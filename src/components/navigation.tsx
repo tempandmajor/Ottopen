@@ -55,13 +55,27 @@ export function Navigation() {
                   <span>Messages</span>
                 </Link>
               </Button>
-              <Button variant="ghost" size="sm" className="flex items-center space-x-2">
-                <Users className="h-4 w-4" />
-                <span>Authors</span>
+              <Button
+                variant={isActive("/authors") ? "default" : "ghost"}
+                size="sm"
+                asChild
+                className="flex items-center space-x-2"
+              >
+                <Link href="/authors">
+                  <Users className="h-4 w-4" />
+                  <span>Authors</span>
+                </Link>
               </Button>
-              <Button variant="ghost" size="sm" className="flex items-center space-x-2">
-                <BookOpen className="h-4 w-4" />
-                <span>Works</span>
+              <Button
+                variant={isActive("/works") ? "default" : "ghost"}
+                size="sm"
+                asChild
+                className="flex items-center space-x-2"
+              >
+                <Link href="/works">
+                  <BookOpen className="h-4 w-4" />
+                  <span>Works</span>
+                </Link>
               </Button>
             </div>
           </div>
@@ -91,16 +105,16 @@ export function Navigation() {
               </Link>
             </Button>
             <div className="hidden sm:flex items-center space-x-2">
-              <Button variant="outline" size="sm">
-                Sign In
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/auth/signin">Sign In</Link>
               </Button>
-              <Button size="sm" className="font-medium">
-                Join Network
+              <Button size="sm" className="font-medium" asChild>
+                <Link href="/auth/signup">Join Network</Link>
               </Button>
             </div>
             <div className="sm:hidden">
-              <Button variant="outline" size="sm" className="text-xs px-2">
-                Join
+              <Button variant="outline" size="sm" className="text-xs px-2" asChild>
+                <Link href="/auth/signup">Join</Link>
               </Button>
             </div>
           </div>
