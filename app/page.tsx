@@ -149,13 +149,21 @@ export default function Home() {
             </div>
 
             <div className="relative">
-              <div className="rounded-2xl literary-shadow w-full h-[400px] bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                <div className="text-center p-8">
-                  <BookOpen className="h-16 w-16 mx-auto mb-4 text-primary" />
-                  <h3 className="text-xl font-semibold mb-2">Where Stories Come to Life</h3>
-                  <p className="text-muted-foreground">
-                    Connect with writers, share your work, and discover amazing stories
-                  </p>
+              <div className="rounded-2xl literary-shadow w-full h-[400px] overflow-hidden">
+                <Image
+                  src="/ottopen-image.png"
+                  alt="Ottopen - Where Stories Connect"
+                  fill
+                  className="object-cover"
+                  priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end justify-center">
+                  <div className="text-center p-8 text-white">
+                    <h3 className="text-xl font-semibold mb-2">Where Stories Come to Life</h3>
+                    <p className="text-gray-200">
+                      Connect with writers, share your work, and discover amazing stories
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
