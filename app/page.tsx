@@ -149,12 +149,12 @@ export default function Home() {
             </div>
 
             <div className="relative">
-              <div className="rounded-2xl literary-shadow w-full h-[400px] overflow-hidden">
+              <div className="rounded-xl literary-shadow w-full h-[400px] overflow-hidden">
                 <Image
                   src="/ottopen-image.png"
                   alt="Ottopen - Where Stories Connect"
                   fill
-                  className="object-cover"
+                  className="object-cover rounded-xl"
                   priority
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end justify-center">
