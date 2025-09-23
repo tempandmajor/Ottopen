@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase, isSupabaseConfigured } from './supabase'
 import { logError, logInfo } from './logger'
 import type { User, Post, Comment, Like, Follow } from './supabase'
 
@@ -9,8 +9,20 @@ export class DatabaseService {
     this.supabase = client || supabase
   }
 
+  private checkSupabaseConfig(): boolean {
+    if (!isSupabaseConfigured()) {
+      logInfo('Supabase not configured, returning empty data')
+      return false
+    }
+    return true
+  }
+
   // User operations
   async getUser(id: string): Promise<User | null> {
+    if (!this.checkSupabaseConfig()) {
+      return null
+    }
+
     try {
       const { data, error } = await this.supabase
         .from('users')
@@ -96,6 +108,10 @@ export class DatabaseService {
     userId?: string
     published?: boolean
   } = {}): Promise<Post[]> {
+    if (!this.checkSupabaseConfig()) {
+      return []
+    }
+
     try {
       const { limit = 20, offset = 0, userId, published = true } = options
 

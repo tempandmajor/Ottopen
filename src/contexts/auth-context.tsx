@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User as SupabaseUser } from '@supabase/supabase-js'
-import { supabase } from '@/src/lib/supabase'
+import { supabase, isSupabaseConfigured } from '@/src/lib/supabase'
 import { authService } from '@/src/lib/auth'
 import { logError, logInfo } from '@/src/lib/logger'
 import type { User } from '@/src/lib/supabase'
@@ -30,13 +30,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Check if Supabase is configured
+    if (!isSupabaseConfigured()) {
+      logInfo('Supabase not configured, skipping auth initialization')
+      setLoading(false)
+      return
+    }
+
     // Get initial session
     const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
 
-      if (session?.user) {
-        const { user: userWithProfile } = await authService.getCurrentUser()
-        setUser(userWithProfile)
+        if (session?.user) {
+          const { user: userWithProfile } = await authService.getCurrentUser()
+          setUser(userWithProfile)
+        }
+      } catch (error) {
+        logError('Failed to get initial session', error as Error)
       }
 
       setLoading(false)
@@ -49,11 +60,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async (event, session) => {
         logInfo('Auth state changed', { event })
 
-        if (session?.user) {
-          const { user: userWithProfile } = await authService.getCurrentUser()
-          setUser(userWithProfile)
-        } else {
-          setUser(null)
+        try {
+          if (session?.user) {
+            const { user: userWithProfile } = await authService.getCurrentUser()
+            setUser(userWithProfile)
+          } else {
+            setUser(null)
+          }
+        } catch (error) {
+          logError('Failed to handle auth state change', error as Error)
         }
 
         setLoading(false)
@@ -64,6 +79,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signIn = async (email: string, password: string) => {
+    if (!isSupabaseConfigured()) {
+      return { error: 'Supabase is not configured' }
+    }
+
     try {
       const { data, error } = await authService.signIn({ email, password })
 
@@ -86,6 +105,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     bio?: string
     specialty?: string
   }) => {
+    if (!isSupabaseConfigured()) {
+      return { error: 'Supabase is not configured' }
+    }
+
     try {
       const { data: authData, error } = await authService.signUp(data)
 
@@ -101,6 +124,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
+    if (!isSupabaseConfigured()) {
+      return
+    }
+
     try {
       await authService.signOut()
       setUser(null)
@@ -110,6 +137,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const forgotPassword = async (email: string) => {
+    if (!isSupabaseConfigured()) {
+      return { error: 'Supabase is not configured' }
+    }
+
     try {
       const { error } = await authService.forgotPassword({ email })
 

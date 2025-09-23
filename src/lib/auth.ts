@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase, isSupabaseConfigured } from './supabase'
 import { logError, logInfo } from './logger'
 import { z } from 'zod'
 
@@ -28,6 +28,11 @@ export type ForgotPasswordData = z.infer<typeof forgotPasswordSchema>
 // Auth service functions
 export const authService = {
   async signUp(data: SignUpData) {
+    if (!isSupabaseConfigured()) {
+      const error = new Error('Supabase is not configured')
+      return { data: null, error }
+    }
+
     try {
       const validatedData = signUpSchema.parse(data)
 
@@ -87,6 +92,11 @@ export const authService = {
   },
 
   async signIn(data: SignInData) {
+    if (!isSupabaseConfigured()) {
+      const error = new Error('Supabase is not configured')
+      return { data: null, error }
+    }
+
     try {
       const validatedData = signInSchema.parse(data)
 
@@ -109,6 +119,11 @@ export const authService = {
   },
 
   async signOut() {
+    if (!isSupabaseConfigured()) {
+      const error = new Error('Supabase is not configured')
+      return { error }
+    }
+
     try {
       const { error } = await supabase.auth.signOut()
 
@@ -126,6 +141,11 @@ export const authService = {
   },
 
   async forgotPassword(data: ForgotPasswordData) {
+    if (!isSupabaseConfigured()) {
+      const error = new Error('Supabase is not configured')
+      return { error }
+    }
+
     try {
       const validatedData = forgotPasswordSchema.parse(data)
 
@@ -150,6 +170,11 @@ export const authService = {
   },
 
   async getCurrentUser() {
+    if (!isSupabaseConfigured()) {
+      const error = new Error('Supabase is not configured')
+      return { user: null, error }
+    }
+
     try {
       const { data: { user }, error } = await supabase.auth.getUser()
 
