@@ -18,89 +18,206 @@ import {
   MoreHorizontal,
   PenTool,
   Image,
-  Smile
+  Smile,
+  Loader2,
+  AlertCircle
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { useAuth } from "@/src/contexts/auth-context";
+import { dbService } from "@/src/lib/database";
+import type { User, Post } from "@/src/lib/supabase";
+import { toast } from "react-hot-toast";
+import Link from "next/link";
 
 export default function Profile() {
   const params = useParams();
-  const username = params.username;
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [activeTab, setActiveTab] = useState("posts");
+  const username = params.username as string;
+  const { user: currentUser } = useAuth();
 
-  // Mock profile data - would come from database
-  const profile = {
-    name: "Maya Rodriguez",
-    username: "maya_writes",
-    bio: "Award-winning novelist exploring themes of identity and belonging. Author of 'The Bridge Between Worlds' and upcoming 'Echoes of Tomorrow'. Currently working on my third novel.",
-    location: "Barcelona, Spain",
-    website: "mayarodriguez.com",
-    joinDate: "March 2022",
-    followers: 3420,
-    following: 892,
-    postsCount: 127,
-    specialty: "Literary Fiction",
-    verified: true,
-    tags: ["Fiction", "Contemporary", "Literary", "Magical Realism"]
+  // State management
+  const [profile, setProfile] = useState<User | null>(null);
+  const [userStats, setUserStats] = useState({
+    posts_count: 0,
+    followers_count: 0,
+    following_count: 0
+  });
+  const [userPosts, setUserPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("posts");
+  const [newPostContent, setNewPostContent] = useState("");
+  const [creatingPost, setCreatingPost] = useState(false);
+
+  // Load profile data on mount
+  useEffect(() => {
+    if (username) {
+      loadProfile();
+    }
+  }, [username]);
+
+  // Check if current user is following this profile
+  useEffect(() => {
+    if (currentUser?.profile && profile && currentUser.profile.id !== profile.id) {
+      checkFollowStatus();
+    }
+  }, [currentUser, profile]);
+
+  const loadProfile = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Load user by username
+      const userData = await dbService.getUserByUsername(username);
+      if (!userData) {
+        setError("User not found");
+        return;
+      }
+
+      setProfile(userData);
+
+      // Load user statistics
+      const stats = await dbService.getUserStats(userData.id);
+      setUserStats(stats);
+
+      // Load user posts
+      const posts = await dbService.getPosts({
+        userId: userData.id,
+        published: true,
+        limit: 20
+      });
+      setUserPosts(posts);
+
+    } catch (error) {
+      console.error("Failed to load profile:", error);
+      setError("Failed to load profile");
+      toast.error("Failed to load profile");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const userPosts = [
-    {
-      author: "Maya Rodriguez",
-      time: "2h ago",
-      content: "Just finished the first draft of chapter 12. There's something magical about those late-night writing sessions when the words just flow. The characters are finally telling me their secrets.\n\nWhat's your favorite time to write?",
-      type: "discussion" as const,
-      likes: 24,
-      comments: 8,
-      isLiked: true
-    },
-    {
-      author: "Maya Rodriguez",
-      time: "1d ago",
-      content: "\"She walked through the market, the scent of cinnamon and cardamom wrapping around her like her grandmother's embrace. Some memories, she realized, lived not in the mind but in the senses.\"\n\nFrom chapter 8 of my work in progress. Sometimes a single sentence captures everything you're trying to say.",
-      type: "excerpt" as const,
-      likes: 67,
-      comments: 15
-    },
-    {
-      author: "Maya Rodriguez",
-      time: "3d ago",
-      content: "Exciting news! 'The Bridge Between Worlds' has been selected for the Barcelona Literary Festival's spotlight series. I'll be doing a reading next month alongside some incredible authors.\n\nGrateful for this community that continues to support and inspire.",
-      type: "announcement" as const,
-      likes: 156,
-      comments: 34
-    }
-  ];
+  const checkFollowStatus = async () => {
+    if (!currentUser?.profile || !profile) return;
 
-  const likedPosts = [
-    {
-      author: "James Chen",
-      time: "4h ago",
-      content: "\"FADE IN:\n\nEXT. COFFEE SHOP - MORNING\n\nThe rain drums against the window as SARAH stares at her laptop screen, cursor blinking mockingly at the blank page...\"\n\nWorking on a new short film script.",
-      type: "excerpt" as const,
-      likes: 31,
-      comments: 12,
-      isLiked: true
+    try {
+      const following = await dbService.isFollowing(currentUser.profile.id, profile.id);
+      setIsFollowing(following);
+    } catch (error) {
+      console.error("Failed to check follow status:", error);
     }
-  ];
+  };
 
-  const resharedPosts = [
-    {
-      author: "Amelia Foster",
-      time: "6h ago",
-      content: "Thrilled to announce my new play 'Voices in the Dark' will premiere at the Riverside Theatre next month! It's been a two-year journey bringing this story to life.",
-      type: "announcement" as const,
-      likes: 67,
-      comments: 23
+  const handleFollow = async () => {
+    if (!currentUser?.profile || !profile || currentUser.profile.id === profile.id) return;
+
+    try {
+      setFollowLoading(true);
+      const nowFollowing = await dbService.toggleFollow(currentUser.profile.id, profile.id);
+      setIsFollowing(nowFollowing);
+
+      // Update followers count
+      setUserStats(prev => ({
+        ...prev,
+        followers_count: nowFollowing ? prev.followers_count + 1 : prev.followers_count - 1
+      }));
+
+      toast.success(nowFollowing ? "Following user" : "Unfollowed user");
+    } catch (error) {
+      console.error("Failed to toggle follow:", error);
+      toast.error("Failed to update follow status");
+    } finally {
+      setFollowLoading(false);
     }
-  ];
+  };
+
+  const handleCreatePost = async () => {
+    if (!currentUser?.profile || !newPostContent.trim()) return;
+
+    try {
+      setCreatingPost(true);
+      const post = await dbService.createPost({
+        user_id: currentUser.profile.id,
+        title: "Post", // You might want to extract title from content or make it optional
+        content: newPostContent.trim(),
+        published: true
+      });
+
+      if (post) {
+        // If viewing own profile, add the new post to the list
+        if (profile?.id === currentUser.profile.id) {
+          setUserPosts(prev => [post, ...prev]);
+          setUserStats(prev => ({
+            ...prev,
+            posts_count: prev.posts_count + 1
+          }));
+        }
+        setNewPostContent("");
+        toast.success("Post created successfully!");
+      }
+    } catch (error) {
+      console.error("Failed to create post:", error);
+      toast.error("Failed to create post");
+    } finally {
+      setCreatingPost(false);
+    }
+  };
+
+  const isOwnProfile = currentUser?.profile?.id === profile?.id;
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+              <p className="mt-4 text-muted-foreground">Loading profile...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !profile) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center py-12">
+              <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h2 className="text-xl font-semibold mb-2">
+                {error === "User not found" ? "User Not Found" : "Error Loading Profile"}
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                {error === "User not found"
+                  ? "The user you're looking for doesn't exist or may have been deactivated."
+                  : "We couldn't load this profile. Please try again later."
+                }
+              </p>
+              <Button variant="outline" onClick={() => window.history.back()}>
+                Go Back
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const getPostsForTab = () => {
     switch (activeTab) {
       case "posts": return userPosts;
-      case "likes": return likedPosts;
-      case "reshares": return resharedPosts;
+      case "likes": return []; // TODO: Implement liked posts functionality
+      case "reshares": return []; // TODO: Implement reshared posts functionality
       default: return userPosts;
     }
   };
@@ -119,26 +236,40 @@ export default function Profile() {
                 <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
                   <div className="flex flex-col items-center sm:items-start">
                     <Avatar className="h-24 w-24 sm:h-32 sm:w-32 mb-4">
+                      <AvatarImage src={profile.avatar_url} alt={profile.display_name} />
                       <AvatarFallback className="bg-literary-subtle text-foreground font-bold text-xl sm:text-2xl">
-                        MR
+                        {profile.display_name.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
 
                     <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                      <Button
-                        variant={isFollowing ? "outline" : "default"}
-                        size="sm"
-                        onClick={() => setIsFollowing(!isFollowing)}
-                        className="flex items-center space-x-2"
-                      >
-                        {isFollowing ? <UserMinus className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-                        <span>{isFollowing ? "Following" : "Follow"}</span>
-                      </Button>
+                      {!isOwnProfile && (
+                        <>
+                          <Button
+                            variant={isFollowing ? "outline" : "default"}
+                            size="sm"
+                            onClick={handleFollow}
+                            disabled={followLoading}
+                            className="flex items-center space-x-2"
+                          >
+                            {followLoading ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : isFollowing ? (
+                              <UserMinus className="h-4 w-4" />
+                            ) : (
+                              <UserPlus className="h-4 w-4" />
+                            )}
+                            <span>{isFollowing ? "Following" : "Follow"}</span>
+                          </Button>
 
-                      <Button variant="outline" size="sm" className="flex items-center space-x-2">
-                        <MessageCircle className="h-4 w-4" />
-                        <span className="hidden xs:inline">Message</span>
-                      </Button>
+                          <Button variant="outline" size="sm" className="flex items-center space-x-2" asChild>
+                            <Link href="/messages">
+                              <MessageCircle className="h-4 w-4" />
+                              <span className="hidden xs:inline">Message</span>
+                            </Link>
+                          </Button>
+                        </>
+                      )}
 
                       <Button variant="ghost" size="sm" className="p-2">
                         <MoreHorizontal className="h-4 w-4" />
@@ -149,102 +280,114 @@ export default function Profile() {
                   <div className="flex-1 space-y-4 text-center sm:text-left">
                     <div>
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                        <h1 className="font-serif text-2xl sm:text-3xl font-bold break-words">{profile.name}</h1>
-                        {profile.verified && (
-                          <Badge variant="secondary" className="text-xs self-center sm:self-auto">Verified</Badge>
-                        )}
+                        <h1 className="font-serif text-2xl sm:text-3xl font-bold break-words">{profile.display_name}</h1>
                       </div>
                       <p className="text-muted-foreground text-base sm:text-lg">@{profile.username}</p>
-                      <p className="text-sm text-literary-accent font-medium mb-2">{profile.specialty}</p>
+                      {profile.specialty && (
+                        <p className="text-sm text-literary-accent font-medium mb-2">{profile.specialty}</p>
+                      )}
                     </div>
 
-                    <p className="text-foreground leading-relaxed text-sm sm:text-base">{profile.bio}</p>
+                    {profile.bio && (
+                      <p className="text-foreground leading-relaxed text-sm sm:text-base">{profile.bio}</p>
+                    )}
 
                     <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                       <div className="flex items-center">
-                        <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                        <span>{profile.location}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <LinkIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                        <a href={`https://${profile.website}`} className="text-primary hover:underline truncate max-w-[120px] sm:max-w-none">
-                          {profile.website}
-                        </a>
-                      </div>
-                      <div className="flex items-center">
                         <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                        <span>Joined {profile.joinDate}</span>
+                        <span>Joined {new Date(profile.created_at).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long'
+                        })}</span>
                       </div>
                     </div>
 
                     <div className="flex flex-wrap gap-4 sm:gap-6 text-sm justify-center sm:justify-start">
                       <div className="text-center sm:text-left">
-                        <span className="font-semibold text-foreground">{profile.following.toLocaleString()}</span>
+                        <span className="font-semibold text-foreground">{userStats.following_count.toLocaleString()}</span>
                         <span className="text-muted-foreground ml-1">Following</span>
                       </div>
                       <div className="text-center sm:text-left">
-                        <span className="font-semibold text-foreground">{profile.followers.toLocaleString()}</span>
+                        <span className="font-semibold text-foreground">{userStats.followers_count.toLocaleString()}</span>
                         <span className="text-muted-foreground ml-1">Followers</span>
                       </div>
                       <div className="text-center sm:text-left">
-                        <span className="font-semibold text-foreground">{profile.postsCount}</span>
+                        <span className="font-semibold text-foreground">{userStats.posts_count}</span>
                         <span className="text-muted-foreground ml-1">Posts</span>
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                      {profile.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-xs">
-                          {tag}
+                    {profile.specialty && (
+                      <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                        <Badge variant="secondary" className="text-xs">
+                          {profile.specialty}
                         </Badge>
-                      ))}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Create Post Section */}
-          <Card className="card-bg card-shadow border-literary-border mb-6">
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex items-start space-x-3 sm:space-x-4">
-                <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
-                  <AvatarFallback className="bg-literary-subtle text-foreground font-medium text-xs sm:text-sm">
-                    You
-                  </AvatarFallback>
-                </Avatar>
+          {/* Create Post Section - Only show for own profile */}
+          {isOwnProfile && (
+            <Card className="card-bg card-shadow border-literary-border mb-6">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-start space-x-3 sm:space-x-4">
+                  <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
+                    <AvatarImage src={currentUser?.profile?.avatar_url} alt={currentUser?.profile?.display_name} />
+                    <AvatarFallback className="bg-literary-subtle text-foreground font-medium text-xs sm:text-sm">
+                      {currentUser?.profile?.display_name?.split(' ').map(n => n[0]).join('') || 'You'}
+                    </AvatarFallback>
+                  </Avatar>
 
-                <div className="flex-1 space-y-3 sm:space-y-4 min-w-0">
-                  <Textarea
-                    placeholder="Share your latest work, thoughts, or connect with the community..."
-                    className="min-h-[60px] sm:min-h-[80px] resize-none border-literary-border text-sm sm:text-base"
-                  />
+                  <div className="flex-1 space-y-3 sm:space-y-4 min-w-0">
+                    <Textarea
+                      value={newPostContent}
+                      onChange={(e) => setNewPostContent(e.target.value)}
+                      placeholder="Share your latest work, thoughts, or connect with the community..."
+                      className="min-h-[60px] sm:min-h-[80px] resize-none border-literary-border text-sm sm:text-base"
+                      disabled={creatingPost}
+                    />
 
-                  <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-3">
-                    <div className="flex items-center space-x-2 sm:space-x-3 overflow-x-auto">
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap">
-                        <Image className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                        <span>Image</span>
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap">
-                        <PenTool className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                        <span>Excerpt</span>
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap">
-                        <Smile className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                        <span>Mood</span>
+                    <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-3">
+                      <div className="flex items-center space-x-2 sm:space-x-3 overflow-x-auto">
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap" disabled>
+                          <Image className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                          <span>Image</span>
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap" disabled>
+                          <PenTool className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                          <span>Excerpt</span>
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap" disabled>
+                          <Smile className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                          <span>Mood</span>
+                        </Button>
+                      </div>
+
+                      <Button
+                        size="sm"
+                        className="font-medium self-end xs:self-auto"
+                        onClick={handleCreatePost}
+                        disabled={!newPostContent.trim() || creatingPost}
+                      >
+                        {creatingPost ? (
+                          <>
+                            <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 animate-spin" />
+                            <span>Posting...</span>
+                          </>
+                        ) : (
+                          <span>Post</span>
+                        )}
                       </Button>
                     </div>
-
-                    <Button size="sm" className="font-medium self-end xs:self-auto">
-                      Post
-                    </Button>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Tabs Section */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
@@ -258,33 +401,59 @@ export default function Profile() {
               <TabsTrigger value="likes" className="flex flex-col xs:flex-row xs:items-center xs:space-x-2 p-2 sm:p-3">
                 <span className="text-xs sm:text-sm">Liked</span>
                 <Badge variant="secondary" className="text-xs mt-1 xs:mt-0">
-                  {likedPosts.length}
+                  0
                 </Badge>
               </TabsTrigger>
               <TabsTrigger value="reshares" className="flex flex-col xs:flex-row xs:items-center xs:space-x-2 p-2 sm:p-3">
                 <span className="text-xs sm:text-sm">Reshared</span>
                 <Badge variant="secondary" className="text-xs mt-1 xs:mt-0">
-                  {resharedPosts.length}
+                  0
                 </Badge>
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="posts" className="space-y-4">
-              {getPostsForTab().map((post, index) => (
-                <PostCard key={index} {...post} />
-              ))}
+              {userPosts.length > 0 ? (
+                userPosts.map((post) => (
+                  <PostCard
+                    key={post.id}
+                    author={post.user?.display_name || profile?.display_name || "Unknown"}
+                    avatar={post.user?.avatar_url || profile?.avatar_url}
+                    time={new Date(post.created_at).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                    content={post.content}
+                    type="discussion"
+                    likes={post.likes_count || 0}
+                    comments={post.comments_count || 0}
+                  />
+                ))
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">
+                    {isOwnProfile ? "You haven't posted anything yet" : "No posts yet"}
+                  </p>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="likes" className="space-y-4">
-              {getPostsForTab().map((post, index) => (
-                <PostCard key={index} {...post} />
-              ))}
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">
+                  Liked posts functionality coming soon
+                </p>
+              </div>
             </TabsContent>
 
             <TabsContent value="reshares" className="space-y-4">
-              {getPostsForTab().map((post, index) => (
-                <PostCard key={index} {...post} />
-              ))}
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">
+                  Reshared posts functionality coming soon
+                </p>
+              </div>
             </TabsContent>
           </Tabs>
 

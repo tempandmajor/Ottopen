@@ -1,6 +1,7 @@
 "use client";
 
 import { Navigation } from "@/src/components/navigation";
+import { ProtectedRoute } from "@/src/components/auth/protected-route";
 import { Button } from "@/src/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/src/components/ui/card";
 import { Input } from "@/src/components/ui/input";
@@ -16,114 +17,113 @@ import {
   Info,
   Smile,
   Paperclip,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Loader2,
+  MessageSquare
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useAuth } from "@/src/contexts/auth-context";
+import { dbService } from "@/src/lib/database";
+import type { User, Message, Conversation } from "@/src/lib/supabase";
+import { toast } from "react-hot-toast";
+import Link from "next/link";
 
 export default function Messages() {
-  const [selectedConversation, setSelectedConversation] = useState(0);
+  const { user } = useAuth();
+  const [selectedConversationIndex, setSelectedConversationIndex] = useState<number | null>(null);
   const [newMessage, setNewMessage] = useState("");
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Mock conversations
-  const conversations = [
-    {
-      id: 1,
-      name: "Maya Rodriguez",
-      username: "maya_writes",
-      lastMessage: "Thanks for the feedback on my latest chapter! I really appreciate your insights.",
-      time: "2m ago",
-      unread: 2,
-      online: true,
-      avatar: null
-    },
-    {
-      id: 2,
-      name: "James Chen",
-      username: "james_screenplay",
-      lastMessage: "Would love to collaborate on that screenplay project we discussed.",
-      time: "1h ago",
-      unread: 0,
-      online: true,
-      avatar: null
-    },
-    {
-      id: 3,
-      name: "Amelia Foster",
-      username: "amelia_theatre",
-      lastMessage: "The play reading went amazing! Thank you for coming.",
-      time: "3h ago",
-      unread: 1,
-      online: false,
-      avatar: null
-    },
-    {
-      id: 4,
-      name: "Elena Vasquez",
-      username: "elena_poet",
-      lastMessage: "Your poetry workshop recommendation was perfect.",
-      time: "1d ago",
-      unread: 0,
-      online: false,
-      avatar: null
-    },
-    {
-      id: 5,
-      name: "Marcus Thompson",
-      username: "marcus_fiction",
-      lastMessage: "Can't wait to read your new short story collection!",
-      time: "2d ago",
-      unread: 0,
-      online: true,
-      avatar: null
+  // Load conversations on mount
+  useEffect(() => {
+    if (user) {
+      loadConversations();
     }
-  ];
+  }, [user]);
 
-  // Mock messages for selected conversation
-  const messages = [
-    {
-      id: 1,
-      sender: "Maya Rodriguez",
-      content: "Hey! I just finished reading your latest excerpt. The dialogue feels so natural and authentic.",
-      time: "10:30 AM",
-      isOwn: false
-    },
-    {
-      id: 2,
-      sender: "You",
-      content: "Thank you so much! I've been working on making the conversations feel more realistic. Your feedback means a lot.",
-      time: "10:35 AM",
-      isOwn: true
-    },
-    {
-      id: 3,
-      sender: "Maya Rodriguez",
-      content: "The way you handled the emotional tension between the characters was brilliant. Especially in that coffee shop scene.",
-      time: "10:37 AM",
-      isOwn: false
-    },
-    {
-      id: 4,
-      sender: "You",
-      content: "That scene took me weeks to get right! I rewrote it probably 10 times.",
-      time: "10:40 AM",
-      isOwn: true
-    },
-    {
-      id: 5,
-      sender: "Maya Rodriguez",
-      content: "Thanks for the feedback on my latest chapter! I really appreciate your insights.",
-      time: "Just now",
-      isOwn: false
+  // Load messages when conversation is selected
+  useEffect(() => {
+    if (selectedConversationIndex !== null && conversations[selectedConversationIndex]) {
+      loadMessages(conversations[selectedConversationIndex].id);
+      markMessagesAsRead(conversations[selectedConversationIndex].id);
     }
-  ];
+  }, [selectedConversationIndex, conversations]);
 
-  const selectedConv = conversations[selectedConversation];
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
-  const handleSendMessage = () => {
-    if (newMessage.trim()) {
-      // In a real app, this would send the message
-      console.log("Sending message:", newMessage);
-      setNewMessage("");
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const loadConversations = async () => {
+    try {
+      setLoading(true);
+      if (user) {
+        const convs = await dbService.getConversations(user.id);
+        setConversations(convs);
+      }
+    } catch (error) {
+      console.error("Failed to load conversations:", error);
+      toast.error("Failed to load conversations");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadMessages = async (conversationId: string) => {
+    try {
+      const msgs = await dbService.getMessages(conversationId);
+      setMessages(msgs);
+    } catch (error) {
+      console.error("Failed to load messages:", error);
+      toast.error("Failed to load messages");
+    }
+  };
+
+  const markMessagesAsRead = async (conversationId: string) => {
+    if (user) {
+      await dbService.markMessagesAsRead(conversationId, user.id);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !user || selectedConversationIndex === null) return;
+
+    const selectedConv = conversations[selectedConversationIndex];
+    const otherUser = selectedConv.user1_id === user.id ? selectedConv.user2 : selectedConv.user1;
+
+    if (!otherUser) return;
+
+    try {
+      setSendingMessage(true);
+
+      const message = await dbService.sendMessage({
+        sender_id: user.id,
+        receiver_id: otherUser.id,
+        content: newMessage.trim(),
+        conversation_id: selectedConv.id,
+      });
+
+      if (message) {
+        setMessages(prev => [...prev, message]);
+        setNewMessage("");
+        toast.success("Message sent!");
+      } else {
+        toast.error("Failed to send message");
+      }
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      toast.error("Failed to send message");
+    } finally {
+      setSendingMessage(false);
     }
   };
 
@@ -134,13 +134,31 @@ export default function Messages() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
+  const getOtherUser = (conv: Conversation): User | null => {
+    if (!user) return null;
+    return conv.user1_id === user.id ? conv.user2 : conv.user1;
+  };
 
-      <div className="container mx-auto px-4 py-6 sm:py-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-4 gap-4 h-[calc(100vh-200px)]">
+  const filteredConversations = conversations.filter(conv => {
+    const otherUser = getOtherUser(conv);
+    if (!otherUser) return false;
+
+    const searchLower = searchQuery.toLowerCase();
+    return otherUser.display_name.toLowerCase().includes(searchLower) ||
+           otherUser.username.toLowerCase().includes(searchLower);
+  });
+
+  const selectedConv = selectedConversationIndex !== null ? conversations[selectedConversationIndex] : null;
+  const selectedOtherUser = selectedConv ? getOtherUser(selectedConv) : null;
+
+  return (
+    <ProtectedRoute>
+      <div className="min-h-screen bg-background">
+        <Navigation />
+
+        <div className="container mx-auto px-4 py-6 sm:py-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid lg:grid-cols-4 gap-4 h-[calc(100vh-200px)]">
             {/* Conversations List */}
             <div className="lg:col-span-1">
               <Card className="h-full card-bg card-shadow border-literary-border">
@@ -155,6 +173,8 @@ export default function Messages() {
                   <div className="relative mt-4">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search messages..."
                       className="pl-10 border-literary-border"
                     />
@@ -163,42 +183,59 @@ export default function Messages() {
 
                 <ScrollArea className="flex-1">
                   <div className="p-2">
-                    {conversations.map((conv, index) => (
-                      <button
-                        key={conv.id}
-                        onClick={() => setSelectedConversation(index)}
-                        className={`w-full p-3 rounded-lg text-left transition-colors hover:bg-literary-subtle ${selectedConversation === index ? 'bg-literary-subtle' : ''
-                          }`}
-                      >
-                        <div className="flex items-start space-x-3">
-                          <div className="relative">
-                            <Avatar className="h-10 w-10">
-                              <AvatarFallback className="bg-muted text-foreground font-medium text-sm">
-                                {conv.name.split(' ').map(n => n[0]).join('')}
-                              </AvatarFallback>
-                            </Avatar>
-                            {conv.online && (
-                              <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-green-500 rounded-full border-2 border-background"></div>
-                            )}
-                          </div>
+                    {loading ? (
+                      <div className="text-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                        <p className="mt-2 text-sm text-muted-foreground">Loading conversations...</p>
+                      </div>
+                    ) : filteredConversations.length > 0 ? (
+                      filteredConversations.map((conv, index) => {
+                        const otherUser = getOtherUser(conv);
+                        if (!otherUser) return null;
 
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <h3 className="font-medium text-sm truncate">{conv.name}</h3>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-xs text-muted-foreground">{conv.time}</span>
-                                {conv.unread > 0 && (
-                                  <Badge variant="default" className="h-5 w-5 p-0 flex items-center justify-center text-xs">
-                                    {conv.unread}
-                                  </Badge>
-                                )}
+                        return (
+                          <button
+                            key={conv.id}
+                            onClick={() => setSelectedConversationIndex(conversations.indexOf(conv))}
+                            className={`w-full p-3 rounded-lg text-left transition-colors hover:bg-literary-subtle ${selectedConversationIndex === conversations.indexOf(conv) ? 'bg-literary-subtle' : ''
+                              }`}
+                          >
+                            <div className="flex items-start space-x-3">
+                              <div className="relative">
+                                <Avatar className="h-10 w-10">
+                                  <AvatarImage src={otherUser.avatar_url} alt={otherUser.display_name} />
+                                  <AvatarFallback className="bg-muted text-foreground font-medium text-sm">
+                                    {otherUser.display_name.split(' ').map(n => n[0]).join('')}
+                                  </AvatarFallback>
+                                </Avatar>
+                              </div>
+
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between mb-1">
+                                  <h3 className="font-medium text-sm truncate">{otherUser.display_name}</h3>
+                                  <div className="flex items-center space-x-2">
+                                    <span className="text-xs text-muted-foreground">
+                                      {new Date(conv.updated_at).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                </div>
+                                <p className="text-xs text-muted-foreground line-clamp-2">
+                                  {conv.last_message?.content || "No messages yet"}
+                                </p>
                               </div>
                             </div>
-                            <p className="text-xs text-muted-foreground line-clamp-2">{conv.lastMessage}</p>
-                          </div>
-                        </div>
-                      </button>
-                    ))}
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center py-8">
+                        <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                        <p className="text-sm text-muted-foreground mb-2">No conversations yet</p>
+                        <Link href="/authors" className="text-primary hover:underline text-sm">
+                          Find writers to connect with
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 </ScrollArea>
               </Card>
@@ -207,118 +244,149 @@ export default function Messages() {
             {/* Chat Interface */}
             <div className="lg:col-span-3">
               <Card className="h-full card-bg card-shadow border-literary-border flex flex-col">
-                {/* Chat Header */}
-                <CardHeader className="p-4 sm:p-6 border-b border-literary-border">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="relative">
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback className="bg-muted text-foreground font-medium">
-                            {selectedConv.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        {selectedConv.online && (
-                          <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-green-500 rounded-full border-2 border-background"></div>
-                        )}
-                      </div>
-
-                      <div>
-                        <h3 className="font-medium">{selectedConv.name}</h3>
-                        <p className="text-xs text-muted-foreground">
-                          {selectedConv.online ? 'Online' : `Last seen ${selectedConv.time}`}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <Button variant="ghost" size="sm" className="p-2">
-                        <Phone className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="p-2">
-                        <Video className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="p-2">
-                        <Info className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-
-                {/* Messages */}
-                <ScrollArea className="flex-1 p-4 sm:p-6">
-                  <div className="space-y-4">
-                    {messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`flex ${message.isOwn ? 'justify-end' : 'justify-start'}`}
-                      >
-                        <div className={`max-w-[70%] ${message.isOwn ? 'order-2' : 'order-1'}`}>
-                          <div
-                            className={`p-3 rounded-2xl ${message.isOwn
-                              ? 'bg-primary text-primary-foreground ml-2'
-                              : 'bg-muted text-foreground mr-2'
-                              }`}
-                          >
-                            <p className="text-sm leading-relaxed">{message.content}</p>
+                {selectedOtherUser ? (
+                  <>
+                    {/* Chat Header */}
+                    <CardHeader className="p-4 sm:p-6 border-b border-literary-border">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="relative">
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={selectedOtherUser.avatar_url} alt={selectedOtherUser.display_name} />
+                              <AvatarFallback className="bg-muted text-foreground font-medium">
+                                {selectedOtherUser.display_name.split(' ').map(n => n[0]).join('')}
+                              </AvatarFallback>
+                            </Avatar>
                           </div>
-                          <p className={`text-xs text-muted-foreground mt-1 ${message.isOwn ? 'text-right' : 'text-left'
-                            }`}>
-                            {message.time}
-                          </p>
+
+                          <div>
+                            <h3 className="font-medium">{selectedOtherUser.display_name}</h3>
+                            <p className="text-xs text-muted-foreground">@{selectedOtherUser.username}</p>
+                          </div>
                         </div>
 
-                        {!message.isOwn && (
-                          <Avatar className="h-6 w-6 order-1 mr-2 mt-auto">
-                            <AvatarFallback className="bg-muted text-foreground text-xs">
-                              {message.sender.split(' ').map(n => n[0]).join('')}
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
+                        <div className="flex items-center space-x-2">
+                          <Button variant="ghost" size="sm" className="p-2" disabled>
+                            <Phone className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="p-2" disabled>
+                            <Video className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="p-2" asChild>
+                            <Link href={`/profile/${selectedOtherUser.username}`}>
+                              <Info className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-
-                {/* Message Input */}
-                <div className="p-4 sm:p-6 border-t border-literary-border">
-                  <div className="flex items-end space-x-2">
-                    <div className="flex space-x-2">
-                      <Button variant="ghost" size="sm" className="p-2">
-                        <Paperclip className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="p-2">
-                        <ImageIcon className="h-4 w-4" />
-                      </Button>
+                    </CardHeader>
+                  </>
+                ) : (
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center">
+                      <MessageSquare className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-medium mb-2">Select a conversation</h3>
+                      <p className="text-muted-foreground">Choose a conversation to start messaging</p>
                     </div>
-
-                    <div className="flex-1 relative">
-                      <Input
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        placeholder="Type a message..."
-                        className="pr-12 border-literary-border min-h-[40px]"
-                      />
-                      <Button variant="ghost" size="sm" className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1">
-                        <Smile className="h-4 w-4" />
-                      </Button>
-                    </div>
-
-                    <Button
-                      onClick={handleSendMessage}
-                      disabled={!newMessage.trim()}
-                      size="sm"
-                      className="p-2"
-                    >
-                      <Send className="h-4 w-4" />
-                    </Button>
                   </div>
-                </div>
+                )}
+
+                {selectedOtherUser && (
+                  <>
+                    {/* Messages */}
+                    <ScrollArea className="flex-1 p-4 sm:p-6">
+                      <div className="space-y-4">
+                        {messages.length > 0 ? (
+                          messages.map((message) => {
+                            const isOwn = message.sender_id === user?.id;
+                            return (
+                              <div
+                                key={message.id}
+                                className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
+                              >
+                                <div className={`max-w-[70%] ${isOwn ? 'order-2' : 'order-1'}`}>
+                                  <div
+                                    className={`p-3 rounded-2xl ${isOwn
+                                      ? 'bg-primary text-primary-foreground ml-2'
+                                      : 'bg-muted text-foreground mr-2'
+                                      }`}
+                                  >
+                                    <p className="text-sm leading-relaxed">{message.content}</p>
+                                  </div>
+                                  <p className={`text-xs text-muted-foreground mt-1 ${isOwn ? 'text-right' : 'text-left'
+                                    }`}>
+                                    {new Date(message.created_at).toLocaleTimeString()}
+                                  </p>
+                                </div>
+
+                                {!isOwn && (
+                                  <Avatar className="h-6 w-6 order-1 mr-2 mt-auto">
+                                    <AvatarImage src={selectedOtherUser.avatar_url} alt={selectedOtherUser.display_name} />
+                                    <AvatarFallback className="bg-muted text-foreground text-xs">
+                                      {selectedOtherUser.display_name.split(' ').map(n => n[0]).join('')}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                )}
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="text-center py-8">
+                            <p className="text-muted-foreground">No messages yet. Start the conversation!</p>
+                          </div>
+                        )}
+                        <div ref={messagesEndRef} />
+                      </div>
+                    </ScrollArea>
+
+                    {/* Message Input */}
+                    <div className="p-4 sm:p-6 border-t border-literary-border">
+                      <div className="flex items-end space-x-2">
+                        <div className="flex space-x-2">
+                          <Button variant="ghost" size="sm" className="p-2" disabled>
+                            <Paperclip className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="p-2" disabled>
+                            <ImageIcon className="h-4 w-4" />
+                          </Button>
+                        </div>
+
+                        <div className="flex-1 relative">
+                          <Input
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            onKeyPress={handleKeyPress}
+                            placeholder="Type a message..."
+                            className="pr-12 border-literary-border min-h-[40px]"
+                            disabled={sendingMessage}
+                          />
+                          <Button variant="ghost" size="sm" className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1" disabled>
+                            <Smile className="h-4 w-4" />
+                          </Button>
+                        </div>
+
+                        <Button
+                          onClick={handleSendMessage}
+                          disabled={!newMessage.trim() || sendingMessage}
+                          size="sm"
+                          className="p-2"
+                        >
+                          {sendingMessage ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Send className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </Card>
+            </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }

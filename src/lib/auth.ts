@@ -206,4 +206,46 @@ export const authService = {
     }
   },
 
+  async updatePassword(currentPassword: string, newPassword: string) {
+    if (!isSupabaseConfigured()) {
+      return { error: 'Supabase is not configured' }
+    }
+
+    try {
+      // Verify current password by re-authenticating
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user?.email) {
+        return { error: 'User not authenticated' }
+      }
+
+      // Re-authenticate with current password
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      })
+
+      if (signInError) {
+        logError('Current password verification failed', signInError)
+        return { error: 'Current password is incorrect' }
+      }
+
+      // Update password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword
+      })
+
+      if (updateError) {
+        logError('Password update failed', updateError)
+        return { error: updateError.message }
+      }
+
+      logInfo('Password updated successfully')
+      return { error: null }
+    } catch (error) {
+      logError('Update password error', error as Error)
+      return { error: (error as Error).message }
+    }
+  },
+
 }

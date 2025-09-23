@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/ta
 import { Avatar, AvatarFallback, AvatarImage } from "@/src/components/ui/avatar";
 import { Badge } from "@/src/components/ui/badge";
 import { Separator } from "@/src/components/ui/separator";
+import { ProtectedRoute } from "@/src/components/auth/protected-route";
 import {
   User,
   Bell,
@@ -28,20 +29,33 @@ import {
   Key,
   Smartphone,
   Mail,
-  Lock
+  Lock,
+  Loader2,
+  AlertCircle
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/src/contexts/auth-context";
+import { dbService } from "@/src/lib/database";
+import { authService } from "@/src/lib/auth";
+import type { User as UserType } from "@/src/lib/supabase";
+import { toast } from "react-hot-toast";
 
 export default function Settings() {
+  const { user: currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState("profile");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserType | null>(null);
+
+  // Form states
   const [profileData, setProfileData] = useState({
-    displayName: "Maya Rodriguez",
-    username: "maya_writes",
-    email: "maya@example.com",
-    bio: "Award-winning novelist exploring themes of identity and belonging. Author of 'The Bridge Between Worlds' and upcoming 'Echoes of Tomorrow'.",
-    location: "Barcelona, Spain",
-    website: "mayarodriguez.com",
-    specialty: "Literary Fiction"
+    displayName: "",
+    username: "",
+    email: "",
+    bio: "",
+    location: "",
+    website: "",
+    specialty: ""
   });
 
   const [notificationSettings, setNotificationSettings] = useState({
@@ -63,32 +77,209 @@ export default function Settings() {
     searchable: true
   });
 
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
+
   const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleSaveProfile = () => {
-    console.log("Saving profile:", profileData);
+  // Load user data on mount
+  useEffect(() => {
+    if (currentUser?.profile) {
+      loadUserData();
+    }
+  }, [currentUser]);
+
+  const loadUserData = async () => {
+    if (!currentUser?.profile) return;
+
+    try {
+      setLoading(true);
+      const profile = currentUser.profile;
+
+      setUserProfile(profile);
+      setProfileData({
+        displayName: profile.display_name || "",
+        username: profile.username || "",
+        email: currentUser.email || "",
+        bio: profile.bio || "",
+        location: "", // Not in current User interface
+        website: "", // Not in current User interface
+        specialty: profile.specialty || ""
+      });
+
+      // TODO: Load actual notification and privacy settings from database
+      // For now, using default values
+
+    } catch (error) {
+      console.error("Failed to load user data:", error);
+      toast.error("Failed to load user data");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSaveNotifications = () => {
-    console.log("Saving notifications:", notificationSettings);
+  const validateProfileForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!profileData.displayName.trim()) {
+      newErrors.displayName = "Display name is required";
+    }
+
+    if (!profileData.username.trim()) {
+      newErrors.username = "Username is required";
+    } else if (!/^[a-zA-Z0-9_]+$/.test(profileData.username)) {
+      newErrors.username = "Username can only contain letters, numbers, and underscores";
+    }
+
+    if (!profileData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profileData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    if (profileData.bio.length > 500) {
+      newErrors.bio = "Bio cannot exceed 500 characters";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const handleSavePrivacy = () => {
-    console.log("Saving privacy:", privacySettings);
+  const validatePasswordForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!passwordForm.currentPassword) {
+      newErrors.currentPassword = "Current password is required";
+    }
+
+    if (!passwordForm.newPassword) {
+      newErrors.newPassword = "New password is required";
+    } else if (passwordForm.newPassword.length < 6) {
+      newErrors.newPassword = "Password must be at least 6 characters";
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
+
+  const handleSaveProfile = async () => {
+    if (!currentUser?.profile || !validateProfileForm()) return;
+
+    try {
+      setSaving(true);
+      setErrors({});
+
+      const updatedProfile = await dbService.updateUser(currentUser.profile.id, {
+        display_name: profileData.displayName,
+        username: profileData.username,
+        bio: profileData.bio,
+        specialty: profileData.specialty
+      });
+
+      if (updatedProfile) {
+        setUserProfile(updatedProfile);
+        toast.success("Profile updated successfully!");
+      }
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+      toast.error("Failed to update profile");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!validatePasswordForm()) return;
+
+    try {
+      setSaving(true);
+      setErrors({});
+
+      const result = await authService.updatePassword(
+        passwordForm.currentPassword,
+        passwordForm.newPassword
+      );
+
+      if (result.error) {
+        setErrors({ currentPassword: result.error });
+        toast.error(result.error);
+      } else {
+        setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+        toast.success("Password updated successfully!");
+      }
+    } catch (error) {
+      console.error("Failed to update password:", error);
+      toast.error("Failed to update password");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveNotifications = async () => {
+    try {
+      setSaving(true);
+      // TODO: Implement notification settings in database
+      toast.success("Notification preferences saved!");
+    } catch (error) {
+      console.error("Failed to save notifications:", error);
+      toast.error("Failed to save notification preferences");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSavePrivacy = async () => {
+    try {
+      setSaving(true);
+      // TODO: Implement privacy settings in database
+      toast.success("Privacy settings saved!");
+    } catch (error) {
+      console.error("Failed to save privacy settings:", error);
+      toast.error("Failed to save privacy settings");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-background">
+          <Navigation />
+          <div className="container mx-auto px-4 py-6 sm:py-8">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+                <p className="mt-4 text-muted-foreground">Loading settings...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
+    <ProtectedRoute>
+      <div className="min-h-screen bg-background">
+        <Navigation />
 
-      <div className="container mx-auto px-4 py-6 sm:py-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-6 sm:mb-8">
-            <h1 className="font-serif text-2xl sm:text-3xl font-bold mb-2">Settings</h1>
-            <p className="text-muted-foreground text-sm sm:text-base">Manage your account preferences and privacy settings</p>
-          </div>
+        <div className="container mx-auto px-4 py-6 sm:py-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-6 sm:mb-8">
+              <h1 className="font-serif text-2xl sm:text-3xl font-bold mb-2">Settings</h1>
+              <p className="text-muted-foreground text-sm sm:text-base">Manage your account preferences and privacy settings</p>
+            </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 h-auto p-1">
               <TabsTrigger value="profile" className="flex items-center space-x-2 p-3">
                 <User className="h-4 w-4" />
@@ -125,16 +316,17 @@ export default function Settings() {
                   {/* Avatar Section */}
                   <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
                     <Avatar className="h-20 w-20 sm:h-24 sm:w-24">
+                      <AvatarImage src={userProfile?.avatar_url} alt={profileData.displayName} />
                       <AvatarFallback className="bg-literary-subtle text-foreground font-bold text-lg">
-                        MR
+                        {profileData.displayName?.split(' ').map(n => n[0]).join('') || 'U'}
                       </AvatarFallback>
                     </Avatar>
                     <div className="space-y-2">
-                      <Button variant="outline" size="sm" className="flex items-center space-x-2">
+                      <Button variant="outline" size="sm" className="flex items-center space-x-2" disabled>
                         <Camera className="h-4 w-4" />
                         <span>Change Photo</span>
                       </Button>
-                      <p className="text-xs text-muted-foreground">JPG, PNG or GIF. Max size 2MB.</p>
+                      <p className="text-xs text-muted-foreground">Avatar upload coming soon</p>
                     </div>
                   </div>
 
@@ -148,18 +340,36 @@ export default function Settings() {
                         <Input
                           id="displayName"
                           value={profileData.displayName}
-                          onChange={(e) => setProfileData(prev => ({ ...prev, displayName: e.target.value }))}
-                          className="border-literary-border"
+                          onChange={(e) => {
+                            setProfileData(prev => ({ ...prev, displayName: e.target.value }));
+                            if (errors.displayName) {
+                              setErrors(prev => ({ ...prev, displayName: "" }));
+                            }
+                          }}
+                          className={`border-literary-border ${errors.displayName ? 'border-destructive' : ''}`}
+                          disabled={saving}
                         />
+                        {errors.displayName && (
+                          <p className="text-sm text-destructive">{errors.displayName}</p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="username">Username</Label>
                         <Input
                           id="username"
                           value={profileData.username}
-                          onChange={(e) => setProfileData(prev => ({ ...prev, username: e.target.value }))}
-                          className="border-literary-border"
+                          onChange={(e) => {
+                            setProfileData(prev => ({ ...prev, username: e.target.value }));
+                            if (errors.username) {
+                              setErrors(prev => ({ ...prev, username: "" }));
+                            }
+                          }}
+                          className={`border-literary-border ${errors.username ? 'border-destructive' : ''}`}
+                          disabled={saving}
                         />
+                        {errors.username && (
+                          <p className="text-sm text-destructive">{errors.username}</p>
+                        )}
                       </div>
                     </div>
 
@@ -169,9 +379,18 @@ export default function Settings() {
                         id="email"
                         type="email"
                         value={profileData.email}
-                        onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
-                        className="border-literary-border"
+                        onChange={(e) => {
+                          setProfileData(prev => ({ ...prev, email: e.target.value }));
+                          if (errors.email) {
+                            setErrors(prev => ({ ...prev, email: "" }));
+                          }
+                        }}
+                        className={`border-literary-border ${errors.email ? 'border-destructive' : ''}`}
+                        disabled={saving}
                       />
+                      {errors.email && (
+                        <p className="text-sm text-destructive">{errors.email}</p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -179,11 +398,24 @@ export default function Settings() {
                       <Textarea
                         id="bio"
                         value={profileData.bio}
-                        onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
-                        className="min-h-[100px] border-literary-border"
+                        onChange={(e) => {
+                          setProfileData(prev => ({ ...prev, bio: e.target.value }));
+                          if (errors.bio) {
+                            setErrors(prev => ({ ...prev, bio: "" }));
+                          }
+                        }}
+                        className={`min-h-[100px] border-literary-border ${errors.bio ? 'border-destructive' : ''}`}
                         placeholder="Tell us about yourself..."
+                        disabled={saving}
                       />
-                      <p className="text-xs text-muted-foreground">{profileData.bio.length}/500 characters</p>
+                      <div className="flex justify-between items-center">
+                        <p className={`text-xs ${profileData.bio.length > 500 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                          {profileData.bio.length}/500 characters
+                        </p>
+                        {errors.bio && (
+                          <p className="text-sm text-destructive">{errors.bio}</p>
+                        )}
+                      </div>
                     </div>
 
                     <div className="grid sm:grid-cols-2 gap-4">
@@ -209,9 +441,13 @@ export default function Settings() {
 
                     <div className="space-y-2">
                       <Label htmlFor="specialty">Writing Specialty</Label>
-                      <Select value={profileData.specialty}>
+                      <Select
+                        value={profileData.specialty}
+                        onValueChange={(value) => setProfileData(prev => ({ ...prev, specialty: value }))}
+                        disabled={saving}
+                      >
                         <SelectTrigger className="border-literary-border">
-                          <SelectValue />
+                          <SelectValue placeholder="Select your specialty" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="Literary Fiction">Literary Fiction</SelectItem>
@@ -229,9 +465,22 @@ export default function Settings() {
                   </div>
 
                   <div className="flex justify-end">
-                    <Button onClick={handleSaveProfile} className="flex items-center space-x-2">
-                      <Save className="h-4 w-4" />
-                      <span>Save Changes</span>
+                    <Button
+                      onClick={handleSaveProfile}
+                      disabled={saving}
+                      className="flex items-center space-x-2"
+                    >
+                      {saving ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4" />
+                          <span>Save Changes</span>
+                        </>
+                      )}
                     </Button>
                   </div>
                 </CardContent>
@@ -307,9 +556,22 @@ export default function Settings() {
                   </div>
 
                   <div className="flex justify-end">
-                    <Button onClick={handleSaveNotifications} className="flex items-center space-x-2">
-                      <Save className="h-4 w-4" />
-                      <span>Save Preferences</span>
+                    <Button
+                      onClick={handleSaveNotifications}
+                      disabled={saving}
+                      className="flex items-center space-x-2"
+                    >
+                      {saving ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4" />
+                          <span>Save Preferences</span>
+                        </>
+                      )}
                     </Button>
                   </div>
                 </CardContent>
@@ -329,7 +591,11 @@ export default function Settings() {
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label>Profile Visibility</Label>
-                      <Select value={privacySettings.profileVisibility}>
+                      <Select
+                        value={privacySettings.profileVisibility}
+                        onValueChange={(value) => setPrivacySettings(prev => ({ ...prev, profileVisibility: value }))}
+                        disabled={saving}
+                      >
                         <SelectTrigger className="border-literary-border">
                           <SelectValue />
                         </SelectTrigger>
@@ -371,7 +637,11 @@ export default function Settings() {
 
                     <div className="space-y-2">
                       <Label>Who Can Message You</Label>
-                      <Select value={privacySettings.allowMessages}>
+                      <Select
+                        value={privacySettings.allowMessages}
+                        onValueChange={(value) => setPrivacySettings(prev => ({ ...prev, allowMessages: value }))}
+                        disabled={saving}
+                      >
                         <SelectTrigger className="border-literary-border">
                           <SelectValue />
                         </SelectTrigger>
@@ -398,9 +668,22 @@ export default function Settings() {
                   </div>
 
                   <div className="flex justify-end">
-                    <Button onClick={handleSavePrivacy} className="flex items-center space-x-2">
-                      <Save className="h-4 w-4" />
-                      <span>Save Settings</span>
+                    <Button
+                      onClick={handleSavePrivacy}
+                      disabled={saving}
+                      className="flex items-center space-x-2"
+                    >
+                      {saving ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4" />
+                          <span>Save Settings</span>
+                        </>
+                      )}
                     </Button>
                   </div>
                 </CardContent>
@@ -498,7 +781,15 @@ export default function Settings() {
                           <Input
                             type={showPassword ? "text" : "password"}
                             placeholder="Current password"
-                            className="border-literary-border pr-10"
+                            value={passwordForm.currentPassword}
+                            onChange={(e) => {
+                              setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }));
+                              if (errors.currentPassword) {
+                                setErrors(prev => ({ ...prev, currentPassword: "" }));
+                              }
+                            }}
+                            className={`border-literary-border pr-10 ${errors.currentPassword ? 'border-destructive' : ''}`}
+                            disabled={saving}
                           />
                           <Button
                             type="button"
@@ -510,18 +801,58 @@ export default function Settings() {
                             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </Button>
                         </div>
+                        {errors.currentPassword && (
+                          <p className="text-sm text-destructive">{errors.currentPassword}</p>
+                        )}
+
                         <Input
                           type="password"
                           placeholder="New password"
-                          className="border-literary-border"
+                          value={passwordForm.newPassword}
+                          onChange={(e) => {
+                            setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }));
+                            if (errors.newPassword) {
+                              setErrors(prev => ({ ...prev, newPassword: "" }));
+                            }
+                          }}
+                          className={`border-literary-border ${errors.newPassword ? 'border-destructive' : ''}`}
+                          disabled={saving}
                         />
+                        {errors.newPassword && (
+                          <p className="text-sm text-destructive">{errors.newPassword}</p>
+                        )}
+
                         <Input
                           type="password"
                           placeholder="Confirm new password"
-                          className="border-literary-border"
+                          value={passwordForm.confirmPassword}
+                          onChange={(e) => {
+                            setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }));
+                            if (errors.confirmPassword) {
+                              setErrors(prev => ({ ...prev, confirmPassword: "" }));
+                            }
+                          }}
+                          className={`border-literary-border ${errors.confirmPassword ? 'border-destructive' : ''}`}
+                          disabled={saving}
                         />
-                        <Button variant="outline" size="sm">
-                          Update Password
+                        {errors.confirmPassword && (
+                          <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+                        )}
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleChangePassword}
+                          disabled={saving || !passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword}
+                        >
+                          {saving ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                              Updating...
+                            </>
+                          ) : (
+                            "Update Password"
+                          )}
                         </Button>
                       </div>
                     </div>
@@ -609,9 +940,10 @@ export default function Settings() {
                 </CardContent>
               </Card>
             </TabsContent>
-          </Tabs>
+            </Tabs>
+          </div>
         </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }

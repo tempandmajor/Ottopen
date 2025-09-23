@@ -65,3 +65,27 @@ export interface Follow {
   following_id: string
   created_at: string
 }
+
+export interface Message {
+  id: string
+  conversation_id: string
+  sender_id: string
+  receiver_id: string
+  content: string
+  read: boolean
+  created_at: string
+  sender?: User
+  receiver?: User
+}
+
+export interface Conversation {
+  id: string
+  user1_id: string
+  user2_id: string
+  last_message_id?: string
+  created_at: string
+  updated_at: string
+  user1?: User
+  user2?: User
+  last_message?: Message
+}

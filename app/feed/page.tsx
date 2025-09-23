@@ -1,64 +1,128 @@
+"use client";
+
 import { Navigation } from "@/src/components/navigation";
 import { PostCard } from "@/src/components/post-card";
+import { ProtectedRoute } from "@/src/components/auth/protected-route";
 import { Button } from "@/src/components/ui/button";
 import { Card, CardContent } from "@/src/components/ui/card";
 import { Input } from "@/src/components/ui/input";
 import { Textarea } from "@/src/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/src/components/ui/avatar";
-import { PenTool, Image, Smile, Filter } from "lucide-react";
+import { PenTool, Image, Smile, Filter, Loader2 } from "lucide-react";
+import { useAuth } from "@/src/contexts/auth-context";
+import { useState, useEffect } from "react";
+import { dbService } from "@/src/lib/database";
+import type { User, Post } from "@/src/lib/supabase";
+import { toast } from "react-hot-toast";
+import Link from "next/link";
 
 export default function Feed() {
-  const followingPosts = [
-    {
-      author: "Maya Rodriguez",
-      time: "1h ago",
-      content: "The coffee shop scene is finally coming together. Sometimes you need to step away from your desk and write in a different space to find the right voice for your characters.\n\n\"She ordered her usual - black coffee, no sugar, just like her mood that morning.\"\n\nWhat's your favorite writing spot?",
-      type: "excerpt" as const,
-      likes: 42,
-      comments: 15,
-      isLiked: true
-    },
-    {
-      author: "James Chen",
-      time: "3h ago",
-      content: "Big news! My screenplay 'The Last Station' has been optioned by Meridian Studios. It's been a 3-year journey from first draft to this moment.\n\nTo all the writers out there struggling with rejections - keep going. Your story matters.",
-      type: "announcement" as const,
-      likes: 156,
-      comments: 34
-    },
-    {
-      author: "Elena Vasquez",
-      time: "5h ago",
-      content: "Working on character development today. I've been thinking about how our past shapes our present, and how that translates into storytelling.\n\nMy protagonist carries her grandmother's journal everywhere - it's become her compass through grief. What objects anchor your characters?",
-      type: "discussion" as const,
-      likes: 28,
-      comments: 9
-    },
-    {
-      author: "Amelia Foster",
-      time: "8h ago",
-      content: "Rehearsals for 'Voices in the Dark' are in full swing! Watching actors bring your words to life never gets old. There's magic in that moment when the script transforms into something living and breathing.\n\nThe energy in the rehearsal room today was electric. October 15th can't come soon enough!",
-      type: "story" as const,
-      likes: 73,
-      comments: 18
-    },
-    {
-      author: "Marcus Thompson",
-      time: "12h ago",
-      content: "\"In the end, we are all stories waiting to be told, and every story deserves a listener.\"\n\nThis line came to me during my morning walk. Sometimes inspiration strikes in the most ordinary moments. Now to figure out which character gets to say it...",
-      type: "excerpt" as const,
-      likes: 91,
-      comments: 22,
-      isLiked: true
+  const { user } = useAuth();
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [creatingPost, setCreatingPost] = useState(false);
+  const [newPostContent, setNewPostContent] = useState("");
+  const [followingCount, setFollowingCount] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
+
+  // Load initial data
+  useEffect(() => {
+    if (user) {
+      loadFeedData();
+      loadFollowingCount();
     }
-  ];
+  }, [user]);
+
+  const loadFeedData = async (pageNum = 0) => {
+    try {
+      setLoading(pageNum === 0);
+      setLoadingMore(pageNum > 0);
+
+      // Load posts from followed users (for now, load all published posts)
+      const feedPosts = await dbService.getPosts({
+        limit: 10,
+        offset: pageNum * 10,
+        published: true
+      });
+
+      if (pageNum === 0) {
+        setPosts(feedPosts);
+      } else {
+        setPosts(prev => [...prev, ...feedPosts]);
+      }
+
+      setHasMore(feedPosts.length === 10);
+    } catch (error) {
+      console.error("Failed to load feed:", error);
+      toast.error("Failed to load feed");
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadFollowingCount = async () => {
+    try {
+      if (user) {
+        const following = await dbService.getFollowing(user.id);
+        setFollowingCount(following.length);
+      }
+    } catch (error) {
+      console.error("Failed to load following count:", error);
+    }
+  };
+
+  const handleCreatePost = async () => {
+    if (!newPostContent.trim() || !user) return;
+
+    try {
+      setCreatingPost(true);
+
+      const newPost = await dbService.createPost({
+        user_id: user.id,
+        title: "",
+        content: newPostContent.trim(),
+        published: true,
+      });
+
+      if (newPost) {
+        // Add the new post to the top of the feed
+        setPosts(prev => [newPost, ...prev]);
+        setNewPostContent("");
+        toast.success("Post shared successfully!");
+      } else {
+        toast.error("Failed to create post");
+      }
+    } catch (error) {
+      console.error("Failed to create post:", error);
+      toast.error("Failed to create post");
+    } finally {
+      setCreatingPost(false);
+    }
+  };
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    loadFeedData(nextPage);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      handleCreatePost();
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
+    <ProtectedRoute>
+      <div className="min-h-screen bg-background">
+        <Navigation />
 
-      <div className="container mx-auto px-4 py-6 sm:py-8">
-        <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6">
+        <div className="container mx-auto px-4 py-6 sm:py-8">
+          <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6">
           {/* Header */}
           <div className="text-center space-y-2">
             <h1 className="font-serif text-2xl sm:text-3xl font-bold">Your Feed</h1>
@@ -70,35 +134,67 @@ export default function Feed() {
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-start space-x-3 sm:space-x-4">
                 <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
+                  <AvatarImage src={user?.profile?.avatar_url} alt={user?.profile?.display_name || user?.email} />
                   <AvatarFallback className="bg-literary-subtle text-foreground font-medium text-xs sm:text-sm">
-                    You
+                    {(user?.profile?.display_name || user?.email)?.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
 
                 <div className="flex-1 space-y-3 sm:space-y-4 min-w-0">
                   <Textarea
-                    placeholder="Share your writing journey, an excerpt, or start a discussion..."
+                    value={newPostContent}
+                    onChange={(e) => setNewPostContent(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Share your writing journey, an excerpt, or start a discussion... (Ctrl+Enter to post)"
                     className="min-h-[80px] sm:min-h-[100px] resize-none border-literary-border text-sm sm:text-base"
+                    disabled={creatingPost}
                   />
 
                   <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-3">
                     <div className="flex items-center space-x-2 sm:space-x-3 overflow-x-auto">
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap"
+                        disabled={creatingPost}
+                      >
                         <Image className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                         <span>Image</span>
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap"
+                        disabled={creatingPost}
+                      >
                         <PenTool className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                         <span>Excerpt</span>
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap"
+                        disabled={creatingPost}
+                      >
                         <Smile className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                         <span>Mood</span>
                       </Button>
                     </div>
 
-                    <Button size="sm" className="font-medium self-end xs:self-auto">
-                      Share
+                    <Button
+                      size="sm"
+                      className="font-medium self-end xs:self-auto"
+                      onClick={handleCreatePost}
+                      disabled={!newPostContent.trim() || creatingPost}
+                    >
+                      {creatingPost ? (
+                        <>
+                          <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 animate-spin" />
+                          <span>Sharing...</span>
+                        </>
+                      ) : (
+                        <span>Share</span>
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -110,28 +206,81 @@ export default function Feed() {
           <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-3">
             <div className="flex items-center space-x-2">
               <Filter className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
-              <span className="text-xs sm:text-sm text-muted-foreground">Following 47 writers</span>
+              <span className="text-xs sm:text-sm text-muted-foreground">
+                Following {followingCount} writers
+              </span>
             </div>
-            <Button variant="outline" size="sm" className="self-start xs:self-auto text-xs sm:text-sm">
-              Filter Posts
+            <Button variant="outline" size="sm" className="self-start xs:self-auto text-xs sm:text-sm" asChild>
+              <Link href="/search?type=posts">Filter Posts</Link>
             </Button>
           </div>
 
           {/* Posts Feed */}
           <div className="space-y-3 sm:space-y-4">
-            {followingPosts.map((post, index) => (
-              <PostCard key={index} {...post} />
-            ))}
+            {loading ? (
+              <div className="text-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+                <p className="mt-2 text-muted-foreground">Loading your feed...</p>
+              </div>
+            ) : posts.length > 0 ? (
+              posts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  author={post.user?.display_name || post.user?.username || 'Unknown Author'}
+                  avatar={post.user?.avatar_url}
+                  time={new Date(post.created_at).toLocaleDateString()}
+                  content={post.content}
+                  type="discussion"
+                  likes={post.likes_count || 0}
+                  comments={post.comments_count || 0}
+                />
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground mb-4">No posts in your feed yet.</p>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    <Link href="/authors" className="text-primary hover:underline">
+                      Follow some writers
+                    </Link>
+                    {" "}to see their posts here.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Or{" "}
+                    <Link href="/search" className="text-primary hover:underline">
+                      explore the community
+                    </Link>
+                    {" "}to discover amazing content.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Load More */}
-          <div className="text-center pt-6 sm:pt-8">
-            <Button variant="outline" size="lg" className="w-full xs:w-auto">
-              Load More Posts
-            </Button>
+          {posts.length > 0 && hasMore && (
+            <div className="text-center pt-6 sm:pt-8">
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full xs:w-auto"
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+              >
+                {loadingMore ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  "Load More Posts"
+                )}
+              </Button>
+            </div>
+          )}
           </div>
         </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }

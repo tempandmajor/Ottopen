@@ -16,17 +16,23 @@ interface AuthorCardProps {
   bio: string;
   avatar?: string;
   tags: string[];
+  username?: string;
+  onFollow?: () => void;
+  isFollowing?: boolean;
 }
 
-export function AuthorCard({ 
-  name, 
-  specialty, 
-  location, 
-  works, 
-  followers, 
-  bio, 
-  avatar, 
-  tags 
+export function AuthorCard({
+  name,
+  specialty,
+  location,
+  works,
+  followers,
+  bio,
+  avatar,
+  tags,
+  username,
+  onFollow,
+  isFollowing = false
 }: AuthorCardProps) {
   const initials = name.split(' ').map(n => n[0]).join('');
 
@@ -43,14 +49,19 @@ export function AuthorCard({
           
           <div className="flex-1 min-w-0">
             <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2 mb-2">
-              <Link 
-                href={`/profile/${name.toLowerCase().replace(' ', '_')}`}
+              <Link
+                href={`/profile/${username || name.toLowerCase().replace(' ', '_')}`}
                 className="font-serif text-base sm:text-lg font-semibold hover:underline break-words"
               >
                 {name}
               </Link>
-              <Button variant="outline" size="sm" className="self-start xs:self-auto text-xs sm:text-sm">
-                Follow
+              <Button
+                variant={isFollowing ? "default" : "outline"}
+                size="sm"
+                className="self-start xs:self-auto text-xs sm:text-sm"
+                onClick={onFollow}
+              >
+                {isFollowing ? "Following" : "Follow"}
               </Button>
             </div>
             

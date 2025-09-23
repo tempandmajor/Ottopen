@@ -1,3 +1,5 @@
+"use client";
+
 import { Navigation } from "@/src/components/navigation";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
@@ -5,127 +7,90 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/ca
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/tabs";
 import { Badge } from "@/src/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/src/components/ui/avatar";
-import { Search, Filter, BookOpen, Star, Eye, Heart, Calendar, User } from "lucide-react";
+import { Search, Filter, BookOpen, Star, Eye, Heart, Calendar, User, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useState, useEffect } from "react";
+import { dbService } from "@/src/lib/database";
+import type { Post } from "@/src/lib/supabase";
+import { toast } from "react-hot-toast";
 
 export default function Works() {
-  const featuredWorks = [
-    {
-      title: "The Bridge Between Worlds",
-      author: "Maya Rodriguez",
-      authorUsername: "maya_writes",
-      type: "Novel",
-      genre: "Literary Fiction",
-      description: "A profound exploration of identity and belonging as two cultures collide in modern Barcelona. Rodriguez weaves a tale of love, loss, and self-discovery.",
-      publishedDate: "2023-09-15",
-      pages: 342,
-      rating: 4.7,
-      reviews: 1249,
-      views: 15420,
-      likes: 892,
-      status: "Published",
-      coverColor: "bg-gradient-to-br from-blue-500 to-purple-600"
-    },
-    {
-      title: "Shadows of Truth",
-      author: "Marcus Thompson",
-      authorUsername: "marcus_fiction",
-      type: "Novel",
-      genre: "Mystery & Thriller",
-      description: "A psychological thriller that will keep you guessing until the last page. Detective Sarah Chen must solve a case that hits too close to home.",
-      publishedDate: "2024-01-20",
-      pages: 289,
-      rating: 4.5,
-      reviews: 876,
-      views: 12890,
-      likes: 654,
-      status: "Published",
-      coverColor: "bg-gradient-to-br from-gray-700 to-black"
-    },
-    {
-      title: "Digital Dreams",
-      author: "David Kim",
-      authorUsername: "david_scifi",
-      type: "Novel",
-      genre: "Science Fiction",
-      description: "In 2089, the line between reality and virtual worlds has blurred. A young programmer discovers a conspiracy that threatens both worlds.",
-      publishedDate: "2023-11-03",
-      pages: 387,
-      rating: 4.8,
-      reviews: 2103,
-      views: 23450,
-      likes: 1567,
-      status: "Published",
-      coverColor: "bg-gradient-to-br from-cyan-500 to-blue-600"
-    },
-    {
-      title: "Finding Home",
-      author: "Sarah Williams",
-      authorUsername: "sarah_ya",
-      type: "Series",
-      genre: "Young Adult",
-      description: "A coming-of-age trilogy that follows Emma's journey from small-town dreamer to confident young woman finding her place in the world.",
-      publishedDate: "2023-07-12",
-      pages: 956,
-      rating: 4.6,
-      reviews: 3456,
-      views: 34210,
-      likes: 2890,
-      status: "Complete",
-      coverColor: "bg-gradient-to-br from-pink-500 to-orange-500"
-    },
-    {
-      title: "Echoes of Tomorrow",
-      author: "Maya Rodriguez",
-      authorUsername: "maya_writes",
-      type: "Novel",
-      genre: "Literary Fiction",
-      description: "Rodriguez's highly anticipated follow-up explores themes of climate change and human resilience through multiple interconnected narratives.",
-      publishedDate: "2024-03-01",
-      pages: 398,
-      rating: 4.9,
-      reviews: 567,
-      views: 8920,
-      likes: 743,
-      status: "New Release",
-      coverColor: "bg-gradient-to-br from-green-500 to-teal-600"
-    },
-    {
-      title: "Voices in the Dark",
-      author: "Amelia Foster",
-      authorUsername: "amelia_theatre",
-      type: "Play",
-      genre: "Drama",
-      description: "A powerful stage play examining social justice and human rights. Winner of the Young Playwright Award 2023.",
-      publishedDate: "2023-10-15",
-      pages: 89,
-      rating: 4.4,
-      reviews: 234,
-      views: 4560,
-      likes: 345,
-      status: "Published",
-      coverColor: "bg-gradient-to-br from-purple-600 to-indigo-700"
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Post[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [worksStats, setWorksStats] = useState({
+    total: 0,
+    newThisWeek: 0,
+    totalReads: 0,
+    totalLikes: 0
+  });
+
+  // Load posts on mount
+  useEffect(() => {
+    loadPosts();
+  }, []);
+
+  // Search functionality
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      handleSearch();
+    } else {
+      setSearchResults([]);
     }
-  ];
+  }, [searchQuery]);
 
-  const newReleases = featuredWorks.filter(work =>
-    new Date(work.publishedDate) > new Date('2024-01-01')
+  const loadPosts = async () => {
+    try {
+      setLoading(true);
+      const allPosts = await dbService.getPosts({ limit: 50, published: true });
+      setPosts(allPosts);
+      setWorksStats({
+        total: allPosts.length,
+        newThisWeek: allPosts.filter(p =>
+          new Date(p.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        ).length,
+        totalReads: allPosts.reduce((sum, p) => sum + (p.likes_count || 0), 0), // Using likes as reads proxy
+        totalLikes: allPosts.reduce((sum, p) => sum + (p.likes_count || 0), 0)
+      });
+    } catch (error) {
+      console.error("Failed to load posts:", error);
+      toast.error("Failed to load works");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+
+    try {
+      setSearching(true);
+      const results = await dbService.searchPosts(searchQuery, 20);
+      setSearchResults(results);
+    } catch (error) {
+      console.error("Search failed:", error);
+      toast.error("Search failed");
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const filteredPosts = searchQuery.trim() ? searchResults : posts;
+  const featuredWorks = filteredPosts.slice(0, 6);
+  const newReleases = filteredPosts.filter(post =>
+    new Date(post.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
   );
+  const popular = [...filteredPosts].sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0)).slice(0, 4);
+  const trending = [...filteredPosts].sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0)).slice(0, 4);
 
-  const popular = [...featuredWorks].sort((a, b) => b.views - a.views).slice(0, 4);
-  const trending = [...featuredWorks].sort((a, b) => b.likes - a.likes).slice(0, 4);
-
-  const genres = [
-    "Literary Fiction", "Mystery & Thriller", "Romance", "Science Fiction",
-    "Fantasy", "Poetry", "Non-Fiction", "Young Adult", "Historical Fiction",
-    "Horror", "Drama", "Comedy"
-  ];
-
-  const WorkCard = ({ work }: { work: typeof featuredWorks[0] }) => (
+  // Create WorkCard component for real posts
+  const WorkCard = ({ post }: { post: Post }) => (
     <Card className="card-bg card-shadow border-literary-border hover:shadow-lg transition-all duration-300">
       <CardContent className="p-6">
         <div className="flex space-x-4">
-          <div className={`w-16 h-20 sm:w-20 sm:h-24 rounded-lg ${work.coverColor} flex-shrink-0 flex items-center justify-center text-white font-bold text-lg`}>
+          <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-lg">
             <BookOpen className="h-8 w-8" />
           </div>
 
@@ -133,62 +98,57 @@ export default function Works() {
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
               <div className="min-w-0">
                 <h3 className="font-serif text-lg sm:text-xl font-semibold mb-1 truncate">
-                  {work.title}
+                  {post.title}
                 </h3>
                 <Link
-                  href={`/profile/${work.authorUsername}`}
+                  href={`/profile/${post.user?.username || 'unknown'}`}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
-                  by {work.author}
+                  by {post.user?.display_name || "Unknown Author"}
                 </Link>
               </div>
               <div className="flex items-center space-x-2 flex-shrink-0">
-                <Badge variant={work.status === 'New Release' ? 'default' : 'secondary'}>
-                  {work.status}
+                <Badge variant={post.published ? 'default' : 'secondary'}>
+                  {post.published ? 'Published' : 'Draft'}
                 </Badge>
-                <Badge variant="outline">{work.type}</Badge>
+                <Badge variant="outline">Article</Badge>
               </div>
             </div>
 
             <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-              {work.description}
+              {post.excerpt || post.content?.substring(0, 150) + "..."}
             </p>
 
             <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground mb-4">
               <div className="flex items-center">
                 <Calendar className="h-3 w-3 mr-1" />
-                {new Date(work.publishedDate).toLocaleDateString('en-US', {
+                {new Date(post.created_at).toLocaleDateString('en-US', {
                   year: 'numeric',
                   month: 'short'
                 })}
               </div>
               <div className="flex items-center">
-                <BookOpen className="h-3 w-3 mr-1" />
-                {work.pages} pages
+                <User className="h-3 w-3 mr-1" />
+                {post.user?.display_name || "Unknown"}
               </div>
-              <Badge variant="secondary" className="text-xs">
-                {work.genre}
-              </Badge>
             </div>
 
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                 <div className="flex items-center">
-                  <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                  <span>{work.rating}</span>
-                  <span className="ml-1">({work.reviews})</span>
-                </div>
-                <div className="flex items-center">
                   <Eye className="h-4 w-4 mr-1" />
-                  <span>{work.views.toLocaleString()}</span>
+                  <span>{(post.likes_count || 0).toLocaleString()}</span>
                 </div>
                 <div className="flex items-center">
                   <Heart className="h-4 w-4 mr-1" />
-                  <span>{work.likes}</span>
+                  <span>{post.likes_count || 0}</span>
+                </div>
+                <div className="flex items-center">
+                  <span>{post.comments_count || 0} comments</span>
                 </div>
               </div>
-              <Button variant="outline" size="sm">
-                Read
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/posts/${post.id}`}>Read</Link>
               </Button>
             </div>
           </div>
@@ -196,6 +156,12 @@ export default function Works() {
       </CardContent>
     </Card>
   );
+
+  const genres = [
+    "Literary Fiction", "Mystery & Thriller", "Romance", "Science Fiction",
+    "Fantasy", "Poetry", "Non-Fiction", "Young Adult", "Historical Fiction",
+    "Horror", "Drama", "Comedy"
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -219,6 +185,8 @@ export default function Works() {
                   <div className="flex-1 relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search works by title, author, or genre..."
                       className="pl-10 border-literary-border"
                     />
@@ -254,7 +222,9 @@ export default function Works() {
               <CardContent className="p-4 text-center">
                 <div className="flex items-center justify-center space-x-2 mb-2">
                   <BookOpen className="h-5 w-5 text-primary" />
-                  <span className="text-2xl font-bold">15,672</span>
+                  <span className="text-2xl font-bold">
+                    {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : worksStats.total.toLocaleString()}
+                  </span>
                 </div>
                 <p className="text-sm text-muted-foreground">Total Works</p>
               </CardContent>
@@ -263,7 +233,9 @@ export default function Works() {
               <CardContent className="p-4 text-center">
                 <div className="flex items-center justify-center space-x-2 mb-2">
                   <Star className="h-5 w-5 text-primary" />
-                  <span className="text-2xl font-bold">234</span>
+                  <span className="text-2xl font-bold">
+                    {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : worksStats.newThisWeek}
+                  </span>
                 </div>
                 <p className="text-sm text-muted-foreground">New This Week</p>
               </CardContent>
@@ -272,7 +244,9 @@ export default function Works() {
               <CardContent className="p-4 text-center">
                 <div className="flex items-center justify-center space-x-2 mb-2">
                   <Eye className="h-5 w-5 text-primary" />
-                  <span className="text-2xl font-bold">2.1M</span>
+                  <span className="text-2xl font-bold">
+                    {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : worksStats.totalReads.toLocaleString()}
+                  </span>
                 </div>
                 <p className="text-sm text-muted-foreground">Total Reads</p>
               </CardContent>
@@ -281,7 +255,9 @@ export default function Works() {
               <CardContent className="p-4 text-center">
                 <div className="flex items-center justify-center space-x-2 mb-2">
                   <Heart className="h-5 w-5 text-primary" />
-                  <span className="text-2xl font-bold">89.2K</span>
+                  <span className="text-2xl font-bold">
+                    {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : worksStats.totalLikes.toLocaleString()}
+                  </span>
                 </div>
                 <p className="text-sm text-muted-foreground">Total Likes</p>
               </CardContent>
@@ -306,34 +282,65 @@ export default function Works() {
             </TabsList>
 
             <TabsContent value="featured" className="space-y-6">
-              <div className="space-y-4">
-                {featuredWorks.map((work, index) => (
-                  <WorkCard key={index} work={work} />
-                ))}
-              </div>
+              {loading ? (
+                <div className="text-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+                  <p className="mt-2 text-muted-foreground">Loading works...</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {featuredWorks.length > 0 ? (
+                    featuredWorks.map((post) => (
+                      <WorkCard key={post.id} post={post} />
+                    ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">No featured works found</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="new" className="space-y-6">
               <div className="space-y-4">
-                {newReleases.map((work, index) => (
-                  <WorkCard key={index} work={work} />
-                ))}
+                {newReleases.length > 0 ? (
+                  newReleases.map((post) => (
+                    <WorkCard key={post.id} post={post} />
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">No new releases found</p>
+                  </div>
+                )}
               </div>
             </TabsContent>
 
             <TabsContent value="popular" className="space-y-6">
               <div className="space-y-4">
-                {popular.map((work, index) => (
-                  <WorkCard key={index} work={work} />
-                ))}
+                {popular.length > 0 ? (
+                  popular.map((post) => (
+                    <WorkCard key={post.id} post={post} />
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">No popular works found</p>
+                  </div>
+                )}
               </div>
             </TabsContent>
 
             <TabsContent value="trending" className="space-y-6">
               <div className="space-y-4">
-                {trending.map((work, index) => (
-                  <WorkCard key={index} work={work} />
-                ))}
+                {trending.length > 0 ? (
+                  trending.map((post) => (
+                    <WorkCard key={post.id} post={post} />
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">No trending works found</p>
+                  </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>

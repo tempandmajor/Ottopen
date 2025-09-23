@@ -1,6 +1,6 @@
 import { supabase, isSupabaseConfigured } from './supabase'
 import { logError, logInfo } from './logger'
-import type { User, Post, Comment, Like, Follow } from './supabase'
+import type { User, Post, Comment, Like, Follow, Message, Conversation } from './supabase'
 
 export class DatabaseService {
   private supabase: typeof supabase
@@ -491,6 +491,192 @@ export class DatabaseService {
     } catch (error) {
       logError('Search users error', error as Error)
       return []
+    }
+  }
+
+  // Message operations
+  async getConversations(userId: string): Promise<Conversation[]> {
+    if (!this.checkSupabaseConfig()) {
+      return []
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('conversations')
+        .select(`
+          *,
+          user1:users!user1_id(*),
+          user2:users!user2_id(*),
+          last_message:messages!last_message_id(*)
+        `)
+        .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
+        .order('updated_at', { ascending: false })
+
+      if (error) {
+        logError('Failed to get conversations', error)
+        return []
+      }
+
+      return data || []
+    } catch (error) {
+      logError('Get conversations error', error as Error)
+      return []
+    }
+  }
+
+  async getMessages(conversationId: string, limit = 50): Promise<Message[]> {
+    if (!this.checkSupabaseConfig()) {
+      return []
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('messages')
+        .select(`
+          *,
+          sender:users!sender_id(*),
+          receiver:users!receiver_id(*)
+        `)
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true })
+        .limit(limit)
+
+      if (error) {
+        logError('Failed to get messages', error)
+        return []
+      }
+
+      return data || []
+    } catch (error) {
+      logError('Get messages error', error as Error)
+      return []
+    }
+  }
+
+  async sendMessage(params: {
+    sender_id: string
+    receiver_id: string
+    content: string
+    conversation_id?: string
+  }): Promise<Message | null> {
+    if (!this.checkSupabaseConfig()) {
+      return null
+    }
+
+    try {
+      let conversationId = params.conversation_id
+
+      // If no conversation ID provided, create or get existing conversation
+      if (!conversationId) {
+        const conversation = await this.createOrGetConversation(params.sender_id, params.receiver_id)
+        if (!conversation) {
+          logError('Failed to create or get conversation')
+          return null
+        }
+        conversationId = conversation.id
+      }
+
+      const { data, error } = await this.supabase
+        .from('messages')
+        .insert({
+          conversation_id: conversationId,
+          sender_id: params.sender_id,
+          receiver_id: params.receiver_id,
+          content: params.content,
+          read: false
+        })
+        .select(`
+          *,
+          sender:users!sender_id(*),
+          receiver:users!receiver_id(*)
+        `)
+        .single()
+
+      if (error) {
+        logError('Failed to send message', error)
+        return null
+      }
+
+      // Update conversation's last_message_id and updated_at
+      await this.supabase
+        .from('conversations')
+        .update({
+          last_message_id: data.id,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', conversationId)
+
+      logInfo('Message sent successfully', { messageId: data.id })
+      return data
+    } catch (error) {
+      logError('Send message error', error as Error)
+      return null
+    }
+  }
+
+  async markMessagesAsRead(conversationId: string, userId: string): Promise<boolean> {
+    if (!this.checkSupabaseConfig()) {
+      return false
+    }
+
+    try {
+      const { error } = await this.supabase
+        .from('messages')
+        .update({ read: true })
+        .eq('conversation_id', conversationId)
+        .eq('receiver_id', userId)
+        .eq('read', false)
+
+      if (error) {
+        logError('Failed to mark messages as read', error)
+        return false
+      }
+
+      return true
+    } catch (error) {
+      logError('Mark messages as read error', error as Error)
+      return false
+    }
+  }
+
+  async createOrGetConversation(user1Id: string, user2Id: string): Promise<Conversation | null> {
+    if (!this.checkSupabaseConfig()) {
+      return null
+    }
+
+    try {
+      // First try to find existing conversation
+      const { data: existing } = await this.supabase
+        .from('conversations')
+        .select('*')
+        .or(
+          `and(user1_id.eq.${user1Id},user2_id.eq.${user2Id}),and(user1_id.eq.${user2Id},user2_id.eq.${user1Id})`
+        )
+        .single()
+
+      if (existing) {
+        return existing
+      }
+
+      // Create new conversation
+      const { data, error } = await this.supabase
+        .from('conversations')
+        .insert({
+          user1_id: user1Id,
+          user2_id: user2Id
+        })
+        .select()
+        .single()
+
+      if (error) {
+        logError('Failed to create conversation', error)
+        return null
+      }
+
+      return data
+    } catch (error) {
+      logError('Create or get conversation error', error as Error)
+      return null
     }
   }
 }

@@ -1,3 +1,5 @@
+"use client";
+
 import { Navigation } from "@/src/components/navigation";
 import { AuthorCard } from "@/src/components/author-card";
 import { PostCard } from "@/src/components/post-card";
@@ -5,64 +7,96 @@ import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Search, TrendingUp, Star, BookOpen } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+import { useAuth } from "@/src/contexts/auth-context";
+import { useState, useEffect } from "react";
+import { dbService } from "@/src/lib/database";
+import type { User, Post } from "@/src/lib/supabase";
 
 export default function Home() {
-  const featuredAuthors = [
-    {
-      name: "Maya Rodriguez",
-      specialty: "Literary Fiction",
-      location: "Barcelona, Spain",
-      works: 12,
-      followers: 3420,
-      bio: "Award-winning novelist exploring themes of identity and belonging. Author of 'The Bridge Between Worlds' and upcoming 'Echoes of Tomorrow'.",
-      tags: ["Fiction", "Contemporary", "Literary"]
-    },
-    {
-      name: "James Chen",
-      specialty: "Screenwriter",
-      location: "Los Angeles, CA",
-      works: 8,
-      followers: 1890,
-      bio: "Emmy-nominated screenwriter for drama series. Currently developing new projects for streaming platforms.",
-      tags: ["Screenplay", "Drama", "Thriller"]
-    },
-    {
-      name: "Amelia Foster",
-      specialty: "Playwright",
-      location: "London, UK",
-      works: 15,
-      followers: 2650,
-      bio: "Theatre creator with a passion for contemporary social issues. Winner of the Young Playwright Award 2023.",
-      tags: ["Theatre", "Social Drama", "Contemporary"]
-    }
-  ];
+  const { user } = useAuth();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [recentPosts, setRecentPosts] = useState<Post[]>([]);
+  const [featuredAuthors, setFeaturedAuthors] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const recentPosts = [
-    {
-      author: "Maya Rodriguez",
-      time: "2h ago",
-      content: "Just finished the first draft of chapter 12. There's something magical about those late-night writing sessions when the words just flow. The characters are finally telling me their secrets.\n\nWhat's your favorite time to write?",
-      type: "discussion" as const,
-      likes: 24,
-      comments: 8
-    },
-    {
-      author: "James Chen",
-      time: "4h ago",
-      content: "\"FADE IN:\n\nEXT. COFFEE SHOP - MORNING\n\nThe rain drums against the window as SARAH stares at her laptop screen, cursor blinking mockingly at the blank page...\"\n\nWorking on a new short film script. Sometimes the simplest scenes carry the most weight.",
-      type: "excerpt" as const,
-      likes: 31,
-      comments: 12
-    },
-    {
-      author: "Amelia Foster",
-      time: "6h ago",
-      content: "Thrilled to announce my new play 'Voices in the Dark' will premiere at the Riverside Theatre next month! It's been a two-year journey bringing this story to life.\n\nPremiere night: October 15th. Who's in London and wants to join?",
-      type: "announcement" as const,
-      likes: 67,
-      comments: 23
+  // Load data on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+
+        // Load recent posts
+        const posts = await dbService.getPosts({ limit: 6, published: true });
+        setRecentPosts(posts);
+
+        // Load featured authors (users with most followers or posts)
+        const authors = await dbService.searchUsers("", 6);
+        setFeaturedAuthors(authors);
+      } catch (error) {
+        console.error("Failed to load homepage data:", error);
+        // Fallback to mock data if database fails
+        setRecentPosts([
+          {
+            id: "1",
+            user_id: "1",
+            title: "Welcome to Ottopen",
+            content: "Welcome to Ottopen, a literary social network for authors, screenwriters, and playwrights. Share your work, discover new voices, and build meaningful connections in the literary world.",
+            published: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            user: {
+              id: "1",
+              email: "demo@ottopen.com",
+              display_name: "Ottopen Team",
+              username: "ottopen",
+              bio: "The official Ottopen team account",
+              specialty: "Platform",
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            },
+            likes_count: 24,
+            comments_count: 8,
+          }
+        ] as Post[]);
+
+        setFeaturedAuthors([
+          {
+            id: "1",
+            email: "demo@ottopen.com",
+            display_name: "Maya Rodriguez",
+            username: "maya_rodriguez",
+            bio: "Award-winning novelist exploring themes of identity and belonging. Author of 'The Bridge Between Worlds' and upcoming 'Echoes of Tomorrow'.",
+            specialty: "Literary Fiction",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+          {
+            id: "2",
+            email: "demo2@ottopen.com",
+            display_name: "James Chen",
+            username: "james_chen",
+            bio: "Emmy-nominated screenwriter for drama series. Currently developing new projects for streaming platforms.",
+            specialty: "Screenwriter",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }
+        ] as User[]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  // Handle search
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`;
     }
-  ];
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -84,11 +118,17 @@ export default function Home() {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="font-medium">
-                  Start Writing
-                </Button>
-                <Button variant="outline" size="lg">
-                  Explore Community
+                {user ? (
+                  <Button size="lg" className="font-medium" asChild>
+                    <Link href="/dashboard">Start Writing</Link>
+                  </Button>
+                ) : (
+                  <Button size="lg" className="font-medium" asChild>
+                    <Link href="/auth/signup">Start Writing</Link>
+                  </Button>
+                )}
+                <Button variant="outline" size="lg" asChild>
+                  <Link href="/authors">Explore Community</Link>
                 </Button>
               </div>
 
@@ -109,13 +149,15 @@ export default function Home() {
             </div>
 
             <div className="relative">
-              <Image
-                src="/hero-writers.jpg"
-                alt="Writers and creators collaborating"
-                width={600}
-                height={400}
-                className="rounded-2xl literary-shadow w-full"
-              />
+              <div className="rounded-2xl literary-shadow w-full h-[400px] bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                <div className="text-center p-8">
+                  <BookOpen className="h-16 w-16 mx-auto mb-4 text-primary" />
+                  <h3 className="text-xl font-semibold mb-2">Where Stories Come to Life</h3>
+                  <p className="text-muted-foreground">
+                    Connect with writers, share your work, and discover amazing stories
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -125,13 +167,17 @@ export default function Home() {
       <section className="py-12 px-4 border-b border-literary-border">
         <div className="container mx-auto">
           <div className="max-w-2xl mx-auto">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search authors, works, or discussions..."
-                className="pl-10 h-12 text-base"
-              />
-            </div>
+            <form onSubmit={handleSearch}>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search authors, works, or discussions..."
+                  className="pl-10 h-12 text-base"
+                />
+              </div>
+            </form>
           </div>
         </div>
       </section>
@@ -144,15 +190,43 @@ export default function Home() {
             <div className="lg:col-span-2 space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="font-serif text-2xl font-semibold">Discover Writers</h2>
-                <Button variant="outline" size="sm">
-                  Filter
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/search?type=posts">Filter</Link>
                 </Button>
               </div>
 
               <div className="space-y-4">
-                {recentPosts.map((post, index) => (
-                  <PostCard key={index} {...post} />
-                ))}
+                {loading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                    <p className="mt-2 text-muted-foreground">Loading posts...</p>
+                  </div>
+                ) : recentPosts.length > 0 ? (
+                  recentPosts.map((post) => (
+                    <PostCard
+                      key={post.id}
+                      author={post.user?.display_name || post.user?.username || 'Unknown Author'}
+                      avatar={post.user?.avatar_url}
+                      time={new Date(post.created_at).toLocaleDateString()}
+                      content={post.content}
+                      type="discussion"
+                      likes={post.likes_count || 0}
+                      comments={post.comments_count || 0}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">No posts available yet.</p>
+                    {!user && (
+                      <p className="mt-2">
+                        <Link href="/auth/signup" className="text-primary hover:underline">
+                          Join the community
+                        </Link>
+                        {" "}to start sharing your work!
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -161,9 +235,30 @@ export default function Home() {
               <div>
                 <h3 className="font-serif text-xl font-semibold mb-4">Featured Authors</h3>
                 <div className="space-y-4">
-                  {featuredAuthors.map((author, index) => (
-                    <AuthorCard key={index} {...author} />
-                  ))}
+                  {loading ? (
+                    <div className="text-center py-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+                      <p className="mt-2 text-sm text-muted-foreground">Loading authors...</p>
+                    </div>
+                  ) : featuredAuthors.length > 0 ? (
+                    featuredAuthors.map((author) => (
+                      <AuthorCard
+                        key={author.id}
+                        name={author.display_name || author.username}
+                        specialty={author.specialty || 'Writer'}
+                        location="Unknown"
+                        works={0}
+                        followers={0}
+                        bio={author.bio || 'No bio available.'}
+                        avatar={author.avatar_url}
+                        tags={author.specialty ? [author.specialty] : ['Writer']}
+                      />
+                    ))
+                  ) : (
+                    <div className="text-center py-4">
+                      <p className="text-sm text-muted-foreground">No authors found.</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

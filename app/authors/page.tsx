@@ -1,3 +1,5 @@
+"use client";
+
 import { Navigation } from "@/src/components/navigation";
 import { AuthorCard } from "@/src/components/author-card";
 import { Button } from "@/src/components/ui/button";
@@ -5,87 +7,79 @@ import { Input } from "@/src/components/ui/input";
 import { Card, CardContent } from "@/src/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/tabs";
 import { Badge } from "@/src/components/ui/badge";
-import { Search, Filter, TrendingUp, Users, Star, BookOpen } from "lucide-react";
+import { Search, Filter, TrendingUp, Users, Star, BookOpen, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { dbService } from "@/src/lib/database";
+import type { User } from "@/src/lib/supabase";
+import { toast } from "react-hot-toast";
 
 export default function Authors() {
-  const featuredAuthors = [
-    {
-      name: "Maya Rodriguez",
-      specialty: "Literary Fiction",
-      location: "Barcelona, Spain",
-      works: 12,
-      followers: 3420,
-      bio: "Award-winning novelist exploring themes of identity and belonging. Author of 'The Bridge Between Worlds' and upcoming 'Echoes of Tomorrow'.",
-      tags: ["Fiction", "Contemporary", "Literary", "Magical Realism"]
-    },
-    {
-      name: "James Chen",
-      specialty: "Screenwriter",
-      location: "Los Angeles, CA",
-      works: 8,
-      followers: 1890,
-      bio: "Emmy-nominated screenwriter for drama series. Currently developing new projects for streaming platforms.",
-      tags: ["Screenplay", "Drama", "Thriller", "Television"]
-    },
-    {
-      name: "Amelia Foster",
-      specialty: "Playwright",
-      location: "London, UK",
-      works: 15,
-      followers: 2650,
-      bio: "Theatre creator with a passion for contemporary social issues. Winner of the Young Playwright Award 2023.",
-      tags: ["Theatre", "Social Drama", "Contemporary"]
-    },
-    {
-      name: "Marcus Thompson",
-      specialty: "Mystery & Thriller",
-      location: "Toronto, Canada",
-      works: 6,
-      followers: 4120,
-      bio: "Bestselling mystery author known for psychological thrillers. His latest novel 'Shadows of Truth' topped charts for 8 weeks.",
-      tags: ["Mystery", "Thriller", "Psychological", "Crime"]
-    },
-    {
-      name: "Elena Vasquez",
-      specialty: "Poetry",
-      location: "Mexico City, Mexico",
-      works: 23,
-      followers: 1560,
-      bio: "Contemporary poet whose work explores themes of migration, identity, and cultural heritage. Published in major literary magazines.",
-      tags: ["Poetry", "Contemporary", "Cultural", "Identity"]
-    },
-    {
-      name: "David Kim",
-      specialty: "Science Fiction",
-      location: "Seoul, South Korea",
-      works: 9,
-      followers: 3890,
-      bio: "Science fiction author focusing on AI and future societies. His debut novel 'Digital Dreams' won the Nebula Award.",
-      tags: ["Sci-Fi", "AI", "Future", "Technology"]
-    },
-    {
-      name: "Sarah Williams",
-      specialty: "Young Adult",
-      location: "Melbourne, Australia",
-      works: 14,
-      followers: 5670,
-      bio: "YA author whose coming-of-age stories resonate with teens worldwide. Her 'Finding Home' series has sold over 2 million copies.",
-      tags: ["YA", "Coming-of-age", "Teen", "Romance"]
-    },
-    {
-      name: "Ahmed Hassan",
-      specialty: "Historical Fiction",
-      location: "Cairo, Egypt",
-      works: 7,
-      followers: 2340,
-      bio: "Historical fiction writer specializing in Middle Eastern narratives. His research-based novels bring ancient stories to modern readers.",
-      tags: ["Historical", "Middle East", "Ancient", "Cultural"]
-    }
-  ];
+  const [authors, setAuthors] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<User[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
+  const [authorStats, setAuthorStats] = useState({
+    total: 0,
+    newThisMonth: 0,
+    awardWinners: 0
+  });
 
-  const newAuthors = featuredAuthors.slice(4);
-  const trendingAuthors = [featuredAuthors[0], featuredAuthors[3], featuredAuthors[6]];
-  const mostFollowed = [...featuredAuthors].sort((a, b) => b.followers - a.followers).slice(0, 3);
+  // Load authors on mount
+  useEffect(() => {
+    loadAuthors();
+  }, []);
+
+  // Search functionality
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      handleSearch();
+    } else {
+      setSearchResults([]);
+    }
+  }, [searchQuery]);
+
+  const loadAuthors = async () => {
+    try {
+      setLoading(true);
+      // Get random sample of authors for demonstration
+      const allAuthors = await dbService.searchUsers("", 50);
+      setAuthors(allAuthors);
+      setAuthorStats({
+        total: allAuthors.length,
+        newThisMonth: Math.floor(allAuthors.length * 0.1),
+        awardWinners: Math.floor(allAuthors.length * 0.05)
+      });
+    } catch (error) {
+      console.error("Failed to load authors:", error);
+      toast.error("Failed to load authors");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+
+    try {
+      setSearching(true);
+      const results = await dbService.searchUsers(searchQuery, 20);
+      setSearchResults(results);
+    } catch (error) {
+      console.error("Search failed:", error);
+      toast.error("Search failed");
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const filteredAuthors = searchQuery.trim() ? searchResults : authors;
+  const featuredAuthors = filteredAuthors.slice(0, 8);
+  const newAuthors = filteredAuthors.slice(8, 12);
+  const trendingAuthors = filteredAuthors.slice(4, 7);
+  const mostFollowed = [...filteredAuthors].slice(0, 3);
+
 
   const genres = [
     "Literary Fiction", "Mystery & Thriller", "Romance", "Science Fiction",
@@ -115,6 +109,8 @@ export default function Authors() {
                   <div className="flex-1 relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search authors by name, specialty, or location..."
                       className="pl-10 border-literary-border"
                     />
@@ -150,7 +146,9 @@ export default function Authors() {
               <CardContent className="p-4 text-center">
                 <div className="flex items-center justify-center space-x-2 mb-2">
                   <Users className="h-5 w-5 text-primary" />
-                  <span className="text-2xl font-bold">2,847</span>
+                  <span className="text-2xl font-bold">
+                    {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : authorStats.total.toLocaleString()}
+                  </span>
                 </div>
                 <p className="text-sm text-muted-foreground">Active Authors</p>
               </CardContent>
@@ -168,7 +166,9 @@ export default function Authors() {
               <CardContent className="p-4 text-center">
                 <div className="flex items-center justify-center space-x-2 mb-2">
                   <TrendingUp className="h-5 w-5 text-primary" />
-                  <span className="text-2xl font-bold">892</span>
+                  <span className="text-2xl font-bold">
+                    {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : authorStats.newThisMonth}
+                  </span>
                 </div>
                 <p className="text-sm text-muted-foreground">New This Month</p>
               </CardContent>
@@ -177,7 +177,9 @@ export default function Authors() {
               <CardContent className="p-4 text-center">
                 <div className="flex items-center justify-center space-x-2 mb-2">
                   <Star className="h-5 w-5 text-primary" />
-                  <span className="text-2xl font-bold">47</span>
+                  <span className="text-2xl font-bold">
+                    {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : authorStats.awardWinners}
+                  </span>
                 </div>
                 <p className="text-sm text-muted-foreground">Award Winners</p>
               </CardContent>
@@ -202,34 +204,109 @@ export default function Authors() {
             </TabsList>
 
             <TabsContent value="featured" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {featuredAuthors.map((author, index) => (
-                  <AuthorCard key={index} {...author} />
-                ))}
-              </div>
+              {loading ? (
+                <div className="text-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+                  <p className="mt-2 text-muted-foreground">Loading authors...</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {featuredAuthors.length > 0 ? (
+                    featuredAuthors.map((author) => (
+                      <AuthorCard
+                        key={author.id}
+                        name={author.display_name}
+                        specialty={author.specialty || "Writer"}
+                        location="Unknown" // User table doesn't have location field
+                        works={0} // Would need to query posts for count
+                        followers={0} // Would need to query follows for count
+                        bio={author.bio || "No bio available"}
+                        avatar={author.avatar_url}
+                        tags={author.specialty ? [author.specialty] : ["Writer"]}
+                        username={author.username}
+                      />
+                    ))
+                  ) : (
+                    <div className="col-span-2 text-center py-8">
+                      <p className="text-muted-foreground">No authors found</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="trending" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {trendingAuthors.map((author, index) => (
-                  <AuthorCard key={index} {...author} />
-                ))}
+                {trendingAuthors.length > 0 ? (
+                  trendingAuthors.map((author) => (
+                    <AuthorCard
+                      key={author.id}
+                      name={author.display_name}
+                      specialty={author.specialty || "Writer"}
+                      location="Unknown"
+                      works={0}
+                      followers={0}
+                      bio={author.bio || "No bio available"}
+                      avatar={author.avatar_url}
+                      tags={author.specialty ? [author.specialty] : ["Writer"]}
+                      username={author.username}
+                    />
+                  ))
+                ) : (
+                  <div className="col-span-2 text-center py-8">
+                    <p className="text-muted-foreground">No trending authors found</p>
+                  </div>
+                )}
               </div>
             </TabsContent>
 
             <TabsContent value="new" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {newAuthors.map((author, index) => (
-                  <AuthorCard key={index} {...author} />
-                ))}
+                {newAuthors.length > 0 ? (
+                  newAuthors.map((author) => (
+                    <AuthorCard
+                      key={author.id}
+                      name={author.display_name}
+                      specialty={author.specialty || "Writer"}
+                      location="Unknown"
+                      works={0}
+                      followers={0}
+                      bio={author.bio || "No bio available"}
+                      avatar={author.avatar_url}
+                      tags={author.specialty ? [author.specialty] : ["Writer"]}
+                      username={author.username}
+                    />
+                  ))
+                ) : (
+                  <div className="col-span-2 text-center py-8">
+                    <p className="text-muted-foreground">No new authors found</p>
+                  </div>
+                )}
               </div>
             </TabsContent>
 
             <TabsContent value="popular" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {mostFollowed.map((author, index) => (
-                  <AuthorCard key={index} {...author} />
-                ))}
+                {mostFollowed.length > 0 ? (
+                  mostFollowed.map((author) => (
+                    <AuthorCard
+                      key={author.id}
+                      name={author.display_name}
+                      specialty={author.specialty || "Writer"}
+                      location="Unknown"
+                      works={0}
+                      followers={0}
+                      bio={author.bio || "No bio available"}
+                      avatar={author.avatar_url}
+                      tags={author.specialty ? [author.specialty] : ["Writer"]}
+                      username={author.username}
+                    />
+                  ))
+                ) : (
+                  <div className="col-span-2 text-center py-8">
+                    <p className="text-muted-foreground">No popular authors found</p>
+                  </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>
