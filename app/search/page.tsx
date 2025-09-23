@@ -9,111 +9,86 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/ca
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/tabs";
 import { Badge } from "@/src/components/ui/badge";
 import { Separator } from "@/src/components/ui/separator";
-import { Search, Filter, Users, BookOpen, MessageCircle, Star, Calendar } from "lucide-react";
+import { Search, Filter, Users, BookOpen, MessageCircle, Star, Calendar, Loader2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
+import { dbService } from "@/src/lib/database";
+import type { User, Post } from "@/src/lib/supabase";
+import { toast } from "react-hot-toast";
+import Link from "next/link";
 
 function SearchContent() {
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const [loading, setLoading] = useState(false);
+  const [searchResults, setSearchResults] = useState({
+    authors: [] as User[],
+    works: [] as Post[],
+    posts: [] as Post[]
+  });
 
   useEffect(() => {
     const query = searchParams.get("q");
     if (query) {
       setSearchQuery(query);
+      performSearch(query);
     }
   }, [searchParams]);
 
-  // Mock search results
-  const searchResults = {
-    authors: [
-      {
-        name: "Maya Rodriguez",
-        specialty: "Literary Fiction",
-        location: "Barcelona, Spain",
-        works: 12,
-        followers: 3420,
-        bio: "Award-winning novelist exploring themes of identity and belonging.",
-        tags: ["Fiction", "Contemporary", "Literary", "Magical Realism"]
-      },
-      {
-        name: "Marcus Thompson",
-        specialty: "Mystery & Thriller",
-        location: "Toronto, Canada",
-        works: 6,
-        followers: 4120,
-        bio: "Bestselling mystery author known for psychological thrillers.",
-        tags: ["Mystery", "Thriller", "Psychological", "Crime"]
-      }
-    ],
-    works: [
-      {
-        title: "The Bridge Between Worlds",
-        author: "Maya Rodriguez",
-        authorUsername: "maya_writes",
-        type: "Novel",
-        genre: "Literary Fiction",
-        description: "A profound exploration of identity and belonging as two cultures collide in modern Barcelona.",
-        publishedDate: "2023-09-15",
-        pages: 342,
-        rating: 4.7,
-        reviews: 1249,
-        views: 15420,
-        likes: 892,
-        status: "Published",
-        coverColor: "bg-gradient-to-br from-blue-500 to-purple-600"
-      },
-      {
-        title: "Shadows of Truth",
-        author: "Marcus Thompson",
-        authorUsername: "marcus_fiction",
-        type: "Novel",
-        genre: "Mystery & Thriller",
-        description: "A psychological thriller that will keep you guessing until the last page.",
-        publishedDate: "2024-01-20",
-        pages: 289,
-        rating: 4.5,
-        reviews: 876,
-        views: 12890,
-        likes: 654,
-        status: "Published",
-        coverColor: "bg-gradient-to-br from-gray-700 to-black"
-      }
-    ],
-    posts: [
-      {
-        author: "Maya Rodriguez",
-        time: "2h ago",
-        content: "Just finished the first draft of chapter 12. There's something magical about those late-night writing sessions when the words just flow.",
-        type: "discussion" as const,
-        likes: 24,
-        comments: 8
-      },
-      {
-        author: "Marcus Thompson",
-        time: "1d ago",
-        content: "Working on a new psychological thriller. The challenge is making readers question what's real and what's imagination.",
-        type: "discussion" as const,
-        likes: 67,
-        comments: 15
-      }
-    ]
+  const performSearch = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults({ authors: [], works: [], posts: [] });
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Search for authors (users)
+      const authors = await dbService.searchUsers(query, 20);
+
+      // Search for works (published posts)
+      const works = await dbService.searchPosts(query, 20);
+      const publishedWorks = works.filter(post => post.published);
+
+      // Search for posts/discussions
+      const posts = await dbService.searchPosts(query, 20);
+
+      setSearchResults({
+        authors,
+        works: publishedWorks,
+        posts
+      });
+    } catch (error) {
+      console.error("Search failed:", error);
+      toast.error("Search failed. Please try again.");
+      setSearchResults({ authors: [], works: [], posts: [] });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const totalResults = searchResults.authors.length + searchResults.works.length + searchResults.posts.length;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would trigger the search
-    console.log("Searching for:", searchQuery);
+    if (searchQuery.trim()) {
+      // Update URL with search query
+      const url = new URL(window.location.href);
+      url.searchParams.set('q', searchQuery.trim());
+      window.history.pushState({}, '', url.toString());
+
+      // Perform search
+      performSearch(searchQuery.trim());
+    }
   };
 
-  const WorkCard = ({ work }: { work: typeof searchResults.works[0] }) => (
+  const WorkCard = ({ work }: { work: Post }) => (
     <Card className="card-bg card-shadow border-literary-border hover:shadow-lg transition-all duration-300">
       <CardContent className="p-6">
         <div className="flex space-x-4">
-          <div className={`w-16 h-20 rounded-lg ${work.coverColor} flex-shrink-0 flex items-center justify-center text-white font-bold text-lg`}>
+          <div className="w-16 h-20 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-lg">
             <BookOpen className="h-8 w-8" />
           </div>
 
@@ -124,32 +99,34 @@ function SearchContent() {
                   {work.title}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  by {work.author}
+                  by {work.user?.display_name || work.user?.username || 'Unknown Author'}
                 </p>
               </div>
               <div className="flex items-center space-x-2 flex-shrink-0">
-                <Badge variant="secondary">{work.type}</Badge>
-                <Badge variant="outline">{work.genre}</Badge>
+                <Badge variant={work.published ? 'default' : 'secondary'}>
+                  {work.published ? 'Published' : 'Draft'}
+                </Badge>
+                <Badge variant="outline">Article</Badge>
               </div>
             </div>
 
             <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-              {work.description}
+              {work.excerpt || work.content?.substring(0, 150) + "..."}
             </p>
 
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                 <div className="flex items-center">
                   <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                  <span>{work.rating}</span>
+                  <span>{work.likes_count || 0}</span>
                 </div>
                 <div className="flex items-center">
-                  <BookOpen className="h-4 w-4 mr-1" />
-                  <span>{work.pages} pages</span>
+                  <MessageCircle className="h-4 w-4 mr-1" />
+                  <span>{work.comments_count || 0} comments</span>
                 </div>
               </div>
-              <Button variant="outline" size="sm">
-                Read
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/posts/${work.id}`}>Read</Link>
               </Button>
             </div>
           </div>
@@ -199,11 +176,18 @@ function SearchContent() {
               {/* Results Summary */}
               <div className="mb-6 flex items-center justify-between">
                 <p className="text-muted-foreground">
-                  Found {totalResults} results for &quot;{searchQuery}&quot;
+                  {loading ? (
+                    <span className="flex items-center">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Searching...
+                    </span>
+                  ) : (
+                    `Found ${totalResults} results for "${searchQuery}"`
+                  )}
                 </p>
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                   <Calendar className="h-4 w-4" />
-                  <span>Last updated 2 hours ago</span>
+                  <span>Just updated</span>
                 </div>
               </div>
 
@@ -225,78 +209,174 @@ function SearchContent() {
                 </TabsList>
 
                 <TabsContent value="all" className="space-y-8">
-                  {/* Authors Section */}
-                  {searchResults.authors.length > 0 && (
-                    <section>
-                      <div className="flex items-center space-x-2 mb-4">
-                        <Users className="h-5 w-5" />
-                        <h2 className="font-serif text-xl font-semibold">Authors</h2>
-                      </div>
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {searchResults.authors.map((author, index) => (
-                          <AuthorCard key={index} {...author} />
-                        ))}
-                      </div>
-                    </section>
-                  )}
+                  {loading ? (
+                    <div className="text-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+                      <p className="mt-2 text-muted-foreground">Searching...</p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Authors Section */}
+                      {searchResults.authors.length > 0 && (
+                        <section>
+                          <div className="flex items-center space-x-2 mb-4">
+                            <Users className="h-5 w-5" />
+                            <h2 className="font-serif text-xl font-semibold">Authors</h2>
+                          </div>
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            {searchResults.authors.map((author) => (
+                              <AuthorCard
+                                key={author.id}
+                                name={author.display_name || author.username}
+                                specialty={author.specialty || 'Writer'}
+                                location="Unknown"
+                                works={0}
+                                followers={0}
+                                bio={author.bio || 'No bio available.'}
+                                avatar={author.avatar_url}
+                                tags={author.specialty ? [author.specialty] : ['Writer']}
+                              />
+                            ))}
+                          </div>
+                        </section>
+                      )}
 
-                  <Separator />
+                      {searchResults.authors.length > 0 && (searchResults.works.length > 0 || searchResults.posts.length > 0) && <Separator />}
 
-                  {/* Works Section */}
-                  {searchResults.works.length > 0 && (
-                    <section>
-                      <div className="flex items-center space-x-2 mb-4">
-                        <BookOpen className="h-5 w-5" />
-                        <h2 className="font-serif text-xl font-semibold">Works</h2>
-                      </div>
-                      <div className="space-y-4">
-                        {searchResults.works.map((work, index) => (
-                          <WorkCard key={index} work={work} />
-                        ))}
-                      </div>
-                    </section>
-                  )}
+                      {/* Works Section */}
+                      {searchResults.works.length > 0 && (
+                        <section>
+                          <div className="flex items-center space-x-2 mb-4">
+                            <BookOpen className="h-5 w-5" />
+                            <h2 className="font-serif text-xl font-semibold">Works</h2>
+                          </div>
+                          <div className="space-y-4">
+                            {searchResults.works.map((work) => (
+                              <WorkCard key={work.id} work={work} />
+                            ))}
+                          </div>
+                        </section>
+                      )}
 
-                  <Separator />
+                      {searchResults.works.length > 0 && searchResults.posts.length > 0 && <Separator />}
 
-                  {/* Posts Section */}
-                  {searchResults.posts.length > 0 && (
-                    <section>
-                      <div className="flex items-center space-x-2 mb-4">
-                        <MessageCircle className="h-5 w-5" />
-                        <h2 className="font-serif text-xl font-semibold">Posts</h2>
-                      </div>
-                      <div className="space-y-4">
-                        {searchResults.posts.map((post, index) => (
-                          <PostCard key={index} {...post} />
-                        ))}
-                      </div>
-                    </section>
+                      {/* Posts Section */}
+                      {searchResults.posts.length > 0 && (
+                        <section>
+                          <div className="flex items-center space-x-2 mb-4">
+                            <MessageCircle className="h-5 w-5" />
+                            <h2 className="font-serif text-xl font-semibold">Posts</h2>
+                          </div>
+                          <div className="space-y-4">
+                            {searchResults.posts.map((post) => (
+                              <PostCard
+                                key={post.id}
+                                author={post.user?.display_name || post.user?.username || 'Unknown Author'}
+                                avatar={post.user?.avatar_url}
+                                time={new Date(post.created_at).toLocaleDateString()}
+                                content={post.content}
+                                type="discussion"
+                                likes={post.likes_count || 0}
+                                comments={post.comments_count || 0}
+                              />
+                            ))}
+                          </div>
+                        </section>
+                      )}
+
+                      {totalResults === 0 && !loading && searchQuery && (
+                        <div className="text-center py-8">
+                          <Search className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                          <h2 className="font-serif text-2xl font-semibold mb-2">No Results Found</h2>
+                          <p className="text-muted-foreground">
+                            We couldn&apos;t find anything matching &quot;{searchQuery}&quot;. Try different keywords or browse our community.
+                          </p>
+                        </div>
+                      )}
+                    </>
                   )}
                 </TabsContent>
 
                 <TabsContent value="authors" className="space-y-6">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {searchResults.authors.map((author, index) => (
-                      <AuthorCard key={index} {...author} />
-                    ))}
-                  </div>
+                  {loading ? (
+                    <div className="text-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+                      <p className="mt-2 text-muted-foreground">Searching authors...</p>
+                    </div>
+                  ) : searchResults.authors.length > 0 ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {searchResults.authors.map((author) => (
+                        <AuthorCard
+                          key={author.id}
+                          name={author.display_name || author.username}
+                          specialty={author.specialty || 'Writer'}
+                          location="Unknown"
+                          works={0}
+                          followers={0}
+                          bio={author.bio || 'No bio available.'}
+                          avatar={author.avatar_url}
+                          tags={author.specialty ? [author.specialty] : ['Writer']}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="font-serif text-xl font-semibold mb-2">No Authors Found</h3>
+                      <p className="text-muted-foreground">No authors match your search criteria.</p>
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="works" className="space-y-6">
-                  <div className="space-y-4">
-                    {searchResults.works.map((work, index) => (
-                      <WorkCard key={index} work={work} />
-                    ))}
-                  </div>
+                  {loading ? (
+                    <div className="text-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+                      <p className="mt-2 text-muted-foreground">Searching works...</p>
+                    </div>
+                  ) : searchResults.works.length > 0 ? (
+                    <div className="space-y-4">
+                      {searchResults.works.map((work) => (
+                        <WorkCard key={work.id} work={work} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="font-serif text-xl font-semibold mb-2">No Works Found</h3>
+                      <p className="text-muted-foreground">No published works match your search criteria.</p>
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="posts" className="space-y-6">
-                  <div className="space-y-4">
-                    {searchResults.posts.map((post, index) => (
-                      <PostCard key={index} {...post} />
-                    ))}
-                  </div>
+                  {loading ? (
+                    <div className="text-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+                      <p className="mt-2 text-muted-foreground">Searching posts...</p>
+                    </div>
+                  ) : searchResults.posts.length > 0 ? (
+                    <div className="space-y-4">
+                      {searchResults.posts.map((post) => (
+                        <PostCard
+                          key={post.id}
+                          author={post.user?.display_name || post.user?.username || 'Unknown Author'}
+                          avatar={post.user?.avatar_url}
+                          time={new Date(post.created_at).toLocaleDateString()}
+                          content={post.content}
+                          type="discussion"
+                          likes={post.likes_count || 0}
+                          comments={post.comments_count || 0}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <MessageCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="font-serif text-xl font-semibold mb-2">No Posts Found</h3>
+                      <p className="text-muted-foreground">No posts match your search criteria.</p>
+                    </div>
+                  )}
                 </TabsContent>
               </Tabs>
 

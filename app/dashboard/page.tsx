@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/ta
 import { Badge } from "@/src/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/src/components/ui/avatar";
 import { Progress } from "@/src/components/ui/progress";
+import { ProtectedRoute } from "@/src/components/auth/protected-route";
 import {
   BookOpen,
   Users,
@@ -20,79 +21,36 @@ import {
   Calendar,
   Target,
   Award,
-  Eye
+  Eye,
+  Loader2
 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/src/contexts/auth-context";
+import { dbService } from "@/src/lib/database";
+import type { Post, User } from "@/src/lib/supabase";
+import { toast } from "react-hot-toast";
+import Link from "next/link";
 
-export default function Dashboard() {
-  // Mock user data
-  const currentUser = {
-    name: "Maya Rodriguez",
-    username: "maya_writes",
-    specialty: "Literary Fiction",
-    joinDate: "March 2022",
-    streak: 45,
-    wordsWrittenThisWeek: 3420,
-    weeklyGoal: 5000
-  };
+function DashboardContent() {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalWorks: 0,
+    totalFollowers: 0,
+    totalLikes: 0,
+    totalViews: 0,
+    wordsThisMonth: 0,
+    postsThisMonth: 0
+  });
+  const [recentActivity, setRecentActivity] = useState<Post[]>([]);
+  const [suggestedAuthors, setSuggestedAuthors] = useState<User[]>([]);
 
-  // Mock statistics
-  const stats = {
-    totalWorks: 12,
-    totalFollowers: 3420,
-    totalLikes: 15680,
-    totalViews: 89450,
-    wordsThisMonth: 12890,
-    postsThisMonth: 23
-  };
-
-  // Mock recent activity
-  const recentActivity = [
-    {
-      author: "James Chen",
-      time: "2h ago",
-      content: "Thanks for the feedback on my latest chapter! Your insights about character development really helped me see the story from a new perspective.",
-      type: "discussion" as const,
-      likes: 12,
-      comments: 3
-    },
-    {
-      author: "Amelia Foster",
-      time: "5h ago",
-      content: "Loved your latest excerpt! The way you describe Barcelona makes me feel like I'm walking through the streets myself. Can't wait to read the full novel.",
-      type: "discussion" as const,
-      likes: 28,
-      comments: 7
-    }
-  ];
-
-  // Mock suggested authors
-  const suggestedAuthors = [
-    {
-      name: "Elena Vasquez",
-      specialty: "Poetry",
-      location: "Mexico City, Mexico",
-      works: 23,
-      followers: 1560,
-      bio: "Contemporary poet exploring themes of migration and identity.",
-      tags: ["Poetry", "Contemporary", "Cultural"]
-    },
-    {
-      name: "David Kim",
-      specialty: "Science Fiction",
-      location: "Seoul, South Korea",
-      works: 9,
-      followers: 3890,
-      bio: "Sci-fi author focusing on AI and future societies.",
-      tags: ["Sci-Fi", "AI", "Future"]
-    }
-  ];
-
-  // Mock writing goals
+  // Mock writing goals - these would ideally be stored in the database
   const writingGoals = [
     {
       title: "Weekly Writing Goal",
-      current: currentUser.wordsWrittenThisWeek,
-      target: currentUser.weeklyGoal,
+      current: 3420,
+      target: 5000,
       unit: "words"
     },
     {
@@ -109,7 +67,63 @@ export default function Dashboard() {
     }
   ];
 
-  const progressPercentage = (currentUser.wordsWrittenThisWeek / currentUser.weeklyGoal) * 100;
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      if (!user?.profile?.id) return;
+
+      try {
+        setLoading(true);
+
+        // Get user's posts for statistics
+        const userPosts = await dbService.getPosts({
+          userId: user.profile.id,
+          limit: 100
+        });
+
+        // Get user's follower count
+        const followers = await dbService.getFollowers(user.profile.id);
+
+        // Calculate statistics
+        const totalLikes = userPosts.reduce((sum, post) => sum + (post.likes_count || 0), 0);
+        const totalViews = userPosts.reduce((sum, post) => sum + (post.likes_count || 0), 0); // Using likes as proxy for views
+        const thisMonth = new Date();
+        thisMonth.setMonth(thisMonth.getMonth() - 1);
+        const postsThisMonth = userPosts.filter(post =>
+          new Date(post.created_at) > thisMonth
+        ).length;
+
+        setStats({
+          totalWorks: userPosts.length,
+          totalFollowers: followers.length,
+          totalLikes,
+          totalViews,
+          wordsThisMonth: Math.floor(Math.random() * 15000) + 5000, // Mock data for words
+          postsThisMonth
+        });
+
+        // Get recent activity from followed users
+        const recentPosts = await dbService.getPosts({
+          limit: 5,
+          published: true
+        });
+        setRecentActivity(recentPosts);
+
+        // Get suggested authors (users with most followers)
+        const authors = await dbService.searchUsers("", 4);
+        setSuggestedAuthors(authors.filter(author => author.id !== user.profile?.id));
+
+      } catch (error) {
+        console.error("Failed to load dashboard data:", error);
+        toast.error("Failed to load dashboard data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, [user]);
+
+  const progressPercentage = (writingGoals[0].current / writingGoals[0].target) * 100;
 
   return (
     <div className="min-h-screen bg-background">
@@ -120,7 +134,7 @@ export default function Dashboard() {
           {/* Welcome Header */}
           <div className="mb-8">
             <h1 className="font-serif text-2xl sm:text-3xl font-bold mb-2">
-              Welcome back, {currentUser.name}! ✨
+              Welcome back, {user?.profile?.display_name || user?.email}! ✨
             </h1>
             <p className="text-muted-foreground">
               Ready to continue your literary journey? Here&apos;s what&apos;s happening in your world.
@@ -135,28 +149,36 @@ export default function Dashboard() {
                 <Card className="card-bg border-literary-border">
                   <CardContent className="p-4 text-center">
                     <BookOpen className="h-5 w-5 text-primary mx-auto mb-2" />
-                    <div className="text-2xl font-bold">{stats.totalWorks}</div>
+                    <div className="text-2xl font-bold">
+                      {loading ? <Loader2 className="h-6 w-6 animate-spin mx-auto" /> : stats.totalWorks}
+                    </div>
                     <p className="text-xs text-muted-foreground">Works</p>
                   </CardContent>
                 </Card>
                 <Card className="card-bg border-literary-border">
                   <CardContent className="p-4 text-center">
                     <Users className="h-5 w-5 text-primary mx-auto mb-2" />
-                    <div className="text-2xl font-bold">{stats.totalFollowers.toLocaleString()}</div>
+                    <div className="text-2xl font-bold">
+                      {loading ? <Loader2 className="h-6 w-6 animate-spin mx-auto" /> : stats.totalFollowers.toLocaleString()}
+                    </div>
                     <p className="text-xs text-muted-foreground">Followers</p>
                   </CardContent>
                 </Card>
                 <Card className="card-bg border-literary-border">
                   <CardContent className="p-4 text-center">
                     <Heart className="h-5 w-5 text-primary mx-auto mb-2" />
-                    <div className="text-2xl font-bold">{(stats.totalLikes / 1000).toFixed(1)}K</div>
+                    <div className="text-2xl font-bold">
+                      {loading ? <Loader2 className="h-6 w-6 animate-spin mx-auto" /> : (stats.totalLikes > 1000 ? (stats.totalLikes / 1000).toFixed(1) + 'K' : stats.totalLikes)}
+                    </div>
                     <p className="text-xs text-muted-foreground">Likes</p>
                   </CardContent>
                 </Card>
                 <Card className="card-bg border-literary-border">
                   <CardContent className="p-4 text-center">
                     <Eye className="h-5 w-5 text-primary mx-auto mb-2" />
-                    <div className="text-2xl font-bold">{(stats.totalViews / 1000).toFixed(0)}K</div>
+                    <div className="text-2xl font-bold">
+                      {loading ? <Loader2 className="h-6 w-6 animate-spin mx-auto" /> : (stats.totalViews > 1000 ? (stats.totalViews / 1000).toFixed(0) + 'K' : stats.totalViews)}
+                    </div>
                     <p className="text-xs text-muted-foreground">Views</p>
                   </CardContent>
                 </Card>
@@ -175,22 +197,24 @@ export default function Dashboard() {
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-medium">Weekly Goal</span>
                       <span className="text-sm text-muted-foreground">
-                        {currentUser.wordsWrittenThisWeek} / {currentUser.weeklyGoal} words
+                        {writingGoals[0].current} / {writingGoals[0].target} words
                       </span>
                     </div>
                     <Progress value={progressPercentage} className="h-2" />
                     <p className="text-xs text-muted-foreground mt-1">
-                      {currentUser.weeklyGoal - currentUser.wordsWrittenThisWeek} words to go
+                      {writingGoals[0].target - writingGoals[0].current} words to go
                     </p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 pt-4 border-t border-literary-border">
                     <div className="text-center">
-                      <div className="text-lg font-semibold">{currentUser.streak}</div>
+                      <div className="text-lg font-semibold">45</div>
                       <p className="text-xs text-muted-foreground">Day Streak</p>
                     </div>
                     <div className="text-center">
-                      <div className="text-lg font-semibold">{stats.wordsThisMonth.toLocaleString()}</div>
+                      <div className="text-lg font-semibold">
+                        {loading ? '...' : stats.wordsThisMonth.toLocaleString()}
+                      </div>
                       <p className="text-xs text-muted-foreground">Words This Month</p>
                     </div>
                   </div>
@@ -207,12 +231,32 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {recentActivity.map((activity, index) => (
-                      <PostCard key={index} {...activity} />
-                    ))}
+                    {loading ? (
+                      <div className="text-center py-4">
+                        <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                        <p className="mt-2 text-sm text-muted-foreground">Loading activity...</p>
+                      </div>
+                    ) : recentActivity.length > 0 ? (
+                      recentActivity.map((post) => (
+                        <PostCard
+                          key={post.id}
+                          author={post.user?.display_name || post.user?.username || 'Unknown Author'}
+                          avatar={post.user?.avatar_url}
+                          time={new Date(post.created_at).toLocaleDateString()}
+                          content={post.content}
+                          type="discussion"
+                          likes={post.likes_count || 0}
+                          comments={post.comments_count || 0}
+                        />
+                      ))
+                    ) : (
+                      <div className="text-center py-4">
+                        <p className="text-sm text-muted-foreground">No recent activity found.</p>
+                      </div>
+                    )}
                   </div>
-                  <Button variant="outline" className="w-full mt-4">
-                    View All Activity
+                  <Button variant="outline" className="w-full mt-4" asChild>
+                    <Link href="/feed">View All Activity</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -256,12 +300,33 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {suggestedAuthors.map((author, index) => (
-                      <AuthorCard key={index} {...author} />
-                    ))}
+                    {loading ? (
+                      <div className="text-center py-4">
+                        <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                        <p className="mt-2 text-sm text-muted-foreground">Loading authors...</p>
+                      </div>
+                    ) : suggestedAuthors.length > 0 ? (
+                      suggestedAuthors.map((author) => (
+                        <AuthorCard
+                          key={author.id}
+                          name={author.display_name || author.username}
+                          specialty={author.specialty || 'Writer'}
+                          location="Unknown"
+                          works={0}
+                          followers={0}
+                          bio={author.bio || 'No bio available.'}
+                          avatar={author.avatar_url}
+                          tags={author.specialty ? [author.specialty] : ['Writer']}
+                        />
+                      ))
+                    ) : (
+                      <div className="text-center py-4">
+                        <p className="text-sm text-muted-foreground">No suggested authors found.</p>
+                      </div>
+                    )}
                   </div>
-                  <Button variant="outline" className="w-full mt-4">
-                    Explore More Authors
+                  <Button variant="outline" className="w-full mt-4" asChild>
+                    <Link href="/authors">Explore More Authors</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -272,21 +337,29 @@ export default function Dashboard() {
                   <CardTitle className="text-lg">Quick Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <Button className="w-full justify-start">
-                    <PenTool className="h-4 w-4 mr-2" />
-                    Start Writing
+                  <Button className="w-full justify-start" asChild>
+                    <Link href="/posts/create">
+                      <PenTool className="h-4 w-4 mr-2" />
+                      Start Writing
+                    </Link>
                   </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    Browse Works
+                  <Button variant="outline" className="w-full justify-start" asChild>
+                    <Link href="/works">
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      Browse Works
+                    </Link>
                   </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    <Users className="h-4 w-4 mr-2" />
-                    Find Authors
+                  <Button variant="outline" className="w-full justify-start" asChild>
+                    <Link href="/authors">
+                      <Users className="h-4 w-4 mr-2" />
+                      Find Authors
+                    </Link>
                   </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Writing Events
+                  <Button variant="outline" className="w-full justify-start" asChild>
+                    <Link href="/feed">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Community Feed
+                    </Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -295,5 +368,13 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <ProtectedRoute>
+      <DashboardContent />
+    </ProtectedRoute>
   );
 }

@@ -17,7 +17,7 @@ import {
   UserMinus,
   MoreHorizontal,
   PenTool,
-  Image,
+  Image as ImageIcon,
   Smile,
   Loader2,
   AlertCircle
@@ -354,7 +354,7 @@ export default function Profile() {
                     <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-3">
                       <div className="flex items-center space-x-2 sm:space-x-3 overflow-x-auto">
                         <Button variant="ghost" size="sm" className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap" disabled>
-                          <Image className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                          <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           <span>Image</span>
                         </Button>
                         <Button variant="ghost" size="sm" className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap" disabled>

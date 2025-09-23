@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/src/components/ui/card";
 import { Input } from "@/src/components/ui/input";
 import { Textarea } from "@/src/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/src/components/ui/avatar";
-import { PenTool, Image, Smile, Filter, Loader2 } from "lucide-react";
+import { PenTool, Image as ImageIcon, Smile, Filter, Loader2 } from "lucide-react";
 import { useAuth } from "@/src/contexts/auth-context";
 import { useState, useEffect } from "react";
 import { dbService } from "@/src/lib/database";
@@ -158,7 +158,7 @@ export default function Feed() {
                         className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap"
                         disabled={creatingPost}
                       >
-                        <Image className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                        <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                         <span>Image</span>
                       </Button>
                       <Button
