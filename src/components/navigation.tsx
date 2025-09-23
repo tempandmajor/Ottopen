@@ -47,6 +47,17 @@ export function Navigation() {
               >
                 <Link href="/">
                   <Home className="h-4 w-4" />
+                  <span>Home</span>
+                </Link>
+              </Button>
+              <Button
+                variant={isActive("/works") ? "default" : "ghost"}
+                size="sm"
+                asChild
+                className="flex items-center space-x-2"
+              >
+                <Link href="/works">
+                  <BookOpen className="h-4 w-4" />
                   <span>Discover</span>
                 </Link>
               </Button>
