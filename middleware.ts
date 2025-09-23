@@ -1,42 +1,99 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  })
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value
+        },
+        set(name: string, value: string, options: any) {
+          request.cookies.set({
+            name,
+            value,
+            ...options,
+          })
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          })
+          response.cookies.set({
+            name,
+            value,
+            ...options,
+          })
+        },
+        remove(name: string, options: any) {
+          request.cookies.set({
+            name,
+            value: '',
+            ...options,
+          })
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          })
+          response.cookies.set({
+            name,
+            value: '',
+            ...options,
+          })
+        },
+      },
+    }
+  )
+
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { pathname } = request.nextUrl
 
   // Protected routes that require authentication
   const protectedRoutes = [
+    '/dashboard',
     '/feed',
     '/messages',
     '/settings',
     '/profile',
-  ];
+  ]
 
-  // Check if the current path is a protected route
+  // Public-only routes (redirect to dashboard if authenticated)
+  const publicOnlyRoutes = [
+    '/auth/signin',
+    '/auth/signup',
+    '/auth/forgot-password',
+  ]
+
   const isProtectedRoute = protectedRoutes.some(route =>
     pathname.startsWith(route)
-  );
+  )
 
-  // For now, we'll just allow all routes through since auth isn't implemented
-  // In a real implementation, you would:
-  // 1. Check for authentication token/session
-  // 2. Redirect to /auth/signin if not authenticated
-  // 3. Allow access if authenticated
+  const isPublicOnlyRoute = publicOnlyRoutes.some(route =>
+    pathname.startsWith(route)
+  )
 
-  if (isProtectedRoute) {
-    // Example authentication check (commented out since auth isn't implemented):
-    // const token = request.cookies.get('auth-token');
-    // if (!token) {
-    //   return NextResponse.redirect(new URL('/auth/signin', request.url));
-    // }
-
-    // For demo purposes, we'll add a header to indicate this route should be protected
-    const response = NextResponse.next();
-    response.headers.set('X-Protected-Route', 'true');
-    return response;
+  // Redirect unauthenticated users from protected routes
+  if (isProtectedRoute && !user) {
+    return NextResponse.redirect(new URL('/auth/signin', request.url))
   }
 
-  return NextResponse.next();
+  // Redirect authenticated users from public-only routes
+  if (isPublicOnlyRoute && user) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+
+  return response
 }
 
 export const config = {

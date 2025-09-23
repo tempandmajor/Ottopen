@@ -8,16 +8,38 @@ import { Separator } from "@/src/components/ui/separator";
 import { PenTool, Mail, Eye, EyeOff, Github, Apple } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useAuth } from "@/src/contexts/auth-context";
+import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const { signIn } = useAuth();
+  const router = useRouter();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Authentication logic would go here
-    console.log("Sign in with:", { email, password });
+    setLoading(true);
+
+    try {
+      const { error } = await signIn(email, password);
+
+      if (error) {
+        toast.error(error);
+        return;
+      }
+
+      toast.success("Signed in successfully!");
+      router.push("/dashboard");
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -85,8 +107,8 @@ export default function SignIn() {
                 </Link>
               </div>
 
-              <Button type="submit" className="w-full">
-                Sign In
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
 

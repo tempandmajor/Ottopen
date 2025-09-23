@@ -11,9 +11,13 @@ import { Checkbox } from "@/src/components/ui/checkbox";
 import { PenTool, Mail, Eye, EyeOff, Github, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useAuth } from "@/src/contexts/auth-context";
+import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 
 export default function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     displayName: "",
     username: "",
@@ -24,10 +28,41 @@ export default function SignUp() {
     agreedToTerms: false
   });
 
+  const { signUp } = useAuth();
+  const router = useRouter();
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Authentication logic would go here
-    console.log("Sign up with:", formData);
+
+    if (!formData.agreedToTerms) {
+      toast.error("Please agree to the terms and conditions");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error } = await signUp({
+        email: formData.email,
+        password: formData.password,
+        displayName: formData.displayName,
+        username: formData.username,
+        bio: formData.bio,
+        specialty: formData.specialty,
+      });
+
+      if (error) {
+        toast.error(error);
+        return;
+      }
+
+      toast.success("Account created successfully! Please check your email to verify your account.");
+      router.push("/auth/signin");
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleInputChange = (field: string, value: string | boolean) => {
@@ -170,8 +205,8 @@ export default function SignUp() {
                 </Label>
               </div>
 
-              <Button type="submit" className="w-full" disabled={!formData.agreedToTerms}>
-                Create Account
+              <Button type="submit" className="w-full" disabled={!formData.agreedToTerms || loading}>
+                {loading ? "Creating Account..." : "Create Account"}
               </Button>
             </form>
 

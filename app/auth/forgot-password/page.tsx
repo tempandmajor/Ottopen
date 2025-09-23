@@ -7,16 +7,35 @@ import { Label } from "@/src/components/ui/label";
 import { PenTool, ArrowLeft, Mail, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useAuth } from "@/src/contexts/auth-context";
+import { toast } from "react-hot-toast";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const { forgotPassword } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Password reset logic would go here
-    console.log("Reset password for:", email);
-    setIsSubmitted(true);
+    setLoading(true);
+
+    try {
+      const { error } = await forgotPassword(email);
+
+      if (error) {
+        toast.error(error);
+        return;
+      }
+
+      setIsSubmitted(true);
+      toast.success("Password reset email sent!");
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (isSubmitted) {
@@ -105,8 +124,8 @@ export default function ForgotPassword() {
                 />
               </div>
 
-              <Button type="submit" className="w-full">
-                Send reset link
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Sending..." : "Send reset link"}
               </Button>
             </form>
 
