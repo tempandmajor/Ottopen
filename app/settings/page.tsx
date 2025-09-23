@@ -1,6 +1,7 @@
 "use client";
 
 import { Navigation } from "@/src/components/navigation";
+import { Footer } from "@/src/components/footer";
 import { Button } from "@/src/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { Input } from "@/src/components/ui/input";
@@ -943,6 +944,8 @@ export default function Settings() {
             </Tabs>
           </div>
         </div>
+
+        <Footer />
       </div>
     </ProtectedRoute>
   );

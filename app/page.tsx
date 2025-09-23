@@ -1,6 +1,7 @@
 "use client";
 
 import { Navigation } from "@/src/components/navigation";
+import { Footer } from "@/src/components/footer";
 import { AuthorCard } from "@/src/components/author-card";
 import { PostCard } from "@/src/components/post-card";
 import { Button } from "@/src/components/ui/button";
@@ -273,6 +274,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   );
 }

@@ -6,9 +6,8 @@ import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
 import { Textarea } from "@/src/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
-import { Separator } from "@/src/components/ui/separator";
 import { Checkbox } from "@/src/components/ui/checkbox";
-import { PenTool, Mail, Eye, EyeOff, Github, CheckCircle } from "lucide-react";
+import { PenTool, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/src/contexts/auth-context";
@@ -209,28 +208,6 @@ export default function SignUp() {
                 {loading ? "Creating Account..." : "Create Account"}
               </Button>
             </form>
-
-            <div className="space-y-4">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <Separator />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <Button variant="outline" className="border-literary-border">
-                  <Github className="h-4 w-4 mr-2" />
-                  GitHub
-                </Button>
-                <Button variant="outline" className="border-literary-border">
-                  <Mail className="h-4 w-4 mr-2" />
-                  Google
-                </Button>
-              </div>
-            </div>
 
             <div className="text-center text-sm">
               <span className="text-muted-foreground">Already have an account? </span>
