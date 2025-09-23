@@ -11,9 +11,9 @@ import { Badge } from "@/src/components/ui/badge";
 import { Separator } from "@/src/components/ui/separator";
 import { Search, Filter, Users, BookOpen, MessageCircle, Star, Calendar } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
@@ -159,10 +159,7 @@ export default function SearchPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-
-      <div className="container mx-auto px-4 py-6 sm:py-8">
+    <div className="container mx-auto px-4 py-6 sm:py-8">
         <div className="max-w-6xl mx-auto">
           {/* Search Header */}
           <div className="mb-8">
@@ -323,6 +320,26 @@ export default function SearchPage() {
           )}
         </div>
       </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      <Suspense fallback={
+        <div className="container mx-auto px-4 py-6 sm:py-8">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center py-12">
+              <Search className="h-16 w-16 text-muted-foreground mx-auto mb-4 animate-pulse" />
+              <h2 className="font-serif text-2xl font-semibold mb-2">Loading Search...</h2>
+              <p className="text-muted-foreground">Please wait while we prepare your search experience.</p>
+            </div>
+          </div>
+        </div>
+      }>
+        <SearchContent />
+      </Suspense>
     </div>
   );
 }
