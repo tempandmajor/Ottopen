@@ -32,7 +32,10 @@ import {
   Mail,
   Lock,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  CreditCard,
+  Crown,
+  ExternalLink
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/src/contexts/auth-context";
@@ -87,12 +90,41 @@ export default function Settings() {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Subscription state
+  const [subscriptionData, setSubscriptionData] = useState<{
+    status: 'active' | 'canceled' | 'past_due' | 'none';
+    planName: string;
+    amount: number;
+    currency: string;
+    interval: string;
+    currentPeriodEnd: string;
+    cancelAtPeriodEnd: boolean;
+  }>({
+    status: 'none',
+    planName: '',
+    amount: 0,
+    currency: 'usd',
+    interval: '',
+    currentPeriodEnd: '',
+    cancelAtPeriodEnd: false
+  });
+
   // Load user data on mount
   useEffect(() => {
     if (currentUser?.profile) {
       loadUserData();
+      loadSubscriptionData();
     }
   }, [currentUser]);
+
+  // Handle URL parameters for tab switching (e.g., returning from Stripe)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, []);
 
   const loadUserData = async () => {
     if (!currentUser?.profile) return;
@@ -120,6 +152,39 @@ export default function Settings() {
       toast.error("Failed to load user data");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadSubscriptionData = async () => {
+    if (!currentUser?.profile?.stripe_customer_id) {
+      // No Stripe customer ID, so no subscription
+      setSubscriptionData({
+        status: 'none',
+        planName: '',
+        amount: 0,
+        currency: 'usd',
+        interval: '',
+        currentPeriodEnd: '',
+        cancelAtPeriodEnd: false
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/subscription-status?customerId=${currentUser.profile.stripe_customer_id}`);
+      const data = await response.json();
+      setSubscriptionData(data);
+    } catch (error) {
+      console.error('Failed to load subscription data:', error);
+      setSubscriptionData({
+        status: 'none',
+        planName: '',
+        amount: 0,
+        currency: 'usd',
+        interval: '',
+        currentPeriodEnd: '',
+        cancelAtPeriodEnd: false
+      });
     }
   };
 
@@ -281,10 +346,14 @@ export default function Settings() {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 h-auto p-1">
+            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 h-auto p-1">
               <TabsTrigger value="profile" className="flex items-center space-x-2 p-3">
                 <User className="h-4 w-4" />
                 <span className="hidden sm:inline">Profile</span>
+              </TabsTrigger>
+              <TabsTrigger value="subscription" className="flex items-center space-x-2 p-3">
+                <CreditCard className="h-4 w-4" />
+                <span className="hidden sm:inline">Subscription</span>
               </TabsTrigger>
               <TabsTrigger value="notifications" className="flex items-center space-x-2 p-3">
                 <Bell className="h-4 w-4" />
@@ -484,6 +553,201 @@ export default function Settings() {
                       )}
                     </Button>
                   </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Subscription Settings */}
+            <TabsContent value="subscription" className="space-y-6">
+              <Card className="card-bg card-shadow border-literary-border">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <CreditCard className="h-5 w-5" />
+                    <span>Subscription Management</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {subscriptionData.status === 'none' ? (
+                    /* No subscription */
+                    <div className="space-y-8">
+                      <div className="text-center">
+                        <Crown className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                        <h3 className="text-lg font-medium mb-2">Choose Your Plan</h3>
+                        <p className="text-muted-foreground mb-6">
+                          Select the plan that best fits your creative goals
+                        </p>
+                      </div>
+
+                      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {/* Writer Premium Plan */}
+                        <div className="border border-literary-border rounded-lg p-6 bg-card">
+                          <div className="text-center mb-4">
+                            <h4 className="font-semibold text-lg">Writer Premium</h4>
+                            <p className="text-2xl font-bold">$20<span className="text-sm text-muted-foreground">/month</span></p>
+                          </div>
+                          <ul className="text-sm space-y-2 mb-6">
+                            <li>• Unlimited submissions</li>
+                            <li>• Priority review</li>
+                            <li>• Professional feedback</li>
+                            <li>• Submission tracking</li>
+                            <li>• Industry networking</li>
+                          </ul>
+                          <Button
+                            className="w-full"
+                            onClick={() => window.open('https://buy.stripe.com/test_aFa9AS8YPfgW64ebCvdUY00', '_blank')}
+                          >
+                            Get Premium
+                          </Button>
+                        </div>
+
+                        {/* Writer Pro Plan */}
+                        <div className="border border-primary rounded-lg p-6 bg-card relative">
+                          <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
+                            <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-medium">
+                              Most Popular
+                            </span>
+                          </div>
+                          <div className="text-center mb-4">
+                            <h4 className="font-semibold text-lg">Writer Pro</h4>
+                            <p className="text-2xl font-bold">$50<span className="text-sm text-muted-foreground">/month</span></p>
+                          </div>
+                          <ul className="text-sm space-y-2 mb-6">
+                            <li>• Everything in Premium</li>
+                            <li>• Direct industry access</li>
+                            <li>• Marketing tools</li>
+                            <li>• Pitch deck assistance</li>
+                            <li>• Agent matching</li>
+                            <li>• Exclusive events</li>
+                          </ul>
+                          <Button className="w-full">
+                            Get Pro Access
+                          </Button>
+                        </div>
+
+                        {/* Industry Professional Plans */}
+                        <div className="border border-literary-border rounded-lg p-6 bg-card">
+                          <div className="text-center mb-4">
+                            <h4 className="font-semibold text-lg">Industry Access</h4>
+                            <p className="text-sm text-muted-foreground mb-2">For Agents, Producers, Publishers</p>
+                            <p className="text-lg font-bold">Starting at $200<span className="text-sm text-muted-foreground">/month</span></p>
+                          </div>
+                          <ul className="text-sm space-y-2 mb-6">
+                            <li>• Manuscript access</li>
+                            <li>• Co-agent relationships</li>
+                            <li>• Industry networking</li>
+                            <li>• Deal tracking</li>
+                            <li>• Custom agreements</li>
+                          </ul>
+                          <Button variant="outline" className="w-full">
+                            Contact Sales
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="text-center">
+                        <p className="text-sm text-muted-foreground mb-4">
+                          All plans include our <strong>literary agency representation</strong> with industry-standard 15% commission on successful deals.
+                        </p>
+                        <Button
+                          variant="link"
+                          onClick={() => window.open('/legal/agency-terms', '_blank')}
+                          className="text-sm"
+                        >
+                          Read Agency Terms & Submission Guidelines
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Active subscription */
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between p-4 border border-literary-border rounded-lg bg-green-50 dark:bg-green-900/20">
+                        <div className="flex items-center space-x-3">
+                          <Crown className="h-6 w-6 text-green-600" />
+                          <div>
+                            <p className="font-medium text-green-700 dark:text-green-400">Premium Member</p>
+                            <p className="text-sm text-green-600 dark:text-green-500">
+                              {subscriptionData.planName} - ${subscriptionData.amount/100}/{subscriptionData.interval}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className="border-green-200 text-green-700 bg-green-50 dark:border-green-800 dark:text-green-400 dark:bg-green-900/20">
+                          {subscriptionData.status === 'active' ? 'Active' :
+                           subscriptionData.status === 'past_due' ? 'Past Due' :
+                           subscriptionData.status === 'canceled' ? 'Canceled' : subscriptionData.status}
+                        </Badge>
+                      </div>
+
+                      <div className="grid gap-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Next billing date:</span>
+                          <span className="text-sm font-medium">
+                            {subscriptionData.currentPeriodEnd ?
+                              new Date(subscriptionData.currentPeriodEnd).toLocaleDateString() :
+                              'N/A'
+                            }
+                          </span>
+                        </div>
+                        {subscriptionData.cancelAtPeriodEnd && (
+                          <div className="flex items-center space-x-2 p-3 border border-orange-200 rounded-lg bg-orange-50 dark:border-orange-800 dark:bg-orange-900/20">
+                            <AlertTriangle className="h-4 w-4 text-orange-600" />
+                            <p className="text-sm text-orange-700 dark:text-orange-400">
+                              Your subscription will cancel at the end of the current billing period.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      <Separator />
+
+                      <div className="space-y-4">
+                        <h4 className="font-medium">Manage Your Subscription</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Use Stripe&apos;s secure portal to manage your subscription, update payment methods, view billing history, and more.
+                        </p>
+
+                        <Button
+                          variant="outline"
+                          className="w-full flex items-center justify-center space-x-2"
+                          onClick={async () => {
+                            try {
+                              setSaving(true);
+                              const response = await fetch('/api/create-portal-session', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  customerId: currentUser?.profile?.stripe_customer_id,
+                                  userEmail: currentUser?.email,
+                                  userName: currentUser?.profile?.display_name
+                                })
+                              });
+
+                              if (!response.ok) {
+                                throw new Error('Failed to create portal session');
+                              }
+
+                              const { url } = await response.json();
+                              window.open(url, '_blank');
+                            } catch (error) {
+                              console.error('Failed to create portal session:', error);
+                              toast.error('Failed to open billing portal');
+                            } finally {
+                              setSaving(false);
+                            }
+                          }}
+                          disabled={saving}
+                        >
+                          {saving ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <>
+                              <ExternalLink className="h-4 w-4" />
+                              <span>Manage Subscription</span>
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

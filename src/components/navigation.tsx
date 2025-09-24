@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/src/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/src/components/ui/avatar";
-import { PenTool, Users, BookOpen, MessageSquare, Home, Rss, User, Mail, Settings as SettingsIcon, LogOut, ChevronDown } from "lucide-react";
+import { PenTool, Users, BookOpen, MessageSquare, Home, Rss, User, Mail, Settings as SettingsIcon, LogOut, ChevronDown, HelpCircle, Shield, FileText, Search, Upload, Briefcase, Gift } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/src/contexts/auth-context";
@@ -82,6 +82,7 @@ export function Navigation() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
+                  {/* Discover Section */}
                   <DropdownMenuItem asChild>
                     <Link href="/feed" className="flex items-center">
                       <Rss className="mr-2 h-4 w-4" />
@@ -89,9 +90,9 @@ export function Navigation() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/messages" className="flex items-center">
-                      <Mail className="mr-2 h-4 w-4" />
-                      <span>Messages</span>
+                    <Link href="/search" className="flex items-center">
+                      <Search className="mr-2 h-4 w-4" />
+                      <span>Search</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
@@ -106,7 +107,28 @@ export function Navigation() {
                       <span>Works</span>
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/messages" className="flex items-center">
+                      <Mail className="mr-2 h-4 w-4" />
+                      <span>Messages</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/submissions" className="flex items-center">
+                      <Upload className="mr-2 h-4 w-4" />
+                      <span>Submissions</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/opportunities" className="flex items-center">
+                      <Briefcase className="mr-2 h-4 w-4" />
+                      <span>Opportunities</span>
+                    </Link>
+                  </DropdownMenuItem>
+
                   <DropdownMenuSeparator />
+
+                  {/* Account Section */}
                   <DropdownMenuItem asChild>
                     <Link href={`/profile/${user.profile?.username || user.id}`} className="flex items-center">
                       <User className="mr-2 h-4 w-4" />
@@ -119,7 +141,32 @@ export function Navigation() {
                       <span>Settings</span>
                     </Link>
                   </DropdownMenuItem>
+
                   <DropdownMenuSeparator />
+
+                  {/* Help & Support Section */}
+                  <DropdownMenuItem asChild>
+                    <Link href="/legal/support" className="flex items-center">
+                      <HelpCircle className="mr-2 h-4 w-4" />
+                      <span>Help & Support</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/legal/community" className="flex items-center">
+                      <Shield className="mr-2 h-4 w-4" />
+                      <span>Community Guidelines</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/legal/terms" className="flex items-center">
+                      <FileText className="mr-2 h-4 w-4" />
+                      <span>Terms & Privacy</span>
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
+                  {/* Sign Out */}
                   <DropdownMenuItem onClick={handleSignOut} className="flex items-center">
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Sign Out</span>
