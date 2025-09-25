@@ -62,17 +62,6 @@ export function Navigation() {
             {/* Public navigation - always visible */}
             <div className="hidden md:flex items-center space-x-1">
               <Button
-                variant={isActive('/') ? 'default' : 'ghost'}
-                size="sm"
-                asChild
-                className="flex items-center space-x-2"
-              >
-                <Link href="/">
-                  <Home className="h-4 w-4" />
-                  <span>Home</span>
-                </Link>
-              </Button>
-              <Button
                 variant={isActive('/works') ? 'default' : 'ghost'}
                 size="sm"
                 asChild
