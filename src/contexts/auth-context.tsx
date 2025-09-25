@@ -7,6 +7,7 @@ import type { User } from '@/src/lib/supabase'
 import { useIdleTimeout } from '@/src/hooks/use-idle-timeout'
 import { SessionTimeoutWarning } from '@/src/components/auth/session-timeout-warning'
 import { logAuthEvent } from '@/src/lib/auth-monitoring'
+import { dbService } from '@/src/lib/database'
 
 interface AuthContextType {
   user: (SupabaseUser & { profile?: User }) | null
@@ -35,28 +36,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   console.log('AuthProvider render - userExists:', !!user, 'loading:', loading)
 
-  // Session timeout management - temporarily disabled for debugging
-  // const { extend: extendSession } = useIdleTimeout({
-  //   timeout: 30 * 60 * 1000, // 30 minutes idle timeout
-  //   warningTime: 2 * 60 * 1000, // 2 minutes warning before timeout
-  //   onWarning: (timeLeft) => {
-  //     if (user && !loading) {
-  //       setTimeoutWarningTime(timeLeft)
-  //       setShowTimeoutWarning(true)
-  //     }
-  //   },
-  //   onTimeout: () => {
-  //     if (user && !loading) {
-  //       console.log('Session timeout - signing out user')
-  //       logAuthEvent('session_timeout', { userId: user.id, email: user.email })
-  //       signOut()
-  //       setShowTimeoutWarning(false)
-  //     }
-  //   },
-  // })
+  // Helper function to fetch and attach user profile
+  const fetchUserProfile = async (supabaseUser: SupabaseUser) => {
+    try {
+      const profileResult = await dbService.getUser(supabaseUser.id)
+      if (profileResult.success && profileResult.data) {
+        return { ...supabaseUser, profile: profileResult.data }
+      } else {
+        console.warn('Could not fetch user profile:', profileResult.error)
+        return supabaseUser
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error)
+      return supabaseUser
+    }
+  }
 
-  // Temporary placeholder for session extension
-  const extendSession = () => {}
+  // Session timeout management - re-enabled with proper timing
+  const { extend: extendSession } = useIdleTimeout({
+    timeout: 30 * 60 * 1000, // 30 minutes idle timeout
+    warningTime: 2 * 60 * 1000, // 2 minutes warning before timeout
+    onWarning: (timeLeft) => {
+      if (user && !loading) {
+        setTimeoutWarningTime(timeLeft)
+        setShowTimeoutWarning(true)
+      }
+    },
+    onTimeout: () => {
+      if (user && !loading) {
+        console.log('Session timeout - signing out user')
+        logAuthEvent('session_timeout', { userId: user.id, email: user.email })
+        signOut()
+        setShowTimeoutWarning(false)
+      }
+    },
+  })
 
   // Reset warning when user signs out
   useEffect(() => {
@@ -93,7 +107,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.user) {
           console.log('Initial session found')
           if (mounted) {
-            setUser(session.user)
+            const userWithProfile = await fetchUserProfile(session.user)
+            setUser(userWithProfile)
           }
         } else {
           console.log('No initial session found')
@@ -128,7 +143,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (session?.user) {
         console.log('Setting user from auth change')
-        setUser(session.user)
+        const userWithProfile = await fetchUserProfile(session.user)
+        setUser(userWithProfile)
       } else {
         console.log('Clearing user from auth change')
         setUser(null)

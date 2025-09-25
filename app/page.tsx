@@ -48,54 +48,9 @@ export default function Home() {
         setFeaturedAuthors(authors)
       } catch (error) {
         console.error('Failed to load homepage data:', error)
-        // Fallback to mock data if database fails
-        setRecentPosts([
-          {
-            id: '1',
-            user_id: '1',
-            title: 'Welcome to Ottopen',
-            content:
-              'Welcome to Ottopen, a literary social network for authors, screenwriters, and playwrights. Share your work, discover new voices, and build meaningful connections in the literary world.',
-            published: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            user: {
-              id: '1',
-              email: 'demo@ottopen.com',
-              display_name: 'Ottopen Team',
-              username: 'ottopen',
-              bio: 'The official Ottopen team account',
-              specialty: 'Platform',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            },
-            likes_count: 24,
-            comments_count: 8,
-          },
-        ] as Post[])
-
-        setFeaturedAuthors([
-          {
-            id: '1',
-            email: 'demo@ottopen.com',
-            display_name: 'Maya Rodriguez',
-            username: 'maya_rodriguez',
-            bio: "Award-winning novelist exploring themes of identity and belonging. Author of 'The Bridge Between Worlds' and upcoming 'Echoes of Tomorrow'.",
-            specialty: 'Literary Fiction',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-          {
-            id: '2',
-            email: 'demo2@ottopen.com',
-            display_name: 'James Chen',
-            username: 'james_chen',
-            bio: 'Emmy-nominated screenwriter for drama series. Currently developing new projects for streaming platforms.',
-            specialty: 'Screenwriter',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-        ] as User[])
+        // Set empty states instead of mock data
+        setRecentPosts([])
+        setFeaturedAuthors([])
       } finally {
         setDataLoading(false)
       }
@@ -108,7 +63,7 @@ export default function Home() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
     }
   }
 
