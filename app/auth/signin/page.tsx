@@ -50,7 +50,11 @@ export default function SignIn() {
       }
 
       toast.success("Signed in successfully!");
-      router.push("/dashboard");
+
+      // Small delay to ensure auth state updates before routing
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 100);
     } catch (error) {
       toast.error("An unexpected error occurred");
     } finally {

@@ -190,7 +190,8 @@ export const authService = {
 
       if (profileError) {
         logError('Failed to get user profile', profileError)
-        return { user, error: profileError }
+        // Still return the user even if profile fetch fails, for fallback
+        return { user: { ...user, profile: null }, error: null }
       }
 
       return { user: { ...user, profile }, error: null }

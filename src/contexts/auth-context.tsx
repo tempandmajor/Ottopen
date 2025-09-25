@@ -66,13 +66,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         try {
           if (session?.user) {
-            const { user: userWithProfile } = await authService.getCurrentUser()
+            logInfo('Getting current user profile after auth state change')
+            const { user: userWithProfile, error } = await authService.getCurrentUser()
+            if (error) {
+              logError('getCurrentUser returned error', error)
+            }
+            logInfo('Setting user in context', { hasProfile: !!userWithProfile?.profile })
             setUser(userWithProfile)
           } else {
+            logInfo('No session, setting user to null')
             setUser(null)
           }
         } catch (error) {
           logError('Failed to handle auth state change', error as Error)
+          setUser(null)
         }
 
         setLoading(false)
