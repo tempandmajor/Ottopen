@@ -172,7 +172,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           userId: data.user.id,
           email: data.user.email
         })
-        // Don't set user here, let the auth state change handler do it
+        // Don't set loading to false here - let the auth state change handler do it
+        // The user state will be updated by the onAuthStateChange listener
         return { success: true }
       }
 
