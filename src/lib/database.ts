@@ -530,7 +530,7 @@ export class DatabaseService {
   async searchUsers(query: string, limit = 20): Promise<User[]> {
     try {
       const { data, error } = await this.supabase
-        .from('users')
+        .from('user_public_profiles')
         .select('*')
         .or(`display_name.ilike.%${query}%, username.ilike.%${query}%, bio.ilike.%${query}%`)
         .limit(limit)

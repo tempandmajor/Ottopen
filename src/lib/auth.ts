@@ -181,17 +181,34 @@ export const authService = {
         return { user: null, error: null }
       }
 
-      // Get user profile
+      // Get user profile (base table, self-only)
       const { data: profile, error: profileError } = await supabase
         .from('users')
         .select('*')
         .eq('id', user.id)
         .single()
 
-      if (profileError) {
-        logError('Failed to get user profile', profileError)
-        // Still return the user even if profile fetch fails, for fallback
-        return { user: { ...user, profile: null }, error: null }
+      if (profileError || !profile) {
+        // Fallback to safe public view to avoid UX regressions when base-table RLS blocks or row missing
+        if (profileError) {
+          logError('Failed to get user profile from base table, falling back to view', profileError)
+        } else {
+          logInfo('Base-table profile is null, falling back to public view')
+        }
+
+        const { data: publicProfile, error: publicProfileError } = await supabase
+          .from('user_public_profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+
+        if (publicProfileError) {
+          logError('Failed to get user profile from public view', publicProfileError)
+          // Still return the user even if profile fetch fails, for UI to continue
+          return { user: { ...user, profile: null }, error: null }
+        }
+
+        return { user: { ...user, profile: publicProfile }, error: null }
       }
 
       return { user: { ...user, profile }, error: null }
