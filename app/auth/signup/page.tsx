@@ -75,8 +75,12 @@ export default function SignUp() {
         return;
       }
 
-      toast.success("Account created successfully! Please check your email to verify your account.");
-      router.push("/auth/signin");
+      toast.success("Account created successfully! Please check your email to confirm your account before signing in.");
+
+      // Show confirmation message and don't redirect immediately
+      setTimeout(() => {
+        router.push("/auth/signin?message=confirm-email");
+      }, 3000);
     } catch (error) {
       toast.error("An unexpected error occurred");
     } finally {

@@ -51,7 +51,7 @@ export const authService = {
         throw new Error('Username is already taken')
       }
 
-      // Sign up with Supabase Auth
+      // Sign up with Supabase Auth - include all data in metadata for trigger
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: validatedData.email,
         password: validatedData.password,
@@ -59,6 +59,12 @@ export const authService = {
           data: {
             display_name: validatedData.displayName,
             username: validatedData.username,
+            bio: validatedData.bio || '',
+            specialty: validatedData.specialty || '',
+            accountType: validatedData.accountType || 'writer',
+            companyName: validatedData.companyName || null,
+            industryCredentials: validatedData.industryCredentials || null,
+            licenseNumber: validatedData.licenseNumber || null,
           }
         }
       })
@@ -68,30 +74,8 @@ export const authService = {
         throw authError
       }
 
-      // Create user profile
-      if (authData.user) {
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert({
-            id: authData.user.id,
-            email: validatedData.email,
-            display_name: validatedData.displayName,
-            username: validatedData.username,
-            bio: validatedData.bio || '',
-            specialty: validatedData.specialty || '',
-            account_type: validatedData.accountType || 'writer',
-            account_tier: 'free',
-            verification_status: 'pending',
-            company_name: validatedData.companyName || null,
-            industry_credentials: validatedData.industryCredentials || null,
-            license_number: validatedData.licenseNumber || null,
-          })
-
-        if (profileError) {
-          logError('Failed to create user profile', profileError)
-          throw new Error('Failed to create user profile')
-        }
-      }
+      // Profile will be created automatically by the database trigger
+      // No need for manual profile creation
 
       logInfo('User signed up successfully', { email: validatedData.email })
       return { data: authData, error: null }
