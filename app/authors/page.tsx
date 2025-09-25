@@ -243,11 +243,11 @@ export default function Authors() {
                     {loading ? (
                       <Loader2 className="h-6 w-6 animate-spin" />
                     ) : (
-                      authorStats.awardWinners
+                      authorStats.total.toLocaleString()
                     )}
                   </span>
                 </div>
-                <p className="text-sm text-muted-foreground">Award Winners</p>
+                <p className="text-sm text-muted-foreground">Total Authors</p>
               </CardContent>
             </Card>
           </div>
