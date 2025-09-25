@@ -6,19 +6,13 @@ import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
 import { PenTool, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useAuth } from "@/src/contexts/auth-context";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
 
-export default function SignIn() {
-  const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const { signIn } = useAuth();
-  const router = useRouter();
+// Component to handle search params with Suspense
+function SearchParamsHandler() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -30,6 +24,18 @@ export default function SignIn() {
       });
     }
   }, [searchParams]);
+
+  return null;
+}
+
+export default function SignIn() {
+  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const { signIn } = useAuth();
+  const router = useRouter();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +60,9 @@ export default function SignIn() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <Suspense fallback={null}>
+        <SearchParamsHandler />
+      </Suspense>
       <div className="w-full max-w-md space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
