@@ -307,13 +307,8 @@ export class DatabaseService {
   async getComments(postId: string): Promise<Comment[]> {
     try {
       const { data, error } = await this.supabase
-        .from('comments')
-        .select(
-          `
-          *,
-          user:users(*)
-        `
-        )
+        .from('comments_with_user_public')
+        .select('*')
         .eq('post_id', postId)
         .order('created_at', { ascending: true })
 
@@ -334,12 +329,7 @@ export class DatabaseService {
       const { data, error } = await this.supabase
         .from('comments')
         .insert(comment)
-        .select(
-          `
-          *,
-          user:users(*)
-        `
-        )
+        .select('id')
         .single()
 
       if (error) {
@@ -347,8 +337,20 @@ export class DatabaseService {
         return null
       }
 
-      logInfo('Comment created successfully', { commentId: data.id })
-      return data
+      // Read enriched row from the view
+      const { data: enriched, error: viewError } = await this.supabase
+        .from('comments_with_user_public')
+        .select('*')
+        .eq('id', data.id)
+        .single()
+
+      if (viewError) {
+        logError('Failed to read created comment from view', viewError)
+        return null
+      }
+
+      logInfo('Comment created successfully', { commentId: enriched.id })
+      return enriched as unknown as Comment
     } catch (error) {
       logError('Create comment error', error as Error)
       return null
@@ -564,15 +566,8 @@ export class DatabaseService {
 
     try {
       const { data, error } = await this.supabase
-        .from('conversations')
-        .select(
-          `
-          *,
-          user1:users!user1_id(*),
-          user2:users!user2_id(*),
-          last_message:messages!last_message_id(*)
-        `
-        )
+        .from('conversations_with_users_public')
+        .select('*')
         .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
         .order('updated_at', { ascending: false })
 
@@ -595,14 +590,8 @@ export class DatabaseService {
 
     try {
       const { data, error } = await this.supabase
-        .from('messages')
-        .select(
-          `
-          *,
-          sender:users!sender_id(*),
-          receiver:users!receiver_id(*)
-        `
-        )
+        .from('messages_with_users_public')
+        .select('*')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true })
         .limit(limit)
@@ -654,13 +643,7 @@ export class DatabaseService {
           content: params.content,
           read: false,
         })
-        .select(
-          `
-          *,
-          sender:users!sender_id(*),
-          receiver:users!receiver_id(*)
-        `
-        )
+        .select('id')
         .single()
 
       if (error) {
@@ -677,8 +660,20 @@ export class DatabaseService {
         })
         .eq('id', conversationId)
 
-      logInfo('Message sent successfully', { messageId: data.id })
-      return data
+      // Read enriched row from the view
+      const { data: enriched, error: viewError } = await this.supabase
+        .from('messages_with_users_public')
+        .select('*')
+        .eq('id', data.id)
+        .single()
+
+      if (viewError) {
+        logError('Failed to read created message from view', viewError)
+        return null
+      }
+
+      logInfo('Message sent successfully', { messageId: enriched.id })
+      return enriched as unknown as Message
     } catch (error) {
       logError('Send message error', error as Error)
       return null
