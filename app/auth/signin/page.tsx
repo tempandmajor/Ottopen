@@ -41,21 +41,45 @@ export default function SignIn() {
     e.preventDefault();
     setLoading(true);
 
+    console.log('=== SIGNIN PROCESS START ===');
+    console.log('Email:', email);
+
     try {
+      console.log('Calling signIn from auth context...');
       const { error } = await signIn(email, password);
 
+      console.log('SignIn result:', { error });
+
       if (error) {
+        console.log('SignIn failed with error:', error);
         toast.error(error);
         return;
       }
 
+      console.log('SignIn success! Testing direct API...');
+      // Test direct API call for comparison
+      try {
+        const response = await fetch('/api/debug-signin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const debugResult = await response.json();
+        console.log('Debug signin API result:', debugResult);
+      } catch (debugError) {
+        console.log('Debug API failed:', debugError);
+      }
+
       toast.success("Signed in successfully!");
 
-      // Small delay to ensure auth state updates before routing
+      console.log('Waiting for auth state to update...');
+      // Test redirect to non-protected page first
       setTimeout(() => {
-        router.push("/dashboard");
-      }, 100);
+        console.log('Attempting redirect to homepage...');
+        router.push("/");
+      }, 1000);
     } catch (error) {
+      console.log('SignIn exception:', error);
       toast.error("An unexpected error occurred");
     } finally {
       setLoading(false);

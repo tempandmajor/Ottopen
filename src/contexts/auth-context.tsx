@@ -44,17 +44,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Get initial session
     const getInitialSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
+        // First try to get existing session
+        let { data: { session }, error } = await supabase.auth.getSession()
+
+        // If no session or error, try to refresh
+        if (!session && !error) {
+          logInfo('No session found, attempting refresh...')
+          const refreshResult = await supabase.auth.refreshSession()
+          session = refreshResult.data.session
+          error = refreshResult.error
+        }
 
         if (session?.user) {
-          const { user: userWithProfile, error } = await authService.getCurrentUser()
+          logInfo('Session found, getting user profile...')
+          const { user: userWithProfile, error: profileError } = await authService.getCurrentUser()
           // Always preserve the authenticated session, even if profile fetch fails
           if (userWithProfile) {
             setUser(userWithProfile)
+            logInfo('User set with profile')
           } else {
             // Fallback: use the session user without profile
             setUser({ ...session.user, profile: null })
+            logInfo('User set without profile (fallback)')
           }
+        } else {
+          logInfo('No valid session found')
         }
       } catch (error) {
         logError('Failed to get initial session', error as Error)
@@ -68,32 +82,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('=== AUTH STATE CHANGE ===')
+        console.log('Event:', event)
+        console.log('Has session:', !!session)
+        console.log('User ID:', session?.user?.id)
+        console.log('User email:', session?.user?.email)
+
         logInfo('Auth state changed', { event })
 
         try {
           if (session?.user) {
+            console.log('Session found, getting user profile...')
             logInfo('Getting current user profile after auth state change')
             const { user: userWithProfile, error } = await authService.getCurrentUser()
             if (error) {
+              console.log('getCurrentUser error:', error)
               logError('getCurrentUser returned error', error)
             }
 
             // Always preserve the authenticated session, even if profile fetch fails
             if (userWithProfile) {
+              console.log('Setting user with profile:', {
+                hasProfile: !!userWithProfile?.profile,
+                displayName: userWithProfile?.profile?.display_name
+              })
               logInfo('Setting user in context with profile', { hasProfile: !!userWithProfile?.profile })
               setUser(userWithProfile)
             } else {
+              console.log('Profile fetch failed, using session fallback')
               logInfo('Profile fetch failed, using session user as fallback')
               setUser({ ...session.user, profile: null })
             }
           } else {
+            console.log('No session, clearing user')
             logInfo('No session, setting user to null')
             setUser(null)
           }
         } catch (error) {
+          console.log('Auth state change error:', error)
           logError('Failed to handle auth state change', error as Error)
           // If there's a session but we failed to process it, use the session as fallback
           if (session?.user) {
+            console.log('Using emergency fallback user')
             logInfo('Using session user as emergency fallback')
             setUser({ ...session.user, profile: null })
           } else {
@@ -101,6 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
+        console.log('Setting loading to false')
         setLoading(false)
       }
     )
