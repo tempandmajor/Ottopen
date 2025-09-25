@@ -3,14 +3,12 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User as SupabaseUser } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '@/src/lib/supabase'
-import { authService } from '@/src/lib/auth'
-import { logError, logInfo } from '@/src/lib/logger'
 import type { User } from '@/src/lib/supabase'
 
 interface AuthContextType {
   user: (SupabaseUser & { profile?: User }) | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<{ error?: string }>
+  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
   signUp: (data: {
     email: string
     password: string
@@ -18,20 +16,10 @@ interface AuthContextType {
     username: string
     bio?: string
     specialty?: string
-    accountType?:
-      | 'writer'
-      | 'platform_agent'
-      | 'external_agent'
-      | 'producer'
-      | 'publisher'
-      | 'theater_director'
-      | 'reader_evaluator'
-    companyName?: string
-    industryCredentials?: string
-    licenseNumber?: string
-  }) => Promise<{ error?: string }>
+    accountType?: string
+  }) => Promise<{ success: boolean; error?: string }>
   signOut: () => Promise<void>
-  forgotPassword: (email: string) => Promise<{ error?: string }>
+  forgotPassword: (email: string) => Promise<{ success: boolean; error?: string }>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -40,136 +28,106 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<(SupabaseUser & { profile?: User }) | null>(null)
   const [loading, setLoading] = useState(true)
 
+  console.log('AuthProvider render - user:', user ? user.email : 'null', 'loading:', loading)
+
   useEffect(() => {
-    // Check if Supabase is configured
     if (!isSupabaseConfigured()) {
-      logInfo('Supabase not configured, skipping auth initialization')
+      console.log('Supabase not configured')
       setLoading(false)
       return
     }
 
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        // First try to get existing session
-        let {
-          data: { session },
-          error,
-        } = await supabase.auth.getSession()
+    let mounted = true
 
-        // If no session or error, try to refresh
-        if (!session && !error) {
-          logInfo('No session found, attempting refresh...')
-          const refreshResult = await supabase.auth.refreshSession()
-          session = refreshResult.data.session
-          error = refreshResult.error
+    // Get initial session
+    const initAuth = async () => {
+      try {
+        console.log('Getting initial session...')
+        const { data: { session }, error } = await supabase.auth.getSession()
+
+        if (error) {
+          console.error('Initial session error:', error)
+          if (mounted) {
+            setUser(null)
+            setLoading(false)
+          }
+          return
         }
 
         if (session?.user) {
-          logInfo('Session found, getting user profile...')
-          const { user: userWithProfile, error: profileError } = await authService.getCurrentUser()
-          // Always preserve the authenticated session, even if profile fetch fails
-          if (userWithProfile) {
-            setUser(userWithProfile)
-            logInfo('User set with profile')
-          } else {
-            // Fallback: use the session user without profile
-            setUser({ ...session.user, profile: null })
-            logInfo('User set without profile (fallback)')
+          console.log('Initial session found for:', session.user.email)
+          if (mounted) {
+            setUser(session.user)
           }
         } else {
-          logInfo('No valid session found')
+          console.log('No initial session found')
+        }
+
+        if (mounted) {
+          setLoading(false)
         }
       } catch (error) {
-        logError('Failed to get initial session', error as Error)
+        console.error('Init auth error:', error)
+        if (mounted) {
+          setUser(null)
+          setLoading(false)
+        }
       }
-
-      setLoading(false)
     }
 
-    getInitialSession()
+    initAuth()
 
     // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('=== AUTH STATE CHANGE ===')
-      console.log('Event:', event)
-      console.log('Has session:', !!session)
-      console.log('User ID:', session?.user?.id)
-      console.log('User email:', session?.user?.email)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change:', event, 'has session:', !!session)
 
-      logInfo('Auth state changed', { event })
+      if (!mounted) return
 
-      try {
-        if (session?.user) {
-          console.log('Session found, getting user profile...')
-          logInfo('Getting current user profile after auth state change')
-          const { user: userWithProfile, error } = await authService.getCurrentUser()
-          if (error) {
-            console.log('getCurrentUser error:', error)
-            logError('getCurrentUser returned error', error)
-          }
-
-          // Always preserve the authenticated session, even if profile fetch fails
-          if (userWithProfile) {
-            console.log('Setting user with profile:', {
-              hasProfile: !!userWithProfile?.profile,
-              displayName: userWithProfile?.profile?.display_name,
-            })
-            logInfo('Setting user in context with profile', {
-              hasProfile: !!userWithProfile?.profile,
-            })
-            setUser(userWithProfile)
-          } else {
-            console.log('Profile fetch failed, using session fallback')
-            logInfo('Profile fetch failed, using session user as fallback')
-            setUser({ ...session.user, profile: null })
-          }
-        } else {
-          console.log('No session, clearing user')
-          logInfo('No session, setting user to null')
-          setUser(null)
-        }
-      } catch (error) {
-        console.log('Auth state change error:', error)
-        logError('Failed to handle auth state change', error as Error)
-        // If there's a session but we failed to process it, use the session as fallback
-        if (session?.user) {
-          console.log('Using emergency fallback user')
-          logInfo('Using session user as emergency fallback')
-          setUser({ ...session.user, profile: null })
-        } else {
-          setUser(null)
-        }
+      if (session?.user) {
+        console.log('Setting user from auth change:', session.user.email)
+        setUser(session.user)
+      } else {
+        console.log('Clearing user from auth change')
+        setUser(null)
       }
 
-      console.log('Setting loading to false')
       setLoading(false)
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
-  const signIn = async (email: string, password: string) => {
-    if (!isSupabaseConfigured()) {
-      return {
-        error:
-          'Authentication is not configured. Please set up your Supabase credentials in .env.local to enable sign in.',
-      }
-    }
-
+  const signIn = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const { data, error } = await authService.signIn({ email, password })
+      console.log('SignIn attempt for:', email)
+      setLoading(true)
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password,
+      })
 
       if (error) {
-        return { error: error.message }
+        console.error('SignIn error:', error)
+        setLoading(false)
+        return { success: false, error: error.message }
       }
 
-      return {}
+      if (data.user) {
+        console.log('SignIn successful for:', data.user.email)
+        // Don't set user here, let the auth state change handler do it
+        return { success: true }
+      }
+
+      setLoading(false)
+      return { success: false, error: 'No user returned from sign in' }
     } catch (error) {
-      logError('Sign in error in context', error as Error)
-      return { error: 'An unexpected error occurred' }
+      console.error('SignIn exception:', error)
+      setLoading(false)
+      return { success: false, error: 'An unexpected error occurred' }
     }
   }
 
@@ -180,71 +138,76 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     username: string
     bio?: string
     specialty?: string
-    accountType?:
-      | 'writer'
-      | 'platform_agent'
-      | 'external_agent'
-      | 'producer'
-      | 'publisher'
-      | 'theater_director'
-      | 'reader_evaluator'
-    companyName?: string
-    industryCredentials?: string
-    licenseNumber?: string
-  }) => {
-    if (!isSupabaseConfigured()) {
-      return {
-        error:
-          'Authentication is not configured. Please set up your Supabase credentials in .env.local to enable user registration.',
-      }
-    }
-
+    accountType?: string
+  }): Promise<{ success: boolean; error?: string }> => {
     try {
-      const { data: authData, error } = await authService.signUp(data)
+      console.log('SignUp attempt for:', data.email)
+      setLoading(true)
+
+      const { data: authData, error } = await supabase.auth.signUp({
+        email: data.email.trim(),
+        password: data.password,
+        options: {
+          data: {
+            display_name: data.displayName,
+            username: data.username,
+            bio: data.bio || '',
+            specialty: data.specialty || '',
+            account_type: data.accountType || 'writer',
+          },
+        },
+      })
 
       if (error) {
-        return { error: error.message }
+        console.error('SignUp error:', error)
+        setLoading(false)
+        return { success: false, error: error.message }
       }
 
-      return {}
+      if (authData.user) {
+        console.log('SignUp successful for:', authData.user.email)
+        return { success: true }
+      }
+
+      setLoading(false)
+      return { success: false, error: 'No user returned from sign up' }
     } catch (error) {
-      logError('Sign up error in context', error as Error)
-      return { error: 'An unexpected error occurred' }
+      console.error('SignUp exception:', error)
+      setLoading(false)
+      return { success: false, error: 'An unexpected error occurred' }
     }
   }
 
   const signOut = async () => {
-    if (!isSupabaseConfigured()) {
-      return
-    }
-
     try {
-      await authService.signOut()
-      setUser(null)
+      console.log('SignOut attempt')
+      const { error } = await supabase.auth.signOut()
+      if (error) {
+        console.error('SignOut error:', error)
+      } else {
+        console.log('SignOut successful')
+        setUser(null)
+      }
     } catch (error) {
-      logError('Sign out error in context', error as Error)
+      console.error('SignOut exception:', error)
     }
   }
 
-  const forgotPassword = async (email: string) => {
-    if (!isSupabaseConfigured()) {
-      return {
-        error:
-          'Authentication is not configured. Please set up your Supabase credentials in .env.local to enable password reset.',
-      }
-    }
-
+  const forgotPassword = async (email: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const { error } = await authService.forgotPassword({ email })
+      console.log('ForgotPassword attempt for:', email)
+      const { error } = await supabase.auth.resetPasswordForEmail(email)
 
       if (error) {
-        return { error: error.message }
+        console.error('ForgotPassword error:', error)
+        return { success: false, error: error.message }
       }
 
-      return {}
+      console.log('ForgotPassword email sent successfully')
+      return { success: true }
     } catch (error) {
-      logError('Forgot password error in context', error as Error)
-      return { error: 'An unexpected error occurred' }
+      console.error('ForgotPassword exception:', error)
+      return { success: false, error: 'An unexpected error occurred' }
     }
   }
 

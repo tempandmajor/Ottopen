@@ -70,7 +70,7 @@ export default function SignUp() {
     setLoading(true)
 
     try {
-      const { error } = await signUp({
+      const result = await signUp({
         email: formData.email,
         password: formData.password,
         displayName: formData.displayName,
@@ -78,13 +78,10 @@ export default function SignUp() {
         bio: formData.bio,
         specialty: formData.specialty,
         accountType: formData.accountType,
-        companyName: formData.companyName || undefined,
-        industryCredentials: formData.industryCredentials || undefined,
-        licenseNumber: formData.licenseNumber || undefined,
       })
 
-      if (error) {
-        toast.error(error)
+      if (!result.success) {
+        toast.error(result.error || 'Signup failed')
         return
       }
 

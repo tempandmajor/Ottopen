@@ -13,18 +13,16 @@ export function ProtectedRoute({ children, redirectTo = '/auth/signin' }: Protec
   const { user, loading } = useAuth()
   const router = useRouter()
 
-  console.log('=== PROTECTED ROUTE ===')
-  console.log('User:', user ? { id: user.id, email: user.email } : 'null')
-  console.log('Loading:', loading)
-  console.log('Will redirect:', !loading && !user)
+  console.log('ProtectedRoute - user:', user ? user.email : 'null', 'loading:', loading)
 
   useEffect(() => {
     if (!loading && !user) {
-      console.log('ProtectedRoute: Redirecting to', redirectTo)
+      console.log('ProtectedRoute: No user, redirecting to', redirectTo)
       router.push(redirectTo)
     }
   }, [user, loading, router, redirectTo])
 
+  // Show loading spinner while checking auth
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -33,23 +31,29 @@ export function ProtectedRoute({ children, redirectTo = '/auth/signin' }: Protec
     )
   }
 
+  // If no user after loading is complete, don't render anything (redirect is happening)
   if (!user) {
     return null
   }
 
+  // User is authenticated, render the protected content
   return <>{children}</>
 }
 
-export function PublicOnlyRoute({ children, redirectTo = '/dashboard' }: ProtectedRouteProps) {
+export function PublicOnlyRoute({ children, redirectTo = '/feed' }: ProtectedRouteProps) {
   const { user, loading } = useAuth()
   const router = useRouter()
 
+  console.log('PublicOnlyRoute - user:', user ? user.email : 'null', 'loading:', loading)
+
   useEffect(() => {
     if (!loading && user) {
+      console.log('PublicOnlyRoute: User exists, redirecting to', redirectTo)
       router.push(redirectTo)
     }
   }, [user, loading, router, redirectTo])
 
+  // Show loading spinner while checking auth
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -58,5 +62,11 @@ export function PublicOnlyRoute({ children, redirectTo = '/dashboard' }: Protect
     )
   }
 
+  // If user exists after loading is complete, don't render anything (redirect is happening)
+  if (user) {
+    return null
+  }
+
+  // No user, render the public content
   return <>{children}</>
 }

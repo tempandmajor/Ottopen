@@ -6,27 +6,11 @@ import { Input } from '@/src/components/ui/input'
 import { Label } from '@/src/components/ui/label'
 import { PenTool, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useEffect, Suspense } from 'react'
+import { useState } from 'react'
 import { useAuth } from '@/src/contexts/auth-context'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
-
-// Component to handle search params with Suspense
-function SearchParamsHandler() {
-  const searchParams = useSearchParams()
-
-  useEffect(() => {
-    const message = searchParams.get('message')
-    if (message === 'confirm-email') {
-      toast('Please check your email and click the confirmation link before signing in.', {
-        duration: 5000,
-        icon: '📧',
-      })
-    }
-  }, [searchParams])
-
-  return null
-}
+import { PublicOnlyRoute } from '@/src/components/auth/protected-route'
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false)
@@ -39,47 +23,33 @@ export default function SignIn() {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
 
-    console.log('=== SIGNIN PROCESS START ===')
+    if (!email || !password) {
+      toast.error('Please fill in all fields')
+      return
+    }
+
+    console.log('=== SIGNIN FORM SUBMIT ===')
     console.log('Email:', email)
 
+    setLoading(true)
+
     try {
-      console.log('Calling signIn from auth context...')
-      const { error } = await signIn(email, password)
+      const result = await signIn(email, password)
+      console.log('SignIn result:', result)
 
-      console.log('SignIn result:', { error })
+      if (result.success) {
+        console.log('SignIn successful - redirecting to feed')
+        toast.success('Signed in successfully!')
 
-      if (error) {
-        console.log('SignIn failed with error:', error)
-        toast.error(error)
-        return
-      }
-
-      console.log('SignIn success! Testing direct API...')
-      // Test direct API call for comparison
-      try {
-        const response = await fetch('/api/debug-signin', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        })
-        const debugResult = await response.json()
-        console.log('Debug signin API result:', debugResult)
-      } catch (debugError) {
-        console.log('Debug API failed:', debugError)
-      }
-
-      toast.success('Signed in successfully!')
-
-      console.log('Waiting for auth state to update...')
-      // Redirect to feed page after successful signin - increased delay for auth state sync
-      setTimeout(() => {
-        console.log('Attempting redirect to feed page...')
+        // Simple immediate redirect
         router.push('/feed')
-      }, 2000)
+      } else {
+        console.log('SignIn failed:', result.error)
+        toast.error(result.error || 'Sign in failed')
+      }
     } catch (error) {
-      console.log('SignIn exception:', error)
+      console.error('SignIn form error:', error)
       toast.error('An unexpected error occurred')
     } finally {
       setLoading(false)
@@ -87,10 +57,8 @@ export default function SignIn() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
-      <Suspense fallback={null}>
-        <SearchParamsHandler />
-      </Suspense>
+    <PublicOnlyRoute>
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
@@ -121,6 +89,7 @@ export default function SignIn() {
                   onChange={e => setEmail(e.target.value)}
                   className="border-literary-border"
                   required
+                  disabled={loading}
                 />
               </div>
 
@@ -135,6 +104,7 @@ export default function SignIn() {
                     onChange={e => setPassword(e.target.value)}
                     className="border-literary-border pr-10"
                     required
+                    disabled={loading}
                   />
                   <Button
                     type="button"
@@ -142,6 +112,7 @@ export default function SignIn() {
                     size="sm"
                     className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1"
                     onClick={() => setShowPassword(!showPassword)}
+                    disabled={loading}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
@@ -182,5 +153,6 @@ export default function SignIn() {
         </div>
       </div>
     </div>
+    </PublicOnlyRoute>
   )
 }
