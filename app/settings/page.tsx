@@ -49,6 +49,7 @@ import { dbService } from '@/src/lib/database'
 import { authService } from '@/src/lib/auth'
 import type { User as UserType } from '@/src/lib/supabase'
 import { toast } from 'react-hot-toast'
+import { supabase } from '@/src/lib/supabase'
 
 export default function Settings() {
   const { user: currentUser } = useAuth()
@@ -56,6 +57,8 @@ export default function Settings() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [userProfile, setUserProfile] = useState<UserType | null>(null)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const [avatarFileInputKey, setAvatarFileInputKey] = useState(0)
 
   // Form states
   const [profileData, setProfileData] = useState({
@@ -120,6 +123,8 @@ export default function Settings() {
     if (currentUser?.profile) {
       loadUserData()
       loadSubscriptionData()
+      loadNotificationSettings()
+      loadPrivacySettings()
     }
   }, [currentUser])
 
@@ -150,8 +155,7 @@ export default function Settings() {
         specialty: profile.specialty || '',
       })
 
-      // TODO: Load actual notification and privacy settings from database
-      // For now, using default values
+      // Notification & privacy loaded separately
     } catch (error) {
       console.error('Failed to load user data:', error)
       toast.error('Failed to load user data')
@@ -306,7 +310,18 @@ export default function Settings() {
   const handleSaveNotifications = async () => {
     try {
       setSaving(true)
-      // TODO: Implement notification settings in database
+      if (!currentUser?.profile) throw new Error('No user')
+      const result = await dbService.upsertNotificationSettings(currentUser.profile.id, {
+        email_notifications: notificationSettings.emailNotifications,
+        push_notifications: notificationSettings.pushNotifications,
+        new_followers: notificationSettings.newFollowers,
+        new_messages: notificationSettings.newMessages,
+        post_likes: notificationSettings.postLikes,
+        post_comments: notificationSettings.postComments,
+        mentions: notificationSettings.mentions,
+        newsletter: notificationSettings.newsletter,
+      })
+      if (!result) throw new Error('Failed to save')
       toast.success('Notification preferences saved!')
     } catch (error) {
       console.error('Failed to save notifications:', error)
@@ -319,7 +334,15 @@ export default function Settings() {
   const handleSavePrivacy = async () => {
     try {
       setSaving(true)
-      // TODO: Implement privacy settings in database
+      if (!currentUser?.profile) throw new Error('No user')
+      const result = await dbService.upsertPrivacySettings(currentUser.profile.id, {
+        profile_visibility: privacySettings.profileVisibility,
+        show_email: privacySettings.showEmail,
+        show_followers: privacySettings.showFollowers,
+        allow_messages: privacySettings.allowMessages,
+        searchable: privacySettings.searchable,
+      })
+      if (!result) throw new Error('Failed to save')
       toast.success('Privacy settings saved!')
     } catch (error) {
       console.error('Failed to save privacy settings:', error)
@@ -411,16 +434,62 @@ export default function Settings() {
                         </AvatarFallback>
                       </Avatar>
                       <div className="space-y-2">
+                        <input
+                          key={avatarFileInputKey}
+                          id="avatar-file-input"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async e => {
+                            const file = e.target.files?.[0]
+                            if (!file || !currentUser?.profile) return
+                            try {
+                              setAvatarUploading(true)
+                              const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+                              const path = `${currentUser.profile.id}/avatar.${ext}`
+                              // Upload to avatars bucket; upsert to replace existing
+                              const { error: upErr } = await supabase.storage
+                                .from('avatars')
+                                .upload(path, file, { cacheControl: '3600', upsert: true })
+                              if (upErr) {
+                                console.error('Avatar upload failed:', upErr)
+                                toast.error('Failed to upload avatar')
+                                return
+                              }
+                              const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+                              const publicUrl = data.publicUrl
+                              const updated = await dbService.updateUser(currentUser.profile.id, {
+                                avatar_url: publicUrl,
+                              } as Partial<UserType>)
+                              if (updated) {
+                                setUserProfile(updated)
+                                toast.success('Profile photo updated!')
+                              } else {
+                                toast.error('Failed to update profile')
+                              }
+                            } catch (err) {
+                              console.error('Avatar upload error:', err)
+                              toast.error('Failed to upload avatar')
+                            } finally {
+                              setAvatarUploading(false)
+                              // Reset file input
+                              setAvatarFileInputKey(k => k + 1)
+                            }
+                          }}
+                        />
                         <Button
                           variant="outline"
                           size="sm"
                           className="flex items-center space-x-2"
-                          disabled
+                          disabled={avatarUploading}
+                          onClick={() => document.getElementById('avatar-file-input')?.click()}
                         >
                           <Camera className="h-4 w-4" />
-                          <span>Change Photo</span>
+                          <span>{avatarUploading ? 'Uploading...' : 'Change Photo'}</span>
                         </Button>
-                        <p className="text-xs text-muted-foreground">Avatar upload coming soon</p>
+                        <p className="text-xs text-muted-foreground">
+                          PNG/JPG up to ~5MB recommended
+                        </p>
                       </div>
                     </div>
 

@@ -92,6 +92,8 @@ export interface Post {
   title: string
   content: string
   excerpt?: string
+  image_url?: string
+  mood?: string
   published: boolean
   created_at: string
   updated_at: string

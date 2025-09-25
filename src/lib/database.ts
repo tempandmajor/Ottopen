@@ -1,6 +1,18 @@
 import { supabase, isSupabaseConfigured } from './supabase'
 import { logError, logInfo } from './logger'
-import type { User, Post, Comment, Like, Follow, Message, Conversation, WritingGoal, WritingSession, UserStatistics, ApplicationStatistics } from './supabase'
+import type {
+  User,
+  Post,
+  Comment,
+  Like,
+  Follow,
+  Message,
+  Conversation,
+  WritingGoal,
+  WritingSession,
+  UserStatistics,
+  ApplicationStatistics,
+} from './supabase'
 
 // Standardized return types for better error handling
 export interface DatabaseResult<T> {
@@ -25,6 +37,84 @@ export class DatabaseService {
 
   constructor(client?: typeof supabase) {
     this.supabase = client || supabase
+  }
+
+  // User Settings: Notifications
+  async getNotificationSettings(userId: string) {
+    try {
+      const { data, error } = await this.supabase
+        .from('user_notification_settings')
+        .select('*')
+        .eq('user_id', userId)
+        .single()
+
+      if (error && error.code !== 'PGRST116') {
+        logError('Failed to get notification settings', error)
+        return null
+      }
+      return data || null
+    } catch (error) {
+      logError('Get notification settings error', error as Error)
+      return null
+    }
+  }
+
+  async upsertNotificationSettings(userId: string, settings: any) {
+    try {
+      const { data, error } = await this.supabase
+        .from('user_notification_settings')
+        .upsert({ user_id: userId, ...settings }, { onConflict: 'user_id' })
+        .select('*')
+        .single()
+
+      if (error) {
+        logError('Failed to upsert notification settings', error)
+        return null
+      }
+      return data
+    } catch (error) {
+      logError('Upsert notification settings error', error as Error)
+      return null
+    }
+  }
+
+  // User Settings: Privacy
+  async getPrivacySettings(userId: string) {
+    try {
+      const { data, error } = await this.supabase
+        .from('user_privacy_settings')
+        .select('*')
+        .eq('user_id', userId)
+        .single()
+
+      if (error && error.code !== 'PGRST116') {
+        logError('Failed to get privacy settings', error)
+        return null
+      }
+      return data || null
+    } catch (error) {
+      logError('Get privacy settings error', error as Error)
+      return null
+    }
+  }
+
+  async upsertPrivacySettings(userId: string, settings: any) {
+    try {
+      const { data, error } = await this.supabase
+        .from('user_privacy_settings')
+        .upsert({ user_id: userId, ...settings }, { onConflict: 'user_id' })
+        .select('*')
+        .single()
+
+      if (error) {
+        logError('Failed to upsert privacy settings', error)
+        return null
+      }
+      return data
+    } catch (error) {
+      logError('Upsert privacy settings error', error as Error)
+      return null
+    }
   }
 
   private checkSupabaseConfig(): DatabaseBooleanResult {
@@ -753,7 +843,7 @@ export class DatabaseService {
         active_writers: 2400,
         stories_shared: 12000,
         published_works: 500,
-        total_users: 5000
+        total_users: 5000,
       }
     }
 
@@ -830,7 +920,9 @@ export class DatabaseService {
     }
 
     try {
-      const { error } = await this.supabase.rpc('update_user_statistics', { target_user_id: userId })
+      const { error } = await this.supabase.rpc('update_user_statistics', {
+        target_user_id: userId,
+      })
 
       if (error) {
         logError('Failed to update user statistics', error)
@@ -870,7 +962,9 @@ export class DatabaseService {
     }
   }
 
-  async createWritingGoal(goal: Omit<WritingGoal, 'id' | 'created_at' | 'updated_at'>): Promise<WritingGoal | null> {
+  async createWritingGoal(
+    goal: Omit<WritingGoal, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<WritingGoal | null> {
     if (!this.checkSupabaseConfig()) {
       return null
     }
@@ -895,7 +989,10 @@ export class DatabaseService {
     }
   }
 
-  async updateWritingGoal(goalId: string, updates: Partial<WritingGoal>): Promise<WritingGoal | null> {
+  async updateWritingGoal(
+    goalId: string,
+    updates: Partial<WritingGoal>
+  ): Promise<WritingGoal | null> {
     if (!this.checkSupabaseConfig()) {
       return null
     }
@@ -947,7 +1044,9 @@ export class DatabaseService {
     }
   }
 
-  async createWritingSession(session: Omit<WritingSession, 'id' | 'created_at'>): Promise<WritingSession | null> {
+  async createWritingSession(
+    session: Omit<WritingSession, 'id' | 'created_at'>
+  ): Promise<WritingSession | null> {
     if (!this.checkSupabaseConfig()) {
       return null
     }
@@ -978,7 +1077,9 @@ export class DatabaseService {
     }
 
     try {
-      const { data, error } = await this.supabase.rpc('calculate_writing_streak', { target_user_id: userId })
+      const { data, error } = await this.supabase.rpc('calculate_writing_streak', {
+        target_user_id: userId,
+      })
 
       if (error) {
         logError('Failed to calculate writing streak', error)
@@ -993,22 +1094,26 @@ export class DatabaseService {
   }
 
   // Post view tracking
-  async trackPostView(postId: string, userId?: string, ipAddress?: string, userAgent?: string): Promise<void> {
+  async trackPostView(
+    postId: string,
+    userId?: string,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<void> {
     if (!this.checkSupabaseConfig()) {
       return
     }
 
     try {
-      const { error } = await this.supabase
-        .from('post_views')
-        .insert({
-          post_id: postId,
-          user_id: userId,
-          ip_address: ipAddress,
-          user_agent: userAgent,
-        })
+      const { error } = await this.supabase.from('post_views').insert({
+        post_id: postId,
+        user_id: userId,
+        ip_address: ipAddress,
+        user_agent: userAgent,
+      })
 
-      if (error && error.code !== '23505') { // Ignore unique constraint violations (duplicate views)
+      if (error && error.code !== '23505') {
+        // Ignore unique constraint violations (duplicate views)
         logError('Failed to track post view', error)
       }
     } catch (error) {

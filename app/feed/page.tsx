@@ -13,7 +13,7 @@ import { useAuth } from '@/src/contexts/auth-context'
 import { useState, useEffect } from 'react'
 import { dbService } from '@/src/lib/database'
 import type { User, Post } from '@/src/lib/supabase'
-import { isSupabaseConfigured } from '@/src/lib/supabase'
+import { isSupabaseConfigured, supabase } from '@/src/lib/supabase'
 import { toast } from 'react-hot-toast'
 import Link from 'next/link'
 
@@ -24,6 +24,11 @@ export default function Feed() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [creatingPost, setCreatingPost] = useState(false)
   const [newPostContent, setNewPostContent] = useState('')
+  const [newPostExcerpt, setNewPostExcerpt] = useState('')
+  const [newPostMood, setNewPostMood] = useState<string>('')
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string>('')
+  const [uploadingImage, setUploadingImage] = useState(false)
   const [followingCount, setFollowingCount] = useState(0)
   const [hasMore, setHasMore] = useState(true)
   const [page, setPage] = useState(0)
@@ -84,10 +89,32 @@ export default function Feed() {
     try {
       setCreatingPost(true)
 
+      // Upload image if selected
+      let imageUrl: string | undefined
+      if (imageFile) {
+        setUploadingImage(true)
+        const ext = imageFile.name.split('.').pop()?.toLowerCase() || 'jpg'
+        const path = `${user.id}/${Date.now()}.${ext}`
+        const { error: upErr } = await supabase.storage
+          .from('post-images')
+          .upload(path, imageFile, { cacheControl: '3600', upsert: false })
+        if (upErr) {
+          console.error('Image upload failed:', upErr)
+          toast.error('Image upload failed')
+        } else {
+          const { data } = supabase.storage.from('post-images').getPublicUrl(path)
+          imageUrl = data.publicUrl
+        }
+        setUploadingImage(false)
+      }
+
       const newPost = await dbService.createPost({
         user_id: user.id,
         title: '',
         content: newPostContent.trim(),
+        excerpt: newPostExcerpt.trim() || undefined,
+        mood: newPostMood || undefined,
+        image_url: imageUrl,
         published: true,
       })
 
@@ -95,6 +122,10 @@ export default function Feed() {
         // Add the new post to the top of the feed
         setPosts(prev => [newPost, ...prev])
         setNewPostContent('')
+        setNewPostExcerpt('')
+        setNewPostMood('')
+        setImageFile(null)
+        setImagePreview('')
         toast.success('Post shared successfully!')
       } else {
         toast.error('Failed to create post')
@@ -161,38 +192,75 @@ export default function Feed() {
                       disabled={creatingPost}
                     />
 
+                    {/* Optional excerpt */}
+                    <Textarea
+                      value={newPostExcerpt}
+                      onChange={e => setNewPostExcerpt(e.target.value)}
+                      placeholder="Optional: add an excerpt to highlight (renders as blockquote)"
+                      className="min-h-[60px] resize-none border-literary-border text-xs sm:text-sm"
+                      disabled={creatingPost}
+                    />
+
+                    {/* Image preview */}
+                    {imagePreview && (
+                      <div className="rounded-md border border-literary-border overflow-hidden">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="max-h-64 w-full object-cover"
+                        />
+                      </div>
+                    )}
+
                     <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-3">
                       <div className="flex items-center space-x-2 sm:space-x-3 overflow-x-auto">
+                        <input
+                          id="post-image-input"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={e => {
+                            const file = e.target.files?.[0] || null
+                            setImageFile(file)
+                            setImagePreview(file ? URL.createObjectURL(file) : '')
+                          }}
+                        />
                         <Button
                           variant="ghost"
                           size="sm"
                           className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap"
-                          disabled={creatingPost}
-                          onClick={() => toast.error('Image upload coming soon!')}
+                          disabled={creatingPost || uploadingImage}
+                          onClick={() => document.getElementById('post-image-input')?.click()}
                         >
                           <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                          <span>Image</span>
+                          <span>{uploadingImage ? 'Uploading...' : 'Image'}</span>
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
                           className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap"
                           disabled={creatingPost}
-                          onClick={() => toast.error('Excerpt formatting coming soon!')}
                         >
                           <PenTool className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           <span>Excerpt</span>
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap"
-                          disabled={creatingPost}
-                          onClick={() => toast.error('Mood indicators coming soon!')}
-                        >
-                          <Smile className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                          <span>Mood</span>
-                        </Button>
+                        <div className="inline-flex items-center space-x-2">
+                          <Smile className="h-3 w-3 sm:h-4 sm:w-4" />
+                          <select
+                            className="border border-literary-border rounded px-2 py-1 text-xs sm:text-sm bg-background"
+                            value={newPostMood}
+                            onChange={e => setNewPostMood(e.target.value)}
+                            disabled={creatingPost}
+                          >
+                            <option value="">Mood</option>
+                            <option value="inspired">Inspired</option>
+                            <option value="reflective">Reflective</option>
+                            <option value="celebratory">Celebratory</option>
+                            <option value="seeking_feedback">Seeking Feedback</option>
+                            <option value="announcement">Announcement</option>
+                          </select>
+                        </div>
                       </div>
 
                       <Button
@@ -249,6 +317,9 @@ export default function Feed() {
                     avatar={post.user?.avatar_url}
                     time={new Date(post.created_at).toLocaleDateString()}
                     content={post.content}
+                    excerpt={post.excerpt}
+                    imageUrl={post.image_url}
+                    mood={post.mood}
                     type="discussion"
                     likes={post.likes_count || 0}
                     comments={post.comments_count || 0}

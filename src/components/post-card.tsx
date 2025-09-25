@@ -13,6 +13,9 @@ interface PostCardProps {
   time: string
   content: string
   type: 'story' | 'excerpt' | 'discussion' | 'announcement'
+  excerpt?: string
+  imageUrl?: string
+  mood?: string
   likes: number
   comments: number
   reshares?: number
@@ -25,6 +28,9 @@ export function PostCard({
   avatar,
   time,
   content,
+  excerpt,
+  imageUrl,
+  mood,
   type,
   likes,
   comments,
@@ -91,9 +97,25 @@ export function PostCard({
             </div>
 
             <div className="prose prose-sm max-w-none mb-3 sm:mb-4">
+              {excerpt ? (
+                <blockquote className="border-l-2 pl-3 italic text-muted-foreground">
+                  {excerpt}
+                </blockquote>
+              ) : null}
               <p className="text-foreground text-sm sm:text-base leading-relaxed whitespace-pre-line break-words">
                 {content}
               </p>
+              {imageUrl ? (
+                <div className="mt-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imageUrl}
+                    alt="Post image"
+                    className="rounded-md border border-literary-border max-h-[420px] w-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              ) : null}
             </div>
 
             <div className="flex items-center justify-between sm:justify-start sm:space-x-6 text-sm text-muted-foreground">
@@ -123,6 +145,12 @@ export function PostCard({
                 />
                 <span className="text-xs sm:text-sm">{reshareCount}</span>
               </Button>
+
+              {mood ? (
+                <span className="text-xs sm:text-sm px-2 py-1 rounded border border-literary-border bg-muted">
+                  Mood: {mood}
+                </span>
+              ) : null}
 
               <Button variant="ghost" size="sm" className="h-7 sm:h-8 px-2">
                 <Share className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
