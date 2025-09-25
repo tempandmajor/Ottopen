@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { extend: extendSession } = useIdleTimeout({
     timeout: 30 * 60 * 1000, // 30 minutes idle timeout
     warningTime: 2 * 60 * 1000, // 2 minutes warning before timeout
-    onWarning: (timeLeft) => {
+    onWarning: timeLeft => {
       if (user && !loading) {
         setTimeoutWarningTime(timeLeft)
         setShowTimeoutWarning(true)
@@ -93,7 +93,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initAuth = async () => {
       try {
         console.log('Getting initial session...')
-        const { data: { session }, error } = await supabase.auth.getSession()
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession()
 
         if (error) {
           console.error('Initial session error:', error)
@@ -106,6 +109,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (session?.user) {
           console.log('Initial session found')
+          // Sync session to server cookies so middleware sees authenticated state
+          try {
+            if (session.access_token && session.refresh_token) {
+              await fetch('/api/auth/set-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  access_token: session.access_token,
+                  refresh_token: session.refresh_token,
+                }),
+              })
+            }
+          } catch (e) {
+            console.warn('Failed to sync session to server on init', e)
+          }
           if (mounted) {
             const userWithProfile = await fetchUserProfile(session.user)
             setUser(userWithProfile)
@@ -129,7 +147,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initAuth()
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state change:', event, 'has session:', !!session)
 
       if (!mounted) return
@@ -138,11 +158,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logAuthEvent(`auth_state_${event}`, {
         userId: session?.user?.id,
         email: session?.user?.email,
-        metadata: { event, hasSession: !!session }
+        metadata: { event, hasSession: !!session },
       })
 
       if (session?.user) {
         console.log('Setting user from auth change')
+        // Sync session to server cookies on sign-in/refresh
+        try {
+          if (session.access_token && session.refresh_token) {
+            await fetch('/api/auth/set-session', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                access_token: session.access_token,
+                refresh_token: session.refresh_token,
+              }),
+            })
+          }
+        } catch (e) {
+          console.warn('Failed to sync session to server on auth change', e)
+        }
         const userWithProfile = await fetchUserProfile(session.user)
         setUser(userWithProfile)
       } else {
@@ -159,7 +194,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const signIn = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const signIn = async (
+    email: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string }> => {
     const trimmedEmail = email.trim()
     logAuthEvent('signin_attempt', { email: trimmedEmail })
 
@@ -176,7 +214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('SignIn error:', error)
         logAuthEvent('signin_failure', {
           email: trimmedEmail,
-          metadata: { error: error.message }
+          metadata: { error: error.message },
         })
         setLoading(false)
         return { success: false, error: error.message }
@@ -186,7 +224,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('SignIn successful')
         logAuthEvent('signin_success', {
           userId: data.user.id,
-          email: data.user.email
+          email: data.user.email,
         })
         // Don't set loading to false here - let the auth state change handler do it
         // The user state will be updated by the onAuthStateChange listener
@@ -195,7 +233,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       logAuthEvent('signin_failure', {
         email: trimmedEmail,
-        metadata: { error: 'No user returned' }
+        metadata: { error: 'No user returned' },
       })
       setLoading(false)
       return { success: false, error: 'No user returned from sign in' }
@@ -203,7 +241,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('SignIn exception:', error)
       logAuthEvent('signin_failure', {
         email: trimmedEmail,
-        metadata: { error: error instanceof Error ? error.message : 'Unknown error' }
+        metadata: { error: error instanceof Error ? error.message : 'Unknown error' },
       })
       setLoading(false)
       return { success: false, error: 'An unexpected error occurred' }
@@ -244,7 +282,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('SignUp error:', error)
         logAuthEvent('signup_failure', {
           email: trimmedEmail,
-          metadata: { error: error.message }
+          metadata: { error: error.message },
         })
         setLoading(false)
         return { success: false, error: error.message }
@@ -254,14 +292,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('SignUp successful')
         logAuthEvent('signup_success', {
           userId: authData.user.id,
-          email: authData.user.email
+          email: authData.user.email,
         })
         return { success: true }
       }
 
       logAuthEvent('signup_failure', {
         email: trimmedEmail,
-        metadata: { error: 'No user returned' }
+        metadata: { error: 'No user returned' },
       })
       setLoading(false)
       return { success: false, error: 'No user returned from sign up' }
@@ -269,7 +307,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('SignUp exception:', error)
       logAuthEvent('signup_failure', {
         email: trimmedEmail,
-        metadata: { error: error instanceof Error ? error.message : 'Unknown error' }
+        metadata: { error: error instanceof Error ? error.message : 'Unknown error' },
       })
       setLoading(false)
       return { success: false, error: 'An unexpected error occurred' }
@@ -286,7 +324,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('SignOut error:', error)
         logAuthEvent('signout_failure', {
           userId: user?.id,
-          metadata: { error: error.message }
+          metadata: { error: error.message },
         })
       } else {
         console.log('SignOut successful')
@@ -297,7 +335,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('SignOut exception:', error)
       logAuthEvent('signout_failure', {
         userId: user?.id,
-        metadata: { error: error instanceof Error ? error.message : 'Unknown error' }
+        metadata: { error: error instanceof Error ? error.message : 'Unknown error' },
       })
     }
   }
@@ -314,7 +352,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('ForgotPassword error:', error)
         logAuthEvent('password_reset_failure', {
           email: trimmedEmail,
-          metadata: { error: error.message }
+          metadata: { error: error.message },
         })
         return { success: false, error: error.message }
       }
@@ -326,7 +364,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('ForgotPassword exception:', error)
       logAuthEvent('password_reset_failure', {
         email: trimmedEmail,
-        metadata: { error: error instanceof Error ? error.message : 'Unknown error' }
+        metadata: { error: error instanceof Error ? error.message : 'Unknown error' },
       })
       return { success: false, error: 'An unexpected error occurred' }
     }
