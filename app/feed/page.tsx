@@ -119,6 +119,8 @@ export default function Feed() {
     }
   }
 
+  console.log('Feed page rendering...')
+
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-background">

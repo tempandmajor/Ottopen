@@ -6,20 +6,27 @@ import { Input } from '@/src/components/ui/input'
 import { Label } from '@/src/components/ui/label'
 import { PenTool, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/src/contexts/auth-context'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
-import { PublicOnlyRoute } from '@/src/components/auth/protected-route'
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
-  const { signIn } = useAuth()
+  const { signIn, user, loading } = useAuth()
   const router = useRouter()
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!loading && user) {
+      console.log('SignIn: User already authenticated, redirecting to feed')
+      router.push('/feed')
+    }
+  }, [user, loading, router])
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,7 +39,7 @@ export default function SignIn() {
     console.log('=== SIGNIN FORM SUBMIT ===')
     console.log('Email:', email)
 
-    setLoading(true)
+    setSubmitting(true)
 
     try {
       const result = await signIn(email, password)
@@ -52,12 +59,20 @@ export default function SignIn() {
       console.error('SignIn form error:', error)
       toast.error('An unexpected error occurred')
     } finally {
-      setLoading(false)
+      setSubmitting(false)
     }
   }
 
+  // Show loading while auth is initializing
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
   return (
-    <PublicOnlyRoute>
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md space-y-6">
         {/* Header */}
@@ -89,7 +104,7 @@ export default function SignIn() {
                   onChange={e => setEmail(e.target.value)}
                   className="border-literary-border"
                   required
-                  disabled={loading}
+                  disabled={submitting}
                 />
               </div>
 
@@ -104,7 +119,7 @@ export default function SignIn() {
                     onChange={e => setPassword(e.target.value)}
                     className="border-literary-border pr-10"
                     required
-                    disabled={loading}
+                    disabled={submitting}
                   />
                   <Button
                     type="button"
@@ -112,7 +127,7 @@ export default function SignIn() {
                     size="sm"
                     className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1"
                     onClick={() => setShowPassword(!showPassword)}
-                    disabled={loading}
+                    disabled={submitting}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
@@ -125,8 +140,8 @@ export default function SignIn() {
                 </Link>
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Signing in...' : 'Sign In'}
+              <Button type="submit" className="w-full" disabled={submitting}>
+                {submitting ? 'Signing in...' : 'Sign In'}
               </Button>
             </form>
 
@@ -153,6 +168,5 @@ export default function SignIn() {
         </div>
       </div>
     </div>
-    </PublicOnlyRoute>
   )
 }

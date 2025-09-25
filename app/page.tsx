@@ -11,21 +11,33 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useAuth } from '@/src/contexts/auth-context'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { dbService } from '@/src/lib/database'
 import type { User, Post } from '@/src/lib/supabase'
 
 export default function Home() {
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [recentPosts, setRecentPosts] = useState<Post[]>([])
   const [featuredAuthors, setFeaturedAuthors] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
+  const [dataLoading, setDataLoading] = useState(true)
+
+  console.log('Homepage - User:', user ? user.email : 'null', 'Loading:', loading)
+
+  // Redirect authenticated users to feed
+  useEffect(() => {
+    if (!loading && user) {
+      console.log('Homepage: User is authenticated, redirecting to feed')
+      router.push('/feed')
+    }
+  }, [user, loading, router])
 
   // Load data on component mount
   useEffect(() => {
     const loadData = async () => {
       try {
-        setLoading(true)
+        setDataLoading(true)
 
         // Load recent posts
         const posts = await dbService.getPosts({ limit: 6, published: true })
@@ -85,7 +97,7 @@ export default function Home() {
           },
         ] as User[])
       } finally {
-        setLoading(false)
+        setDataLoading(false)
       }
     }
 
@@ -206,7 +218,7 @@ export default function Home() {
               </div>
 
               <div className="space-y-4">
-                {loading ? (
+                {dataLoading ? (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                     <p className="mt-2 text-muted-foreground">Loading posts...</p>
@@ -245,7 +257,7 @@ export default function Home() {
               <div>
                 <h3 className="font-serif text-xl font-semibold mb-4">Featured Authors</h3>
                 <div className="space-y-4">
-                  {loading ? (
+                  {dataLoading ? (
                     <div className="text-center py-4">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
                       <p className="mt-2 text-sm text-muted-foreground">Loading authors...</p>
