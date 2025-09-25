@@ -47,8 +47,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data: { session } } = await supabase.auth.getSession()
 
         if (session?.user) {
-          const { user: userWithProfile } = await authService.getCurrentUser()
-          setUser(userWithProfile)
+          const { user: userWithProfile, error } = await authService.getCurrentUser()
+          // Always preserve the authenticated session, even if profile fetch fails
+          if (userWithProfile) {
+            setUser(userWithProfile)
+          } else {
+            // Fallback: use the session user without profile
+            setUser({ ...session.user, profile: null })
+          }
         }
       } catch (error) {
         logError('Failed to get initial session', error as Error)
@@ -71,15 +77,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (error) {
               logError('getCurrentUser returned error', error)
             }
-            logInfo('Setting user in context', { hasProfile: !!userWithProfile?.profile })
-            setUser(userWithProfile)
+
+            // Always preserve the authenticated session, even if profile fetch fails
+            if (userWithProfile) {
+              logInfo('Setting user in context with profile', { hasProfile: !!userWithProfile?.profile })
+              setUser(userWithProfile)
+            } else {
+              logInfo('Profile fetch failed, using session user as fallback')
+              setUser({ ...session.user, profile: null })
+            }
           } else {
             logInfo('No session, setting user to null')
             setUser(null)
           }
         } catch (error) {
           logError('Failed to handle auth state change', error as Error)
-          setUser(null)
+          // If there's a session but we failed to process it, use the session as fallback
+          if (session?.user) {
+            logInfo('Using session user as emergency fallback')
+            setUser({ ...session.user, profile: null })
+          } else {
+            setUser(null)
+          }
         }
 
         setLoading(false)
