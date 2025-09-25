@@ -23,8 +23,9 @@ export default function Authors() {
   const [authorStats, setAuthorStats] = useState({
     total: 0,
     newThisMonth: 0,
-    awardWinners: 0,
+    publishedWorksTotal: 0,
   })
+  const [authorsWithStats, setAuthorsWithStats] = useState<(User & { works: number; followers: number })[]>([])
 
   // Load authors on mount
   useEffect(() => {
@@ -43,13 +44,43 @@ export default function Authors() {
   const loadAuthors = async () => {
     try {
       setLoading(true)
-      // Get random sample of authors for demonstration
+
+      // Get application statistics for published works total
+      const appStats = await dbService.getApplicationStatistics()
+
+      // Get random sample of authors
       const allAuthors = await dbService.searchUsers('', 50)
       setAuthors(allAuthors)
+
+      // Load detailed stats for each author
+      const authorsWithDetailedStats = await Promise.all(
+        allAuthors.slice(0, 20).map(async (author) => {
+          const userStats = await dbService.getUserStatistics(author.id)
+          const works = userStats?.published_posts_count || 0
+          const followers = userStats?.followers_count || 0
+
+          return {
+            ...author,
+            works,
+            followers
+          }
+        })
+      )
+
+      setAuthorsWithStats(authorsWithDetailedStats)
+
+      // Calculate new this month (users created in the last 30 days)
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+      const newThisMonth = allAuthors.filter(author =>
+        new Date(author.created_at) > thirtyDaysAgo
+      ).length
+
       setAuthorStats({
         total: allAuthors.length,
-        newThisMonth: Math.floor(allAuthors.length * 0.1),
-        awardWinners: Math.floor(allAuthors.length * 0.05),
+        newThisMonth,
+        publishedWorksTotal: appStats.stories_shared || 0,
       })
     } catch (error) {
       console.error('Failed to load authors:', error)
@@ -75,10 +106,18 @@ export default function Authors() {
   }
 
   const filteredAuthors = searchQuery.trim() ? searchResults : authors
-  const featuredAuthors = filteredAuthors.slice(0, 8)
-  const newAuthors = filteredAuthors.slice(8, 12)
-  const trendingAuthors = filteredAuthors.slice(4, 7)
-  const mostFollowed = [...filteredAuthors].slice(0, 3)
+
+  // Use authors with stats when available, otherwise use regular authors
+  const displayAuthors = authorsWithStats.length > 0 ? authorsWithStats : filteredAuthors.map(author => ({
+    ...author,
+    works: 0,
+    followers: 0
+  }))
+
+  const featuredAuthors = displayAuthors.slice(0, 8)
+  const newAuthors = displayAuthors.slice(8, 12)
+  const trendingAuthors = displayAuthors.slice(4, 7)
+  const mostFollowed = [...displayAuthors].sort((a, b) => b.followers - a.followers).slice(0, 3)
 
   const genres = [
     'Literary Fiction',
@@ -170,7 +209,13 @@ export default function Authors() {
               <CardContent className="p-4 text-center">
                 <div className="flex items-center justify-center space-x-2 mb-2">
                   <BookOpen className="h-5 w-5 text-primary" />
-                  <span className="text-2xl font-bold">15,672</span>
+                  <span className="text-2xl font-bold">
+                    {loading ? (
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    ) : (
+                      authorStats.publishedWorksTotal.toLocaleString()
+                    )}
+                  </span>
                 </div>
                 <p className="text-sm text-muted-foreground">Published Works</p>
               </CardContent>
@@ -238,9 +283,9 @@ export default function Authors() {
                         key={author.id}
                         name={author.display_name}
                         specialty={author.specialty || 'Writer'}
-                        location="Unknown" // User table doesn't have location field
-                        works={0} // Would need to query posts for count
-                        followers={0} // Would need to query follows for count
+                        location={author.location || 'Location not specified'}
+                        works={author.works}
+                        followers={author.followers}
                         bio={author.bio || 'No bio available'}
                         avatar={author.avatar_url}
                         tags={author.specialty ? [author.specialty] : ['Writer']}
@@ -264,9 +309,9 @@ export default function Authors() {
                       key={author.id}
                       name={author.display_name}
                       specialty={author.specialty || 'Writer'}
-                      location="Unknown"
-                      works={0}
-                      followers={0}
+                      location={author.location || 'Location not specified'}
+                      works={author.works}
+                      followers={author.followers}
                       bio={author.bio || 'No bio available'}
                       avatar={author.avatar_url}
                       tags={author.specialty ? [author.specialty] : ['Writer']}
@@ -289,9 +334,9 @@ export default function Authors() {
                       key={author.id}
                       name={author.display_name}
                       specialty={author.specialty || 'Writer'}
-                      location="Unknown"
-                      works={0}
-                      followers={0}
+                      location={author.location || 'Location not specified'}
+                      works={author.works}
+                      followers={author.followers}
                       bio={author.bio || 'No bio available'}
                       avatar={author.avatar_url}
                       tags={author.specialty ? [author.specialty] : ['Writer']}
@@ -314,9 +359,9 @@ export default function Authors() {
                       key={author.id}
                       name={author.display_name}
                       specialty={author.specialty || 'Writer'}
-                      location="Unknown"
-                      works={0}
-                      followers={0}
+                      location={author.location || 'Location not specified'}
+                      works={author.works}
+                      followers={author.followers}
                       bio={author.bio || 'No bio available'}
                       avatar={author.avatar_url}
                       tags={author.specialty ? [author.specialty] : ['Writer']}

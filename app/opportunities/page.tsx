@@ -78,93 +78,26 @@ export default function Opportunities() {
   const [selectedExperience, setSelectedExperience] = useState('all')
   const [savedJobs, setSavedJobs] = useState<string[]>([])
 
-  // Mock data for demo
+  // Load real job data from database
   useEffect(() => {
-    setTimeout(() => {
-      setJobs([
-        {
-          id: '1',
-          title: 'Senior Screenwriter - Sci-Fi Series',
-          company: 'Stellar Productions',
-          location: 'Los Angeles, CA',
-          remoteOk: true,
-          jobType: 'contract',
-          category: 'screenwriting',
-          experienceLevel: 'senior',
-          description:
-            "We're seeking an experienced screenwriter to join our team for an upcoming sci-fi series. You'll be responsible for writing compelling episodes that blend character development with cutting-edge science fiction concepts.",
-          requirements:
-            "• 5+ years of screenwriting experience\n• Previous work on serialized television\n• Strong understanding of sci-fi genre\n• Ability to work with writers' room dynamics",
-          compensationType: 'project',
-          compensationMin: 25000,
-          compensationMax: 50000,
-          currency: 'USD',
-          deadline: '2024-02-15',
-          isFeatured: true,
-          applicationsCount: 23,
-          postedAt: '2024-01-10',
-          poster: {
-            displayName: 'Sarah Chen',
-            company: 'Stellar Productions',
-            accountType: 'producer',
-          },
-        },
-        {
-          id: '2',
-          title: 'Literary Agent Assistant',
-          company: 'Premier Literary Agency',
-          location: 'New York, NY',
-          remoteOk: false,
-          jobType: 'full_time',
-          category: 'representation',
-          experienceLevel: 'entry',
-          description:
-            'Entry-level position supporting senior agents in manuscript evaluation, client communication, and submission tracking. Perfect opportunity to learn the publishing industry from the inside.',
-          requirements:
-            "• Bachelor's degree in English, Literature, or related field\n• Strong written communication skills\n• Passion for books and publishing\n• Detail-oriented with excellent organizational skills",
-          compensationType: 'salary',
-          compensationMin: 35000,
-          compensationMax: 45000,
-          currency: 'USD',
-          isFeatured: false,
-          applicationsCount: 67,
-          postedAt: '2024-01-08',
-          poster: {
-            displayName: 'Michael Roberts',
-            company: 'Premier Literary Agency',
-            accountType: 'external_agent',
-          },
-        },
-        {
-          id: '3',
-          title: 'Freelance Script Doctor',
-          company: 'Independent Film Collective',
-          location: 'Remote',
-          remoteOk: true,
-          jobType: 'freelance',
-          category: 'editing',
-          experienceLevel: 'mid',
-          description:
-            "We need an experienced script doctor to polish and enhance existing screenplays for our upcoming film slate. You'll work directly with directors and producers to strengthen story structure, dialogue, and character development.",
-          requirements:
-            '• 3+ years of script editing experience\n• Strong story analysis skills\n• Experience with feature films\n• Ability to work under tight deadlines',
-          compensationType: 'project',
-          compensationMin: 5000,
-          compensationMax: 15000,
-          currency: 'USD',
-          deadline: '2024-01-25',
-          isFeatured: false,
-          applicationsCount: 12,
-          postedAt: '2024-01-12',
-          poster: {
-            displayName: 'Alex Thompson',
-            company: 'Independent Film Collective',
-            accountType: 'producer',
-          },
-        },
-      ])
-      setLoading(false)
-    }, 1000)
+    const loadJobs = async () => {
+      try {
+        setLoading(true)
+
+        // Since we don't have a jobs service yet, show a message about coming soon
+        // In a real implementation, you would call a jobs API here
+
+        // For now, show that the feature is coming soon
+        setJobs([])
+      } catch (error) {
+        console.error('Failed to load jobs:', error)
+        setJobs([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadJobs()
   }, [])
 
   const filteredJobs = jobs.filter(job => {
@@ -467,14 +400,16 @@ export default function Opportunities() {
                     </Card>
                   ))}
 
-                  {filteredJobs.length === 0 && (
+                  {filteredJobs.length === 0 && !loading && (
                     <Card>
                       <CardContent className="p-8 text-center">
                         <Briefcase className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                        <h3 className="text-lg font-medium mb-2">No jobs found</h3>
-                        <p className="text-muted-foreground">
-                          Try adjusting your search criteria or check back later for new
-                          opportunities.
+                        <h3 className="text-lg font-medium mb-2">Job Board Coming Soon</h3>
+                        <p className="text-muted-foreground mb-4">
+                          We&apos;re building partnerships with industry professionals to bring you exclusive job opportunities.
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Check back soon for opportunities from agents, producers, publishers, and studios.
                         </p>
                       </CardContent>
                     </Card>
@@ -554,10 +489,10 @@ export default function Opportunities() {
                     ) : (
                       <div className="space-y-4">
                         <p className="text-muted-foreground">
-                          Job posting feature coming soon for industry partners. Contact our team to
-                          get early access.
+                          Job posting will be available once we launch our industry partner program.
+                          We&apos;re working to connect writers with verified agents, producers, and publishers.
                         </p>
-                        <Button>Contact Sales Team</Button>
+                        <Button disabled>Coming Soon</Button>
                       </div>
                     )}
                   </CardContent>

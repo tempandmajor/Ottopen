@@ -27,7 +27,7 @@ import {
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/src/contexts/auth-context'
 import { dbService } from '@/src/lib/database'
-import type { Post, User } from '@/src/lib/supabase'
+import type { Post, User, WritingGoal, UserStatistics } from '@/src/lib/supabase'
 import { toast } from 'react-hot-toast'
 import Link from 'next/link'
 
@@ -41,31 +41,12 @@ function DashboardContent() {
     totalViews: 0,
     wordsThisMonth: 0,
     postsThisMonth: 0,
+    currentStreak: 0,
   })
   const [recentActivity, setRecentActivity] = useState<Post[]>([])
   const [suggestedAuthors, setSuggestedAuthors] = useState<User[]>([])
-
-  // Mock writing goals - these would ideally be stored in the database
-  const writingGoals = [
-    {
-      title: 'Weekly Writing Goal',
-      current: 3420,
-      target: 5000,
-      unit: 'words',
-    },
-    {
-      title: 'Monthly Posts',
-      current: stats.postsThisMonth,
-      target: 30,
-      unit: 'posts',
-    },
-    {
-      title: 'Reading Goal',
-      current: 18,
-      target: 24,
-      unit: 'books',
-    },
-  ]
+  const [writingGoals, setWritingGoals] = useState<WritingGoal[]>([])
+  const [userStatistics, setUserStatistics] = useState<UserStatistics | null>(null)
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -74,7 +55,16 @@ function DashboardContent() {
       try {
         setLoading(true)
 
-        // Get user's posts for statistics
+        // Load user statistics
+        const userStats = await dbService.getUserStatistics(user.profile.id)
+        setUserStatistics(userStats)
+
+        // Update user statistics if needed
+        if (!userStats) {
+          await dbService.updateUserStatistics(user.profile.id)
+        }
+
+        // Get user's posts for recent statistics
         const userPosts = await dbService.getPosts({
           userId: user.profile.id,
           limit: 100,
@@ -83,23 +73,73 @@ function DashboardContent() {
         // Get user's follower count
         const followers = await dbService.getFollowers(user.profile.id)
 
+        // Get writing streak
+        const currentStreak = await dbService.getWritingStreak(user.profile.id)
+
+        // Get writing sessions for this month
+        const writingSessions = await dbService.getWritingSessions(user.profile.id, 30)
+        const thisMonth = new Date()
+        thisMonth.setMonth(thisMonth.getMonth())
+        const thisMonthSessions = writingSessions.filter(
+          session => new Date(session.session_date).getMonth() === thisMonth.getMonth()
+        )
+        const wordsThisMonth = thisMonthSessions.reduce((sum, session) => sum + session.words_written, 0)
+
         // Calculate statistics
         const totalLikes = userPosts.reduce((sum, post) => sum + (post.likes_count || 0), 0)
-        const totalViews = userPosts.reduce((sum, post) => sum + (post.likes_count || 0), 0) // Using likes as proxy for views
-        const thisMonth = new Date()
-        thisMonth.setMonth(thisMonth.getMonth() - 1)
+        const totalViews = userPosts.reduce((sum, post) => sum + (post.views_count || 0), 0)
+
+        const lastMonth = new Date()
+        lastMonth.setMonth(lastMonth.getMonth() - 1)
         const postsThisMonth = userPosts.filter(
-          post => new Date(post.created_at) > thisMonth
+          post => new Date(post.created_at) > lastMonth
         ).length
 
         setStats({
-          totalWorks: userPosts.length,
-          totalFollowers: followers.length,
-          totalLikes,
-          totalViews,
-          wordsThisMonth: Math.floor(Math.random() * 15000) + 5000, // Mock data for words
+          totalWorks: userStats?.published_posts_count || userPosts.filter(p => p.published).length,
+          totalFollowers: userStats?.followers_count || followers.length,
+          totalLikes: userStats?.likes_received_count || totalLikes,
+          totalViews: totalViews,
+          wordsThisMonth: wordsThisMonth,
           postsThisMonth,
+          currentStreak,
         })
+
+        // Load writing goals
+        const goals = await dbService.getWritingGoals(user.profile.id)
+        setWritingGoals(goals)
+
+        // If no writing goals exist, create default ones
+        if (goals.length === 0) {
+          const defaultGoals = [
+            {
+              user_id: user.profile.id,
+              goal_type: 'weekly_words',
+              target_value: 5000,
+              current_value: 0,
+              unit: 'words',
+              period: 'weekly',
+              is_active: true,
+            },
+            {
+              user_id: user.profile.id,
+              goal_type: 'monthly_posts',
+              target_value: 8,
+              current_value: postsThisMonth,
+              unit: 'posts',
+              period: 'monthly',
+              is_active: true,
+            }
+          ]
+
+          for (const goal of defaultGoals) {
+            await dbService.createWritingGoal(goal)
+          }
+
+          // Reload goals after creating defaults
+          const newGoals = await dbService.getWritingGoals(user.profile.id)
+          setWritingGoals(newGoals)
+        }
 
         // Get recent activity from followed users
         const recentPosts = await dbService.getPosts({
@@ -122,7 +162,8 @@ function DashboardContent() {
     loadDashboardData()
   }, [user])
 
-  const progressPercentage = (writingGoals[0].current / writingGoals[0].target) * 100
+  const weeklyGoal = writingGoals.find(g => g.goal_type === 'weekly_words')
+  const progressPercentage = weeklyGoal ? (weeklyGoal.current_value / weeklyGoal.target_value) * 100 : 0
 
   return (
     <div className="min-h-screen bg-background">
@@ -213,22 +254,26 @@ function DashboardContent() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium">Weekly Goal</span>
-                      <span className="text-sm text-muted-foreground">
-                        {writingGoals[0].current} / {writingGoals[0].target} words
-                      </span>
+                  {weeklyGoal && (
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-medium">Weekly Goal</span>
+                        <span className="text-sm text-muted-foreground">
+                          {weeklyGoal.current_value} / {weeklyGoal.target_value} {weeklyGoal.unit}
+                        </span>
+                      </div>
+                      <Progress value={progressPercentage} className="h-2" />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {weeklyGoal.target_value - weeklyGoal.current_value} {weeklyGoal.unit} to go
+                      </p>
                     </div>
-                    <Progress value={progressPercentage} className="h-2" />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {writingGoals[0].target - writingGoals[0].current} words to go
-                    </p>
-                  </div>
+                  )}
 
                   <div className="grid grid-cols-2 gap-4 pt-4 border-t border-literary-border">
                     <div className="text-center">
-                      <div className="text-lg font-semibold">45</div>
+                      <div className="text-lg font-semibold">
+                        {loading ? '...' : stats.currentStreak}
+                      </div>
                       <p className="text-xs text-muted-foreground">Day Streak</p>
                     </div>
                     <div className="text-center">
@@ -295,19 +340,34 @@ function DashboardContent() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {writingGoals.map((goal, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">{goal.title}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {goal.current}/{goal.target} {goal.unit}
-                        </span>
-                      </div>
-                      <Progress value={(goal.current / goal.target) * 100} className="h-1.5" />
+                  {loading ? (
+                    <div className="text-center py-4">
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                      <p className="mt-2 text-sm text-muted-foreground">Loading goals...</p>
                     </div>
-                  ))}
+                  ) : writingGoals.length > 0 ? (
+                    writingGoals.map((goal, index) => (
+                      <div key={goal.id || index} className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium">
+                            {goal.goal_type === 'weekly_words' ? 'Weekly Writing' :
+                             goal.goal_type === 'monthly_posts' ? 'Monthly Posts' :
+                             goal.goal_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {goal.current_value}/{goal.target_value} {goal.unit}
+                          </span>
+                        </div>
+                        <Progress value={(goal.current_value / goal.target_value) * 100} className="h-1.5" />
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4">
+                      <p className="text-sm text-muted-foreground">No goals set yet.</p>
+                    </div>
+                  )}
                   <Button variant="outline" size="sm" className="w-full mt-4">
-                    Update Goals
+                    {writingGoals.length > 0 ? 'Update Goals' : 'Set Goals'}
                   </Button>
                 </CardContent>
               </Card>
@@ -333,7 +393,7 @@ function DashboardContent() {
                           key={author.id}
                           name={author.display_name || author.username}
                           specialty={author.specialty || 'Writer'}
-                          location="Unknown"
+                          location={author.location || 'Location not specified'}
                           works={0}
                           followers={0}
                           bio={author.bio || 'No bio available.'}

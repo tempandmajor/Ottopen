@@ -1,6 +1,6 @@
 import { supabase, isSupabaseConfigured } from './supabase'
 import { logError, logInfo } from './logger'
-import type { User, Post, Comment, Like, Follow, Message, Conversation } from './supabase'
+import type { User, Post, Comment, Like, Follow, Message, Conversation, WritingGoal, WritingSession, UserStatistics, ApplicationStatistics } from './supabase'
 
 // Standardized return types for better error handling
 export interface DatabaseResult<T> {
@@ -224,6 +224,17 @@ export class DatabaseService {
       }
 
       logInfo('Post created successfully', { postId: data.id })
+
+      // Update user statistics in the background
+      this.updateUserStatistics(post.user_id).catch(error => {
+        logError('Failed to update user statistics after post creation', error)
+      })
+
+      // Update application statistics in the background
+      this.updateApplicationStatistics().catch(error => {
+        logError('Failed to update application statistics after post creation', error)
+      })
+
       return data
     } catch (error) {
       logError('Create post error', error as Error)
@@ -737,6 +748,299 @@ export class DatabaseService {
     } catch (error) {
       logError('Create or get conversation error', error as Error)
       return null
+    }
+  }
+
+  // Application statistics operations
+  async getApplicationStatistics(): Promise<Record<string, number>> {
+    if (!this.checkSupabaseConfig()) {
+      return {
+        active_writers: 2400,
+        stories_shared: 12000,
+        published_works: 500,
+        total_users: 5000
+      }
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('application_statistics')
+        .select('stat_key, stat_value')
+
+      if (error) {
+        logError('Failed to get application statistics', error)
+        return {}
+      }
+
+      const stats: Record<string, number> = {}
+      data?.forEach(stat => {
+        stats[stat.stat_key] = stat.stat_value
+      })
+
+      return stats
+    } catch (error) {
+      logError('Get application statistics error', error as Error)
+      return {}
+    }
+  }
+
+  async updateApplicationStatistics(): Promise<boolean> {
+    if (!this.checkSupabaseConfig()) {
+      return false
+    }
+
+    try {
+      const { error } = await this.supabase.rpc('update_application_statistics')
+
+      if (error) {
+        logError('Failed to update application statistics', error)
+        return false
+      }
+
+      return true
+    } catch (error) {
+      logError('Update application statistics error', error as Error)
+      return false
+    }
+  }
+
+  // User statistics operations
+  async getUserStatistics(userId: string): Promise<UserStatistics | null> {
+    if (!this.checkSupabaseConfig()) {
+      return null
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('user_statistics')
+        .select('*')
+        .eq('user_id', userId)
+        .single()
+
+      if (error && error.code !== 'PGRST116') {
+        logError('Failed to get user statistics', error)
+        return null
+      }
+
+      return data
+    } catch (error) {
+      logError('Get user statistics error', error as Error)
+      return null
+    }
+  }
+
+  async updateUserStatistics(userId: string): Promise<boolean> {
+    if (!this.checkSupabaseConfig()) {
+      return false
+    }
+
+    try {
+      const { error } = await this.supabase.rpc('update_user_statistics', { target_user_id: userId })
+
+      if (error) {
+        logError('Failed to update user statistics', error)
+        return false
+      }
+
+      return true
+    } catch (error) {
+      logError('Update user statistics error', error as Error)
+      return false
+    }
+  }
+
+  // Writing goals operations
+  async getWritingGoals(userId: string): Promise<WritingGoal[]> {
+    if (!this.checkSupabaseConfig()) {
+      return []
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('writing_goals')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        logError('Failed to get writing goals', error)
+        return []
+      }
+
+      return data || []
+    } catch (error) {
+      logError('Get writing goals error', error as Error)
+      return []
+    }
+  }
+
+  async createWritingGoal(goal: Omit<WritingGoal, 'id' | 'created_at' | 'updated_at'>): Promise<WritingGoal | null> {
+    if (!this.checkSupabaseConfig()) {
+      return null
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('writing_goals')
+        .insert(goal)
+        .select()
+        .single()
+
+      if (error) {
+        logError('Failed to create writing goal', error)
+        return null
+      }
+
+      logInfo('Writing goal created successfully', { goalId: data.id })
+      return data
+    } catch (error) {
+      logError('Create writing goal error', error as Error)
+      return null
+    }
+  }
+
+  async updateWritingGoal(goalId: string, updates: Partial<WritingGoal>): Promise<WritingGoal | null> {
+    if (!this.checkSupabaseConfig()) {
+      return null
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('writing_goals')
+        .update(updates)
+        .eq('id', goalId)
+        .select()
+        .single()
+
+      if (error) {
+        logError('Failed to update writing goal', error)
+        return null
+      }
+
+      logInfo('Writing goal updated successfully', { goalId })
+      return data
+    } catch (error) {
+      logError('Update writing goal error', error as Error)
+      return null
+    }
+  }
+
+  // Writing sessions operations
+  async getWritingSessions(userId: string, limit = 30): Promise<WritingSession[]> {
+    if (!this.checkSupabaseConfig()) {
+      return []
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('writing_sessions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('session_date', { ascending: false })
+        .limit(limit)
+
+      if (error) {
+        logError('Failed to get writing sessions', error)
+        return []
+      }
+
+      return data || []
+    } catch (error) {
+      logError('Get writing sessions error', error as Error)
+      return []
+    }
+  }
+
+  async createWritingSession(session: Omit<WritingSession, 'id' | 'created_at'>): Promise<WritingSession | null> {
+    if (!this.checkSupabaseConfig()) {
+      return null
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('writing_sessions')
+        .insert(session)
+        .select()
+        .single()
+
+      if (error) {
+        logError('Failed to create writing session', error)
+        return null
+      }
+
+      logInfo('Writing session created successfully', { sessionId: data.id })
+      return data
+    } catch (error) {
+      logError('Create writing session error', error as Error)
+      return null
+    }
+  }
+
+  async getWritingStreak(userId: string): Promise<number> {
+    if (!this.checkSupabaseConfig()) {
+      return 0
+    }
+
+    try {
+      const { data, error } = await this.supabase.rpc('calculate_writing_streak', { target_user_id: userId })
+
+      if (error) {
+        logError('Failed to calculate writing streak', error)
+        return 0
+      }
+
+      return data || 0
+    } catch (error) {
+      logError('Calculate writing streak error', error as Error)
+      return 0
+    }
+  }
+
+  // Post view tracking
+  async trackPostView(postId: string, userId?: string, ipAddress?: string, userAgent?: string): Promise<void> {
+    if (!this.checkSupabaseConfig()) {
+      return
+    }
+
+    try {
+      const { error } = await this.supabase
+        .from('post_views')
+        .insert({
+          post_id: postId,
+          user_id: userId,
+          ip_address: ipAddress,
+          user_agent: userAgent,
+        })
+
+      if (error && error.code !== '23505') { // Ignore unique constraint violations (duplicate views)
+        logError('Failed to track post view', error)
+      }
+    } catch (error) {
+      logError('Track post view error', error as Error)
+    }
+  }
+
+  async getPostViews(postId: string): Promise<number> {
+    if (!this.checkSupabaseConfig()) {
+      return 0
+    }
+
+    try {
+      const { count, error } = await this.supabase
+        .from('post_views')
+        .select('*', { count: 'exact', head: true })
+        .eq('post_id', postId)
+
+      if (error) {
+        logError('Failed to get post views', error)
+        return 0
+      }
+
+      return count || 0
+    } catch (error) {
+      logError('Get post views error', error as Error)
+      return 0
     }
   }
 }

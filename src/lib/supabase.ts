@@ -64,6 +64,10 @@ export interface User {
   bio?: string
   specialty?: string
   avatar_url?: string
+  location?: string
+  website_url?: string
+  twitter_handle?: string
+  linkedin_url?: string
   stripe_customer_id?: string
   account_type:
     | 'writer'
@@ -94,6 +98,7 @@ export interface Post {
   user?: User
   likes_count?: number
   comments_count?: number
+  views_count?: number
 }
 
 export interface Comment {
@@ -305,4 +310,61 @@ export interface ReferralMilestone {
   is_claimed: boolean
   claimed_at?: string
   user?: User
+}
+
+// New interfaces for enhanced functionality
+export interface WritingGoal {
+  id: string
+  user_id: string
+  goal_type: string
+  target_value: number
+  current_value: number
+  unit: string
+  period: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface WritingSession {
+  id: string
+  user_id: string
+  words_written: number
+  session_duration_minutes: number
+  session_date: string
+  notes?: string
+  created_at: string
+}
+
+export interface UserStatistics {
+  user_id: string
+  posts_count: number
+  published_posts_count: number
+  followers_count: number
+  following_count: number
+  likes_received_count: number
+  comments_received_count: number
+  current_streak_days: number
+  longest_streak_days: number
+  total_words_written: number
+  manuscripts_count: number
+  last_activity_date?: string
+  updated_at: string
+}
+
+export interface ApplicationStatistics {
+  id: string
+  stat_key: string
+  stat_value: number
+  stat_description?: string
+  updated_at: string
+}
+
+export interface PostView {
+  id: string
+  post_id: string
+  user_id?: string
+  ip_address?: string
+  user_agent?: string
+  viewed_at: string
 }

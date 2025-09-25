@@ -292,10 +292,20 @@ export default function Messages() {
                           </div>
 
                           <div className="flex items-center space-x-2">
-                            <Button variant="ghost" size="sm" className="p-2" disabled>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="p-2"
+                              onClick={() => toast.error('Voice calls coming soon!')}
+                            >
                               <Phone className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" className="p-2" disabled>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="p-2"
+                              onClick={() => toast.error('Video calls coming soon!')}
+                            >
                               <Video className="h-4 w-4" />
                             </Button>
                             <Button variant="ghost" size="sm" className="p-2" asChild>

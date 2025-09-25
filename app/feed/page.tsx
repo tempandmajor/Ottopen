@@ -168,6 +168,7 @@ export default function Feed() {
                           size="sm"
                           className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap"
                           disabled={creatingPost}
+                          onClick={() => toast.error('Image upload coming soon!')}
                         >
                           <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           <span>Image</span>
@@ -177,6 +178,7 @@ export default function Feed() {
                           size="sm"
                           className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap"
                           disabled={creatingPost}
+                          onClick={() => toast.error('Excerpt formatting coming soon!')}
                         >
                           <PenTool className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           <span>Excerpt</span>
@@ -186,6 +188,7 @@ export default function Feed() {
                           size="sm"
                           className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap"
                           disabled={creatingPost}
+                          onClick={() => toast.error('Mood indicators coming soon!')}
                         >
                           <Smile className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           <span>Mood</span>

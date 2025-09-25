@@ -22,6 +22,12 @@ export default function Home() {
   const [recentPosts, setRecentPosts] = useState<Post[]>([])
   const [featuredAuthors, setFeaturedAuthors] = useState<User[]>([])
   const [dataLoading, setDataLoading] = useState(true)
+  const [appStats, setAppStats] = useState({
+    active_writers: 0,
+    stories_shared: 0,
+    published_works: 0,
+    total_users: 0
+  })
 
   console.log('Homepage - userExists:', !!user, 'Loading:', loading)
 
@@ -38,6 +44,10 @@ export default function Home() {
     const loadData = async () => {
       try {
         setDataLoading(true)
+
+        // Load application statistics
+        const stats = await dbService.getApplicationStatistics()
+        setAppStats(stats)
 
         // Load recent posts
         const posts = await dbService.getPosts({ limit: 6, published: true })
@@ -104,15 +114,15 @@ export default function Home() {
               <div className="flex items-center space-x-8 text-sm text-muted-foreground">
                 <div className="flex items-center space-x-2">
                   <TrendingUp className="h-4 w-4" />
-                  <span>2.4k+ Active Writers</span>
+                  <span>{appStats.active_writers > 0 ? `${appStats.active_writers.toLocaleString()}+ Active Writers` : 'Growing Community'}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Star className="h-4 w-4" />
-                  <span>12k+ Stories Shared</span>
+                  <span>{appStats.stories_shared > 0 ? `${appStats.stories_shared.toLocaleString()}+ Stories Shared` : 'Stories Welcome'}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <BookOpen className="h-4 w-4" />
-                  <span>500+ Published</span>
+                  <span>{appStats.published_works > 0 ? `${appStats.published_works.toLocaleString()}+ Published` : 'Success Stories'}</span>
                 </div>
               </div>
             </div>
@@ -223,7 +233,7 @@ export default function Home() {
                         key={author.id}
                         name={author.display_name || author.username}
                         specialty={author.specialty || 'Writer'}
-                        location="Unknown"
+                        location={author.location || 'Location not specified'}
                         works={0}
                         followers={0}
                         bio={author.bio || 'No bio available.'}
