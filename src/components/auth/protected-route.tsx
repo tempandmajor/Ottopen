@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/src/contexts/auth-context'
 
 interface ProtectedRouteProps {
@@ -12,15 +12,24 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children, redirectTo = '/auth/signin' }: ProtectedRouteProps) {
   const { user, loading } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
+  const redirectingRef = useRef(false)
 
   console.log('ProtectedRoute - userExists:', !!user, 'loading:', loading)
 
   useEffect(() => {
     if (!loading && !user) {
-      console.log('ProtectedRoute: No user, redirecting to', redirectTo)
-      router.push(redirectTo)
+      // Avoid redirecting to the same path and avoid multiple triggers
+      if (!redirectingRef.current && pathname !== redirectTo) {
+        console.log('ProtectedRoute: No user, redirecting to', redirectTo)
+        redirectingRef.current = true
+        router.replace(redirectTo)
+      }
+    } else {
+      // Reset when user becomes available or loading resumes
+      redirectingRef.current = false
     }
-  }, [user, loading, router, redirectTo])
+  }, [user, loading, router, redirectTo, pathname])
 
   // Show loading spinner while checking auth
   if (loading) {
@@ -43,15 +52,22 @@ export function ProtectedRoute({ children, redirectTo = '/auth/signin' }: Protec
 export function PublicOnlyRoute({ children, redirectTo = '/feed' }: ProtectedRouteProps) {
   const { user, loading } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
+  const redirectingRef = useRef(false)
 
   console.log('PublicOnlyRoute - userExists:', !!user, 'loading:', loading)
 
   useEffect(() => {
     if (!loading && user) {
-      console.log('PublicOnlyRoute: User exists, redirecting to', redirectTo)
-      router.push(redirectTo)
+      if (!redirectingRef.current && pathname !== redirectTo) {
+        console.log('PublicOnlyRoute: User exists, redirecting to', redirectTo)
+        redirectingRef.current = true
+        router.replace(redirectTo)
+      }
+    } else {
+      redirectingRef.current = false
     }
-  }, [user, loading, router, redirectTo])
+  }, [user, loading, router, redirectTo, pathname])
 
   // Show loading spinner while checking auth
   if (loading) {
