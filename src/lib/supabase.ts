@@ -1,7 +1,14 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
+// Hardcoded configuration as fallback (since bundling is not working)
+const FALLBACK_CONFIG = {
+  url: 'https://wkvatudgffosjfwqyxgt.supabase.co',
+  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrdmF0dWRnZmZvc2pmd3F5eGd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1OTIwNzYsImV4cCI6MjA3NDE2ODA3Nn0.d2KK6lraqrJ519T1ek3tDimJxP7lmNsdUib7l4Dyugs'
+}
+
+// Try to get from environment variables first, fallback to hardcoded values
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || FALLBACK_CONFIG.url
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || FALLBACK_CONFIG.anonKey
 
 // Client-side Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -19,13 +26,14 @@ export const isSupabaseConfigured = () => {
   }
 
   // Check if we have valid (non-placeholder) Supabase credentials
-  const hasValidUrl = process.env.NEXT_PUBLIC_SUPABASE_URL &&
-    process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://your-project.supabase.co' &&
-    !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder')
+  // Either from env vars or fallback config
+  const hasValidUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || FALLBACK_CONFIG.url) &&
+    (process.env.NEXT_PUBLIC_SUPABASE_URL || FALLBACK_CONFIG.url) !== 'https://your-project.supabase.co' &&
+    !(process.env.NEXT_PUBLIC_SUPABASE_URL || FALLBACK_CONFIG.url).includes('placeholder')
 
-  const hasValidKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY !== 'your_anon_key_here' &&
-    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.includes('placeholder')
+  const hasValidKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || FALLBACK_CONFIG.anonKey) &&
+    (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || FALLBACK_CONFIG.anonKey) !== 'your_anon_key_here' &&
+    !(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || FALLBACK_CONFIG.anonKey).includes('placeholder')
 
   return !!(hasValidUrl && hasValidKey)
 }
