@@ -13,7 +13,7 @@ export function ProtectedRoute({ children, redirectTo = '/auth/signin' }: Protec
   const { user, loading } = useAuth()
   const router = useRouter()
 
-  console.log('ProtectedRoute - user:', user ? user.email : 'null', 'loading:', loading)
+  console.log('ProtectedRoute - userExists:', !!user, 'loading:', loading)
 
   useEffect(() => {
     if (!loading && !user) {
@@ -44,7 +44,7 @@ export function PublicOnlyRoute({ children, redirectTo = '/feed' }: ProtectedRou
   const { user, loading } = useAuth()
   const router = useRouter()
 
-  console.log('PublicOnlyRoute - user:', user ? user.email : 'null', 'loading:', loading)
+  console.log('PublicOnlyRoute - userExists:', !!user, 'loading:', loading)
 
   useEffect(() => {
     if (!loading && user) {

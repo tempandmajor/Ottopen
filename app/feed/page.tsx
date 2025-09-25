@@ -28,7 +28,8 @@ export default function Feed() {
   const [hasMore, setHasMore] = useState(true)
   const [page, setPage] = useState(0)
 
-  console.log('Feed page - User:', user ? user.email : 'null')
+  console.log('=== FEED PAGE COMPONENT LOADED ===')
+  console.log('Feed page - userExists:', !!user)
 
   // Load initial data
   useEffect(() => {

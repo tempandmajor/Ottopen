@@ -274,24 +274,25 @@ export const authService = {
         return { valid: false, error: 'User not authenticated' }
       }
 
-      // Create a temporary client for verification without affecting main session
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: currentPassword,
+      // SECURITY FIX: Use server-side verification instead of client-side signin
+      // This approach avoids creating a new session that could interfere with the current one
+      const response = await fetch('/api/auth/verify-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: user.email,
+          password: currentPassword
+        }),
       })
 
-      if (error) {
-        logError('Password verification failed', error)
-        return { valid: false, error: 'Current password is incorrect' }
+      if (!response.ok) {
+        return { valid: false, error: 'Password verification failed' }
       }
 
-      // If successful, immediately sign out the verification session to avoid conflicts
-      if (data.session) {
-        // Don't sign out the main session, just validate the password was correct
-        return { valid: true, error: null }
-      }
-
-      return { valid: false, error: 'Password verification failed' }
+      const result = await response.json()
+      return { valid: result.valid, error: result.error }
     } catch (error) {
       logError('Password verification error', error as Error)
       return { valid: false, error: (error as Error).message }

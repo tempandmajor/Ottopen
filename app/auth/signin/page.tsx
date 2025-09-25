@@ -8,7 +8,8 @@ import { PenTool, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/src/contexts/auth-context'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from '@/src/hooks/use-navigate'
+import { useRateLimit } from '@/src/hooks/use-rate-limit'
 import { toast } from 'react-hot-toast'
 
 export default function SignIn() {
@@ -16,17 +17,26 @@ export default function SignIn() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [redirecting, setRedirecting] = useState(false)
 
   const { signIn, user, loading } = useAuth()
-  const router = useRouter()
+  const navigate = useNavigate()
+
+  // Rate limiting for signin attempts
+  const rateLimiter = useRateLimit({
+    maxAttempts: 5,
+    windowMs: 60 * 1000, // 1 minute
+    storageKey: 'signin-rate-limit',
+  })
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (!loading && user) {
+    if (!loading && user && !redirecting) {
       console.log('SignIn: User already authenticated, redirecting to feed')
-      router.push('/feed')
+      setRedirecting(true)
+      navigate('/feed', { replace: true })
     }
-  }, [user, loading, router])
+  }, [user, loading, redirecting, navigate])
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,9 +46,15 @@ export default function SignIn() {
       return
     }
 
-    console.log('=== SIGNIN FORM SUBMIT ===')
-    console.log('Email:', email)
+    // Check rate limiting
+    if (!rateLimiter.canAttempt) {
+      toast.error(
+        `Too many attempts. Please wait ${rateLimiter.remainingTime} seconds before trying again.`
+      )
+      return
+    }
 
+    console.log('=== SIGNIN FORM SUBMIT ===')
     setSubmitting(true)
 
     try {
@@ -46,18 +62,27 @@ export default function SignIn() {
       console.log('SignIn result:', result)
 
       if (result.success) {
-        console.log('SignIn successful - redirecting to feed')
+        console.log('SignIn successful - navigating to feed')
         toast.success('Signed in successfully!')
 
-        // Simple immediate redirect
-        router.push('/feed')
+        // Reset rate limiter on success
+        rateLimiter.recordAttempt(true)
+
+        // Navigate to feed with consistent pattern
+        navigate('/feed', { replace: true })
       } else {
         console.log('SignIn failed:', result.error)
         toast.error(result.error || 'Sign in failed')
+
+        // Record failed attempt
+        rateLimiter.recordAttempt(false)
       }
     } catch (error) {
       console.error('SignIn form error:', error)
       toast.error('An unexpected error occurred')
+
+      // Record failed attempt
+      rateLimiter.recordAttempt(false)
     } finally {
       setSubmitting(false)
     }
@@ -140,9 +165,31 @@ export default function SignIn() {
                 </Link>
               </div>
 
-              <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting ? 'Signing in...' : 'Sign In'}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={submitting || !rateLimiter.canAttempt}
+              >
+                {submitting
+                  ? 'Signing in...'
+                  : !rateLimiter.canAttempt
+                  ? `Wait ${rateLimiter.remainingTime}s`
+                  : 'Sign In'
+                }
               </Button>
+
+              {/* Rate limit feedback */}
+              {rateLimiter.attemptCount > 0 && rateLimiter.canAttempt && (
+                <p className="text-xs text-muted-foreground text-center mt-2">
+                  {rateLimiter.attemptsRemaining} attempts remaining
+                </p>
+              )}
+
+              {!rateLimiter.canAttempt && (
+                <p className="text-xs text-destructive text-center mt-2">
+                  Too many failed attempts. Please wait {rateLimiter.remainingTime} seconds.
+                </p>
+              )}
             </form>
 
             <div className="text-center text-sm">

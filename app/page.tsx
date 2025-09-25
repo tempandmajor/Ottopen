@@ -11,27 +11,27 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useAuth } from '@/src/contexts/auth-context'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from '@/src/hooks/use-navigate'
 import { dbService } from '@/src/lib/database'
 import type { User, Post } from '@/src/lib/supabase'
 
 export default function Home() {
   const { user, loading } = useAuth()
-  const router = useRouter()
+  const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const [recentPosts, setRecentPosts] = useState<Post[]>([])
   const [featuredAuthors, setFeaturedAuthors] = useState<User[]>([])
   const [dataLoading, setDataLoading] = useState(true)
 
-  console.log('Homepage - User:', user ? user.email : 'null', 'Loading:', loading)
+  console.log('Homepage - userExists:', !!user, 'Loading:', loading)
 
   // Redirect authenticated users to feed
   useEffect(() => {
     if (!loading && user) {
       console.log('Homepage: User is authenticated, redirecting to feed')
-      router.push('/feed')
+      navigate('/feed', { replace: true })
     }
-  }, [user, loading, router])
+  }, [user, loading, navigate])
 
   // Load data on component mount
   useEffect(() => {

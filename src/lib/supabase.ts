@@ -10,16 +10,17 @@ function getSupabaseConfig() {
     return { url: envUrl, anonKey: envKey }
   }
 
-  // Fallback: Only in development or when explicitly allowed
-  if (process.env.NODE_ENV === 'development' || process.env.ALLOW_FALLBACK_CONFIG === 'true') {
-    console.warn(
-      '⚠️  Using fallback Supabase configuration. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY for production.'
-    )
-    return {
-      url: 'https://wkvatudgffosjfwqyxgt.supabase.co',
-      anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrdmF0dWRnZmZvc2pmd3F5eGd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1OTIwNzYsImV4cCI6MjA3NDE2ODA3Nn0.d2KK6lraqrJ519T1ek3tDimJxP7lmNsdUib7l4Dyugs',
+  // Development fallback - use environment variables if available
+  if (process.env.NODE_ENV === 'development') {
+    const fallbackUrl = process.env.SUPABASE_FALLBACK_URL
+    const fallbackKey = process.env.SUPABASE_FALLBACK_ANON_KEY
+
+    if (fallbackUrl && fallbackKey) {
+      console.warn('⚠️  Using fallback Supabase configuration from environment.')
+      return { url: fallbackUrl, anonKey: fallbackKey }
     }
+
+    console.warn('⚠️  No Supabase configuration found. Please set environment variables.')
   }
 
   throw new Error(
