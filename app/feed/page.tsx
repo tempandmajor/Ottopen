@@ -222,14 +222,34 @@ export default function Feed() {
                           className="hidden"
                           onChange={e => {
                             const file = e.target.files?.[0] || null
+                            if (!file) {
+                              setImageFile(null)
+                              setImagePreview('')
+                              return
+                            }
+                            const allowed = ['image/jpeg', 'image/png', 'image/webp']
+                            const maxBytes = 5 * 1024 * 1024
+                            if (!allowed.includes(file.type)) {
+                              toast.error('Unsupported image type. Use JPG, PNG, or WebP')
+                              ;(e.target as HTMLInputElement).value = ''
+                              setImageFile(null)
+                              setImagePreview('')
+                              return
+                            }
+                            if (file.size > maxBytes) {
+                              toast.error('Image too large. Max size is 5MB')
+                              ;(e.target as HTMLInputElement).value = ''
+                              setImageFile(null)
+                              setImagePreview('')
+                              return
+                            }
                             setImageFile(file)
-                            setImagePreview(file ? URL.createObjectURL(file) : '')
+                            setImagePreview(URL.createObjectURL(file))
                           }}
                         />
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap"
                           disabled={creatingPost || uploadingImage}
                           onClick={() => document.getElementById('post-image-input')?.click()}
                         >

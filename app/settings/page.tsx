@@ -128,6 +128,49 @@ export default function Settings() {
     }
   }, [currentUser])
 
+  // Load notification settings from database (self-only)
+  const loadNotificationSettings = async () => {
+    if (!currentUser?.profile) return
+    try {
+      const settings = await dbService.getNotificationSettings(currentUser.profile.id)
+      if (settings) {
+        setNotificationSettings({
+          emailNotifications: settings.email_notifications,
+          pushNotifications: settings.push_notifications,
+          newFollowers: settings.new_followers,
+          newMessages: settings.new_messages,
+          postLikes: settings.post_likes,
+          postComments: settings.post_comments,
+          mentions: settings.mentions,
+          newsletter: settings.newsletter,
+        })
+      }
+    } catch (error) {
+      console.warn('Failed to load notification settings', error)
+      toast.error('Failed to load notification settings')
+    }
+  }
+
+  // Load privacy settings from database (self-only)
+  const loadPrivacySettings = async () => {
+    if (!currentUser?.profile) return
+    try {
+      const settings = await dbService.getPrivacySettings(currentUser.profile.id)
+      if (settings) {
+        setPrivacySettings({
+          profileVisibility: settings.profile_visibility,
+          showEmail: settings.show_email,
+          showFollowers: settings.show_followers,
+          allowMessages: settings.allow_messages,
+          searchable: settings.searchable,
+        })
+      }
+    } catch (error) {
+      console.warn('Failed to load privacy settings', error)
+      toast.error('Failed to load privacy settings')
+    }
+  }
+
   // Handle URL parameters for tab switching (e.g., returning from Stripe)
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
@@ -445,6 +488,17 @@ export default function Settings() {
                             if (!file || !currentUser?.profile) return
                             try {
                               setAvatarUploading(true)
+                              // Validate type and size
+                              const allowed = ['image/jpeg', 'image/png', 'image/webp']
+                              if (!allowed.includes(file.type)) {
+                                toast.error('Unsupported image type. Use JPG, PNG, or WebP')
+                                return
+                              }
+                              const maxBytes = 5 * 1024 * 1024 // 5MB
+                              if (file.size > maxBytes) {
+                                toast.error('Image too large. Max size is 5MB')
+                                return
+                              }
                               const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
                               const path = `${currentUser.profile.id}/avatar.${ext}`
                               // Upload to avatars bucket; upsert to replace existing
