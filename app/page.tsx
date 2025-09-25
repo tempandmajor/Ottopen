@@ -47,7 +47,12 @@ export default function Home() {
 
         // Load application statistics
         const stats = await dbService.getApplicationStatistics()
-        setAppStats(stats)
+        setAppStats({
+          active_writers: stats.active_writers || 0,
+          stories_shared: stats.stories_shared || 0,
+          published_works: stats.published_works || 0,
+          total_users: stats.total_users || 0
+        })
 
         // Load recent posts
         const posts = await dbService.getPosts({ limit: 6, published: true })
