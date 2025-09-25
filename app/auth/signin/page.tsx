@@ -73,11 +73,11 @@ export default function SignIn() {
       toast.success('Signed in successfully!')
 
       console.log('Waiting for auth state to update...')
-      // Test redirect to non-protected page first
+      // Redirect to feed page after successful signin - increased delay for auth state sync
       setTimeout(() => {
-        console.log('Attempting redirect to homepage...')
-        router.push('/')
-      }, 1000)
+        console.log('Attempting redirect to feed page...')
+        router.push('/feed')
+      }, 2000)
     } catch (error) {
       console.log('SignIn exception:', error)
       toast.error('An unexpected error occurred')

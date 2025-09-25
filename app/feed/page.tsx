@@ -13,6 +13,7 @@ import { useAuth } from '@/src/contexts/auth-context'
 import { useState, useEffect } from 'react'
 import { dbService } from '@/src/lib/database'
 import type { User, Post } from '@/src/lib/supabase'
+import { isSupabaseConfigured } from '@/src/lib/supabase'
 import { toast } from 'react-hot-toast'
 import Link from 'next/link'
 
@@ -27,6 +28,11 @@ export default function Feed() {
   const [hasMore, setHasMore] = useState(true)
   const [page, setPage] = useState(0)
 
+  console.log('=== FEED PAGE RENDER ===')
+  console.log('User:', user ? { id: user.id, email: user.email, hasProfile: !!user.profile } : 'null')
+  console.log('Loading:', loading)
+  console.log('Supabase configured:', isSupabaseConfigured())
+
   // Load initial data
   useEffect(() => {
     if (user) {
@@ -36,16 +42,22 @@ export default function Feed() {
   }, [user])
 
   const loadFeedData = async (pageNum = 0) => {
+    console.log('=== LOAD FEED DATA ===')
+    console.log('Page:', pageNum)
+    console.log('User available:', !!user)
+
     try {
       setLoading(pageNum === 0)
       setLoadingMore(pageNum > 0)
 
       // Load posts from followed users (for now, load all published posts)
+      console.log('Calling dbService.getPosts...')
       const feedPosts = await dbService.getPosts({
         limit: 10,
         offset: pageNum * 10,
         published: true,
       })
+      console.log('Got posts:', feedPosts.length)
 
       if (pageNum === 0) {
         setPosts(feedPosts)

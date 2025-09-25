@@ -13,8 +13,14 @@ export function ProtectedRoute({ children, redirectTo = '/auth/signin' }: Protec
   const { user, loading } = useAuth()
   const router = useRouter()
 
+  console.log('=== PROTECTED ROUTE ===')
+  console.log('User:', user ? { id: user.id, email: user.email } : 'null')
+  console.log('Loading:', loading)
+  console.log('Will redirect:', !loading && !user)
+
   useEffect(() => {
     if (!loading && !user) {
+      console.log('ProtectedRoute: Redirecting to', redirectTo)
       router.push(redirectTo)
     }
   }, [user, loading, router, redirectTo])
