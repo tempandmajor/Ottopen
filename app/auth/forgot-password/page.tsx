@@ -1,49 +1,52 @@
-"use client";
+'use client'
 
-import { Button } from "@/src/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
-import { Input } from "@/src/components/ui/input";
-import { Label } from "@/src/components/ui/label";
-import { PenTool, ArrowLeft, Mail, CheckCircle } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
-import { useAuth } from "@/src/contexts/auth-context";
-import { toast } from "react-hot-toast";
+import { Button } from '@/src/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card'
+import { Input } from '@/src/components/ui/input'
+import { Label } from '@/src/components/ui/label'
+import { PenTool, ArrowLeft, Mail, CheckCircle } from 'lucide-react'
+import Link from 'next/link'
+import { useState } from 'react'
+import { useAuth } from '@/src/contexts/auth-context'
+import { toast } from 'react-hot-toast'
 
 export default function ForgotPassword() {
-  const [email, setEmail] = useState("");
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('')
+  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [loading, setLoading] = useState(false)
 
-  const { forgotPassword } = useAuth();
+  const { forgotPassword } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+    e.preventDefault()
+    setLoading(true)
 
     try {
-      const { error } = await forgotPassword(email);
+      const { error } = await forgotPassword(email)
 
       if (error) {
-        toast.error(error);
-        return;
+        toast.error(error)
+        return
       }
 
-      setIsSubmitted(true);
-      toast.success("Password reset email sent!");
+      setIsSubmitted(true)
+      toast.success('Password reset email sent!')
     } catch (error) {
-      toast.error("An unexpected error occurred");
+      toast.error('An unexpected error occurred')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   if (isSubmitted) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="w-full max-w-md space-y-6">
           <div className="text-center space-y-2">
-            <Link href="/" className="inline-flex items-center space-x-2 hover:opacity-80 transition-opacity">
+            <Link
+              href="/"
+              className="inline-flex items-center space-x-2 hover:opacity-80 transition-opacity"
+            >
               <PenTool className="h-8 w-8" />
               <h1 className="font-serif text-2xl font-semibold">Ottopen</h1>
             </Link>
@@ -56,7 +59,7 @@ export default function ForgotPassword() {
               </div>
               <h2 className="text-xl font-semibold">Check your email</h2>
               <p className="text-muted-foreground">
-                We&apos;ve sent a password reset link to{" "}
+                We&apos;ve sent a password reset link to{' '}
                 <span className="font-medium text-foreground">{email}</span>
               </p>
               <div className="space-y-3">
@@ -74,7 +77,7 @@ export default function ForgotPassword() {
                 </Button>
               </div>
               <p className="text-sm text-muted-foreground">
-                Didn&apos;t receive the email? Check your spam folder or{" "}
+                Didn&apos;t receive the email? Check your spam folder or{' '}
                 <button
                   onClick={() => setIsSubmitted(false)}
                   className="text-primary hover:underline"
@@ -86,7 +89,7 @@ export default function ForgotPassword() {
           </Card>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -94,7 +97,10 @@ export default function ForgotPassword() {
       <div className="w-full max-w-md space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <Link href="/" className="inline-flex items-center space-x-2 hover:opacity-80 transition-opacity">
+          <Link
+            href="/"
+            className="inline-flex items-center space-x-2 hover:opacity-80 transition-opacity"
+          >
             <PenTool className="h-8 w-8" />
             <h1 className="font-serif text-2xl font-semibold">Ottopen</h1>
           </Link>
@@ -118,14 +124,14 @@ export default function ForgotPassword() {
                   type="email"
                   placeholder="Enter your email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={e => setEmail(e.target.value)}
                   className="border-literary-border"
                   required
                 />
               </div>
 
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Sending..." : "Send reset link"}
+                {loading ? 'Sending...' : 'Send reset link'}
               </Button>
             </form>
 
@@ -142,5 +148,5 @@ export default function ForgotPassword() {
         </Card>
       </div>
     </div>
-  );
+  )
 }

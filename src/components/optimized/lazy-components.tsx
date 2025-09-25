@@ -32,7 +32,7 @@ export function LazyLoad({
   const [hasTriggered, setHasTriggered] = useState(false)
 
   const setElement = useIntersectionObserver(
-    (entry) => {
+    entry => {
       if (entry.isIntersecting) {
         setIsVisible(true)
         if (triggerOnce) {
@@ -52,11 +52,7 @@ export function LazyLoad({
     return <>{children}</>
   }
 
-  return (
-    <div ref={setElement}>
-      {isVisible ? children : fallback}
-    </div>
-  )
+  return <div ref={setElement}>{isVisible ? children : fallback}</div>
 }
 
 // Lazy loading container for lists
@@ -94,7 +90,7 @@ export function LazyList<T>({
   }, [hasMore, onLoadMore, loading, batchSize, items.length])
 
   const setTriggerElement = useIntersectionObserver(
-    (entry) => {
+    entry => {
       if (entry.isIntersecting) {
         handleLoadMore()
       }
@@ -127,7 +123,7 @@ export function LazyList<T>({
           ref={setTriggerElement}
           className="h-4 w-full"
           style={{
-            marginTop: `${loadMoreThreshold * 100}px`
+            marginTop: `${loadMoreThreshold * 100}px`,
           }}
         />
       )}

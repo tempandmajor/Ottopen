@@ -1,6 +1,11 @@
 'use client'
 
-import { useQuery, useInfiniteQuery, UseQueryOptions, UseInfiniteQueryOptions } from '@tanstack/react-query'
+import {
+  useQuery,
+  useInfiniteQuery,
+  UseQueryOptions,
+  UseInfiniteQueryOptions,
+} from '@tanstack/react-query'
 import { useEffect, useRef } from 'react'
 import { monitoring } from '@/src/lib/monitoring'
 
@@ -50,7 +55,7 @@ export function useOptimizedQuery<T>(
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: options?.retryOnError ? 3 : false,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
     ...options,
   })
 
@@ -66,7 +71,8 @@ export function useOptimizedQuery<T>(
   return result
 }
 
-interface OptimizedInfiniteQueryOptions<T> extends Omit<UseInfiniteQueryOptions<T>, 'queryKey' | 'queryFn'> {
+interface OptimizedInfiniteQueryOptions<T>
+  extends Omit<UseInfiniteQueryOptions<T>, 'queryKey' | 'queryFn'> {
   trackPerformance?: boolean
 }
 

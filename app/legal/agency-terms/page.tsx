@@ -1,9 +1,9 @@
-"use client";
+'use client'
 
-import { Navigation } from "@/src/components/navigation";
-import { Footer } from "@/src/components/footer";
-import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
-import { AlertTriangle, Shield, FileText, Users } from "lucide-react";
+import { Navigation } from '@/src/components/navigation'
+import { Footer } from '@/src/components/footer'
+import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card'
+import { AlertTriangle, Shield, FileText, Users } from 'lucide-react'
 
 export default function AgencyTerms() {
   return (
@@ -13,9 +13,12 @@ export default function AgencyTerms() {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
-            <h1 className="font-serif text-3xl font-bold mb-4">Literary Agency Terms & Submission Guidelines</h1>
+            <h1 className="font-serif text-3xl font-bold mb-4">
+              Literary Agency Terms & Submission Guidelines
+            </h1>
             <p className="text-muted-foreground text-lg">
-              Important legal information for writers submitting manuscripts to Ottopen Literary Services
+              Important legal information for writers submitting manuscripts to Ottopen Literary
+              Services
             </p>
           </div>
 
@@ -32,8 +35,8 @@ export default function AgencyTerms() {
                 By submitting material to Ottopen, you acknowledge and agree to these terms.
               </p>
               <p>
-                We strongly recommend reading this entire document before submitting any creative work.
-                Submission constitutes acceptance of all terms herein.
+                We strongly recommend reading this entire document before submitting any creative
+                work. Submission constitutes acceptance of all terms herein.
               </p>
             </CardContent>
           </Card>
@@ -53,19 +56,25 @@ export default function AgencyTerms() {
                   <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                     <li>You retain all copyright and ownership of your submitted material</li>
                     <li>Ottopen will not share your work publicly or with unauthorized parties</li>
-                    <li>Access is limited to verified agents, publishers, and industry professionals</li>
+                    <li>
+                      Access is limited to verified agents, publishers, and industry professionals
+                    </li>
                     <li>All recipients are bound by confidentiality agreements</li>
-                    <li>We recommend registering copyrights before submission for additional protection</li>
+                    <li>
+                      We recommend registering copyrights before submission for additional
+                      protection
+                    </li>
                   </ul>
                 </div>
 
                 <div>
                   <h3 className="font-semibold mb-2">Industry Standard Disclaimer</h3>
                   <p className="text-sm text-muted-foreground bg-muted p-4 rounded-lg">
-                    <strong>IMPORTANT:</strong> Ottopen Literary Services receives numerous submissions and ideas.
-                    While we take reasonable precautions to protect submitted materials, we cannot guarantee
-                    that ideas, themes, or concepts have not been independently developed by others. By submitting
-                    material, you acknowledge that similar works may exist or be developed independently.
+                    <strong>IMPORTANT:</strong> Ottopen Literary Services receives numerous
+                    submissions and ideas. While we take reasonable precautions to protect submitted
+                    materials, we cannot guarantee that ideas, themes, or concepts have not been
+                    independently developed by others. By submitting material, you acknowledge that
+                    similar works may exist or be developed independently.
                   </p>
                 </div>
               </CardContent>
@@ -107,7 +116,9 @@ export default function AgencyTerms() {
                 </div>
 
                 <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
-                  <h3 className="font-semibold mb-2 text-red-700 dark:text-red-400">Do NOT Submit:</h3>
+                  <h3 className="font-semibold mb-2 text-red-700 dark:text-red-400">
+                    Do NOT Submit:
+                  </h3>
                   <ul className="list-disc list-inside text-sm text-red-600 dark:text-red-300 space-y-1">
                     <li>Complete manuscripts or full scripts initially</li>
                     <li>Material you do not own or control</li>
@@ -131,11 +142,22 @@ export default function AgencyTerms() {
                 <div>
                   <h3 className="font-semibold mb-2">Representation Agreement</h3>
                   <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                    <li><strong>Commission Structure:</strong> 15% for primary representation</li>
-                    <li><strong>Co-Agent Relationships:</strong> 7.5% split when working with external agents</li>
-                    <li><strong>Territory:</strong> Worldwide rights unless specifically limited</li>
-                    <li><strong>Duration:</strong> Typically 1-2 years with renewal options</li>
-                    <li><strong>Termination:</strong> 30-day written notice by either party</li>
+                    <li>
+                      <strong>Commission Structure:</strong> 15% for primary representation
+                    </li>
+                    <li>
+                      <strong>Co-Agent Relationships:</strong> 7.5% split when working with external
+                      agents
+                    </li>
+                    <li>
+                      <strong>Territory:</strong> Worldwide rights unless specifically limited
+                    </li>
+                    <li>
+                      <strong>Duration:</strong> Typically 1-2 years with renewal options
+                    </li>
+                    <li>
+                      <strong>Termination:</strong> 30-day written notice by either party
+                    </li>
                   </ul>
                 </div>
 
@@ -171,31 +193,31 @@ export default function AgencyTerms() {
               <CardContent className="space-y-4">
                 <div className="text-sm text-muted-foreground space-y-4">
                   <p>
-                    <strong>No Guarantee of Sale:</strong> While we will make professional efforts to market
-                    your material, we cannot guarantee publication, production, or sale. The entertainment
-                    and publishing industries are highly competitive.
+                    <strong>No Guarantee of Sale:</strong> While we will make professional efforts
+                    to market your material, we cannot guarantee publication, production, or sale.
+                    The entertainment and publishing industries are highly competitive.
                   </p>
 
                   <p>
-                    <strong>Evaluation Process:</strong> Not all submitted material will be accepted for
-                    representation. Our decision to represent is based on commercial viability, market
-                    conditions, and agency capacity.
+                    <strong>Evaluation Process:</strong> Not all submitted material will be accepted
+                    for representation. Our decision to represent is based on commercial viability,
+                    market conditions, and agency capacity.
                   </p>
 
                   <p>
-                    <strong>Response Time:</strong> We aim to respond to submissions within 4-6 weeks.
-                    No response after 8 weeks should be considered a pass.
+                    <strong>Response Time:</strong> We aim to respond to submissions within 4-6
+                    weeks. No response after 8 weeks should be considered a pass.
                   </p>
 
                   <p>
-                    <strong>Confidentiality:</strong> While we maintain confidentiality, the nature of
-                    the business requires sharing material with potential buyers. All recipients are
-                    professional industry contacts.
+                    <strong>Confidentiality:</strong> While we maintain confidentiality, the nature
+                    of the business requires sharing material with potential buyers. All recipients
+                    are professional industry contacts.
                   </p>
 
                   <p>
-                    <strong>Governing Law:</strong> These terms are governed by the laws of [Your State/Country].
-                    Any disputes will be resolved through binding arbitration.
+                    <strong>Governing Law:</strong> These terms are governed by the laws of [Your
+                    State/Country]. Any disputes will be resolved through binding arbitration.
                   </p>
                 </div>
               </CardContent>
@@ -208,7 +230,9 @@ export default function AgencyTerms() {
               </CardHeader>
               <CardContent>
                 <div className="text-sm space-y-2">
-                  <p><strong>Ottopen Literary Services</strong></p>
+                  <p>
+                    <strong>Ottopen Literary Services</strong>
+                  </p>
                   <p>Email: agents@ottopen.com</p>
                   <p>For questions about these terms: legal@ottopen.com</p>
                   <p>Last updated: {new Date().toLocaleDateString()}</p>
@@ -221,5 +245,5 @@ export default function AgencyTerms() {
 
       <Footer />
     </div>
-  );
+  )
 }

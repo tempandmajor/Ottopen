@@ -1,17 +1,23 @@
-"use client";
+'use client'
 
-import { Navigation } from "@/src/components/navigation";
-import { Footer } from "@/src/components/footer";
-import { ProtectedRoute } from "@/src/components/auth/protected-route";
-import { Button } from "@/src/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
-import { Input } from "@/src/components/ui/input";
-import { Label } from "@/src/components/ui/label";
-import { Textarea } from "@/src/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/tabs";
-import { Badge } from "@/src/components/ui/badge";
-import { Separator } from "@/src/components/ui/separator";
+import { Navigation } from '@/src/components/navigation'
+import { Footer } from '@/src/components/footer'
+import { ProtectedRoute } from '@/src/components/auth/protected-route'
+import { Button } from '@/src/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card'
+import { Input } from '@/src/components/ui/input'
+import { Label } from '@/src/components/ui/label'
+import { Textarea } from '@/src/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/src/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/components/ui/tabs'
+import { Badge } from '@/src/components/ui/badge'
+import { Separator } from '@/src/components/ui/separator'
 import {
   FileText,
   Upload,
@@ -22,55 +28,55 @@ import {
   Crown,
   Plus,
   ExternalLink,
-  Shield
-} from "lucide-react";
-import { useState, useEffect } from "react";
-import { useAuth } from "@/src/contexts/auth-context";
-import { toast } from "react-hot-toast";
+  Shield,
+} from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useAuth } from '@/src/contexts/auth-context'
+import { toast } from 'react-hot-toast'
 
 interface Manuscript {
-  id: string;
-  title: string;
-  logline: string;
-  synopsis: string;
-  genre: string;
-  type: string;
-  pageCount: number;
-  status: string;
-  createdAt: string;
+  id: string
+  title: string
+  logline: string
+  synopsis: string
+  genre: string
+  type: string
+  pageCount: number
+  status: string
+  createdAt: string
 }
 
 interface Submission {
-  id: string;
-  manuscriptTitle: string;
-  status: string;
-  submittedAt: string;
-  reviewerNotes?: string;
+  id: string
+  manuscriptTitle: string
+  status: string
+  submittedAt: string
+  reviewerNotes?: string
 }
 
 export default function Submissions() {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("my-submissions");
-  const [manuscripts, setManuscripts] = useState<Manuscript[]>([]);
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth()
+  const [activeTab, setActiveTab] = useState('my-submissions')
+  const [manuscripts, setManuscripts] = useState<Manuscript[]>([])
+  const [submissions, setSubmissions] = useState<Submission[]>([])
+  const [loading, setLoading] = useState(true)
 
   // New submission form state
   const [newSubmission, setNewSubmission] = useState({
-    title: "",
-    logline: "",
-    synopsis: "",
-    genre: "",
-    type: "",
-    pageCount: "",
-    targetAudience: "",
-    comparableWorks: "",
-    authorBio: "",
-    queryLetter: ""
-  });
+    title: '',
+    logline: '',
+    synopsis: '',
+    genre: '',
+    type: '',
+    pageCount: '',
+    targetAudience: '',
+    comparableWorks: '',
+    authorBio: '',
+    queryLetter: '',
+  })
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false)
 
   // Mock data for demo
   useEffect(() => {
@@ -78,101 +84,102 @@ export default function Submissions() {
     setTimeout(() => {
       setManuscripts([
         {
-          id: "1",
-          title: "The Last Chapter",
-          logline: "A struggling writer discovers their fictional characters are real and living in a parallel dimension.",
-          synopsis: "When novelist Sarah Chen begins experiencing strange visions...",
-          genre: "Fantasy",
-          type: "book",
+          id: '1',
+          title: 'The Last Chapter',
+          logline:
+            'A struggling writer discovers their fictional characters are real and living in a parallel dimension.',
+          synopsis: 'When novelist Sarah Chen begins experiencing strange visions...',
+          genre: 'Fantasy',
+          type: 'book',
           pageCount: 320,
-          status: "submitted",
-          createdAt: "2024-01-15"
-        }
-      ]);
+          status: 'submitted',
+          createdAt: '2024-01-15',
+        },
+      ])
 
       setSubmissions([
         {
-          id: "1",
-          manuscriptTitle: "The Last Chapter",
-          status: "under_review",
-          submittedAt: "2024-01-15",
-          reviewerNotes: "Interesting premise. Awaiting full evaluation."
-        }
-      ]);
+          id: '1',
+          manuscriptTitle: 'The Last Chapter',
+          status: 'under_review',
+          submittedAt: '2024-01-15',
+          reviewerNotes: 'Interesting premise. Awaiting full evaluation.',
+        },
+      ])
 
-      setLoading(false);
-    }, 1000);
-  }, []);
+      setLoading(false)
+    }, 1000)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     if (!hasAcceptedTerms) {
-      toast.error("Please accept the agency terms and conditions");
-      return;
+      toast.error('Please accept the agency terms and conditions')
+      return
     }
 
-    setIsSubmitting(true);
+    setIsSubmitting(true)
 
     try {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 2000))
 
-      toast.success("Submission received! We'll review your material within 4-6 weeks.");
+      toast.success("Submission received! We'll review your material within 4-6 weeks.")
 
       // Reset form
       setNewSubmission({
-        title: "",
-        logline: "",
-        synopsis: "",
-        genre: "",
-        type: "",
-        pageCount: "",
-        targetAudience: "",
-        comparableWorks: "",
-        authorBio: "",
-        queryLetter: ""
-      });
-      setHasAcceptedTerms(false);
+        title: '',
+        logline: '',
+        synopsis: '',
+        genre: '',
+        type: '',
+        pageCount: '',
+        targetAudience: '',
+        comparableWorks: '',
+        authorBio: '',
+        queryLetter: '',
+      })
+      setHasAcceptedTerms(false)
 
       // Switch to submissions tab
-      setActiveTab("my-submissions");
+      setActiveTab('my-submissions')
     } catch (error) {
-      toast.error("Failed to submit. Please try again.");
+      toast.error('Failed to submit. Please try again.')
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "pending":
-        return <Clock className="h-4 w-4 text-yellow-600" />;
-      case "under_review":
-        return <AlertCircle className="h-4 w-4 text-blue-600" />;
-      case "accepted":
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case "rejected":
-        return <XCircle className="h-4 w-4 text-red-600" />;
+      case 'pending':
+        return <Clock className="h-4 w-4 text-yellow-600" />
+      case 'under_review':
+        return <AlertCircle className="h-4 w-4 text-blue-600" />
+      case 'accepted':
+        return <CheckCircle className="h-4 w-4 text-green-600" />
+      case 'rejected':
+        return <XCircle className="h-4 w-4 text-red-600" />
       default:
-        return <Clock className="h-4 w-4 text-gray-600" />;
+        return <Clock className="h-4 w-4 text-gray-600" />
     }
-  };
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "pending":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800";
-      case "under_review":
-        return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800";
-      case "accepted":
-        return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800";
-      case "rejected":
-        return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800";
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800'
+      case 'under_review':
+        return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800'
+      case 'accepted':
+        return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800'
+      case 'rejected':
+        return 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800'
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800";
+        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800'
     }
-  };
+  }
 
   if (loading) {
     return (
@@ -187,7 +194,7 @@ export default function Submissions() {
           </div>
         </div>
       </ProtectedRoute>
-    );
+    )
   }
 
   return (
@@ -212,15 +219,15 @@ export default function Submissions() {
                   <div className="text-blue-700 dark:text-blue-300">
                     <p className="font-medium mb-1">Your IP is Protected</p>
                     <p className="text-sm">
-                      All submissions are confidential and only shared with verified industry professionals.
-                      You retain all rights to your work. See our{" "}
+                      All submissions are confidential and only shared with verified industry
+                      professionals. You retain all rights to your work. See our{' '}
                       <Button
                         variant="link"
                         className="h-auto p-0 text-blue-700 dark:text-blue-300 underline"
                         onClick={() => window.open('/legal/agency-terms', '_blank')}
                       >
                         Agency Terms
-                      </Button>{" "}
+                      </Button>{' '}
                       for complete details.
                     </p>
                   </div>
@@ -260,19 +267,25 @@ export default function Submissions() {
                         <p className="text-muted-foreground mb-4">
                           Ready to share your work with industry professionals?
                         </p>
-                        <Button onClick={() => setActiveTab("new-submission")}>
+                        <Button onClick={() => setActiveTab('new-submission')}>
                           Create Your First Submission
                         </Button>
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {submissions.map((submission) => (
-                          <div key={submission.id} className="border border-literary-border rounded-lg p-4">
+                        {submissions.map(submission => (
+                          <div
+                            key={submission.id}
+                            className="border border-literary-border rounded-lg p-4"
+                          >
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
                                 <h3 className="font-semibold mb-2">{submission.manuscriptTitle}</h3>
                                 <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2">
-                                  <span>Submitted: {new Date(submission.submittedAt).toLocaleDateString()}</span>
+                                  <span>
+                                    Submitted:{' '}
+                                    {new Date(submission.submittedAt).toLocaleDateString()}
+                                  </span>
                                 </div>
                                 {submission.reviewerNotes && (
                                   <p className="text-sm text-muted-foreground bg-muted p-3 rounded">
@@ -282,7 +295,10 @@ export default function Submissions() {
                               </div>
                               <div className="flex items-center space-x-2">
                                 {getStatusIcon(submission.status)}
-                                <Badge variant="outline" className={getStatusColor(submission.status)}>
+                                <Badge
+                                  variant="outline"
+                                  className={getStatusColor(submission.status)}
+                                >
                                   {submission.status.replace('_', ' ')}
                                 </Badge>
                               </div>
@@ -301,7 +317,8 @@ export default function Submissions() {
                   <CardHeader>
                     <CardTitle>Submit New Manuscript</CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      Follow industry best practices - submit query materials first, not full manuscripts.
+                      Follow industry best practices - submit query materials first, not full
+                      manuscripts.
                     </p>
                   </CardHeader>
                   <CardContent>
@@ -312,7 +329,9 @@ export default function Submissions() {
                           <Input
                             id="title"
                             value={newSubmission.title}
-                            onChange={(e) => setNewSubmission(prev => ({ ...prev, title: e.target.value }))}
+                            onChange={e =>
+                              setNewSubmission(prev => ({ ...prev, title: e.target.value }))
+                            }
                             placeholder="Your manuscript title"
                             required
                           />
@@ -321,7 +340,9 @@ export default function Submissions() {
                           <Label htmlFor="type">Type *</Label>
                           <Select
                             value={newSubmission.type}
-                            onValueChange={(value) => setNewSubmission(prev => ({ ...prev, type: value }))}
+                            onValueChange={value =>
+                              setNewSubmission(prev => ({ ...prev, type: value }))
+                            }
                             required
                           >
                             <SelectTrigger>
@@ -344,7 +365,9 @@ export default function Submissions() {
                           <Input
                             id="genre"
                             value={newSubmission.genre}
-                            onChange={(e) => setNewSubmission(prev => ({ ...prev, genre: e.target.value }))}
+                            onChange={e =>
+                              setNewSubmission(prev => ({ ...prev, genre: e.target.value }))
+                            }
                             placeholder="e.g., Drama, Comedy, Thriller"
                             required
                           />
@@ -355,7 +378,9 @@ export default function Submissions() {
                             id="pageCount"
                             type="number"
                             value={newSubmission.pageCount}
-                            onChange={(e) => setNewSubmission(prev => ({ ...prev, pageCount: e.target.value }))}
+                            onChange={e =>
+                              setNewSubmission(prev => ({ ...prev, pageCount: e.target.value }))
+                            }
                             placeholder="Number of pages"
                             required
                           />
@@ -367,7 +392,9 @@ export default function Submissions() {
                         <Textarea
                           id="logline"
                           value={newSubmission.logline}
-                          onChange={(e) => setNewSubmission(prev => ({ ...prev, logline: e.target.value }))}
+                          onChange={e =>
+                            setNewSubmission(prev => ({ ...prev, logline: e.target.value }))
+                          }
                           placeholder="One to two sentence summary of your story"
                           className="min-h-[60px]"
                           required
@@ -382,7 +409,9 @@ export default function Submissions() {
                         <Textarea
                           id="synopsis"
                           value={newSubmission.synopsis}
-                          onChange={(e) => setNewSubmission(prev => ({ ...prev, synopsis: e.target.value }))}
+                          onChange={e =>
+                            setNewSubmission(prev => ({ ...prev, synopsis: e.target.value }))
+                          }
                           placeholder="1-2 page detailed summary including the ending"
                           className="min-h-[150px]"
                           required
@@ -397,7 +426,9 @@ export default function Submissions() {
                         <Textarea
                           id="queryLetter"
                           value={newSubmission.queryLetter}
-                          onChange={(e) => setNewSubmission(prev => ({ ...prev, queryLetter: e.target.value }))}
+                          onChange={e =>
+                            setNewSubmission(prev => ({ ...prev, queryLetter: e.target.value }))
+                          }
                           placeholder="Professional query letter (for books/novels)"
                           className="min-h-[120px]"
                         />
@@ -409,7 +440,12 @@ export default function Submissions() {
                           <Input
                             id="targetAudience"
                             value={newSubmission.targetAudience}
-                            onChange={(e) => setNewSubmission(prev => ({ ...prev, targetAudience: e.target.value }))}
+                            onChange={e =>
+                              setNewSubmission(prev => ({
+                                ...prev,
+                                targetAudience: e.target.value,
+                              }))
+                            }
                             placeholder="e.g., Young Adult, Adult Fiction"
                           />
                         </div>
@@ -418,7 +454,12 @@ export default function Submissions() {
                           <Input
                             id="comparableWorks"
                             value={newSubmission.comparableWorks}
-                            onChange={(e) => setNewSubmission(prev => ({ ...prev, comparableWorks: e.target.value }))}
+                            onChange={e =>
+                              setNewSubmission(prev => ({
+                                ...prev,
+                                comparableWorks: e.target.value,
+                              }))
+                            }
                             placeholder="Similar successful works"
                           />
                         </div>
@@ -429,7 +470,9 @@ export default function Submissions() {
                         <Textarea
                           id="authorBio"
                           value={newSubmission.authorBio}
-                          onChange={(e) => setNewSubmission(prev => ({ ...prev, authorBio: e.target.value }))}
+                          onChange={e =>
+                            setNewSubmission(prev => ({ ...prev, authorBio: e.target.value }))
+                          }
                           placeholder="Your writing background and relevant experience"
                           className="min-h-[100px]"
                         />
@@ -443,11 +486,11 @@ export default function Submissions() {
                             type="checkbox"
                             id="terms"
                             checked={hasAcceptedTerms}
-                            onChange={(e) => setHasAcceptedTerms(e.target.checked)}
+                            onChange={e => setHasAcceptedTerms(e.target.checked)}
                             className="mt-1"
                           />
                           <label htmlFor="terms" className="text-sm text-muted-foreground">
-                            I have read and agree to the{" "}
+                            I have read and agree to the{' '}
                             <Button
                               variant="link"
                               className="h-auto p-0 text-primary underline"
@@ -456,8 +499,8 @@ export default function Submissions() {
                             >
                               Literary Agency Terms & Submission Guidelines
                             </Button>
-                            . I understand that Ottopen will act as my literary agent with a 15% commission
-                            on any successful deals.
+                            . I understand that Ottopen will act as my literary agent with a 15%
+                            commission on any successful deals.
                           </label>
                         </div>
 
@@ -494,7 +537,10 @@ export default function Submissions() {
                     <div>
                       <h3 className="font-semibold mb-2">Industry Best Practices</h3>
                       <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                        <li>Submit query materials first - we&apos;ll request full manuscripts if interested</li>
+                        <li>
+                          Submit query materials first - we&apos;ll request full manuscripts if
+                          interested
+                        </li>
                         <li>Include a compelling logline and detailed synopsis</li>
                         <li>Ensure your work is polished and professionally formatted</li>
                         <li>Research comparable works in your genre</li>
@@ -516,7 +562,9 @@ export default function Submissions() {
                       <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
                         <li>Your submission is reviewed by our professional readers</li>
                         <li>Promising works are passed to our agents for evaluation</li>
-                        <li>If we decide to represent you, we&apos;ll send a representation agreement</li>
+                        <li>
+                          If we decide to represent you, we&apos;ll send a representation agreement
+                        </li>
                         <li>We begin marketing your work to industry professionals</li>
                         <li>We negotiate deals on your behalf with a 15% commission</li>
                       </ol>
@@ -540,5 +588,5 @@ export default function Submissions() {
         <Footer />
       </div>
     </ProtectedRoute>
-  );
+  )
 }

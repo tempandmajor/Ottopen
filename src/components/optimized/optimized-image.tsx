@@ -132,12 +132,13 @@ export function OptimizedAvatar({
     xl: 'h-16 w-16 text-lg',
   }
 
-  const fallbackInitials = fallbackText
-    ?.split(' ')
-    .map(word => word[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2) || '?'
+  const fallbackInitials =
+    fallbackText
+      ?.split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2) || '?'
 
   if (!src || hasError) {
     return (

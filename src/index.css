@@ -41,15 +41,15 @@ All colors MUST be HSL.
     --literary-accent: 0 0% 20%;
     --literary-subtle: 0 0% 98%;
     --literary-border: 0 0% 88%;
-    
+
     /* Gradients */
     --gradient-hero: linear-gradient(135deg, hsl(0 0% 100%), hsl(0 0% 96%));
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(0 0% 98%));
-    
+
     /* Shadows */
     --shadow-elegant: 0 4px 12px hsl(0 0% 0% / 0.05);
     --shadow-card: 0 2px 8px hsl(0 0% 0% / 0.08);
-    
+
     /* Typography */
     --font-serif: 'Playfair Display', serif;
     --font-sans: 'Inter', sans-serif;
@@ -107,11 +107,11 @@ All colors MUST be HSL.
     --literary-accent: 0 0% 80%;
     --literary-subtle: 0 0% 2%;
     --literary-border: 0 0% 12%;
-    
+
     /* Dark Gradients */
     --gradient-hero: linear-gradient(135deg, hsl(0 0% 0%), hsl(0 0% 4%));
     --gradient-card: linear-gradient(180deg, hsl(0 0% 4%), hsl(0 0% 2%));
-    
+
     /* Dark Shadows */
     --shadow-elegant: 0 4px 12px hsl(0 0% 0% / 0.3);
     --shadow-card: 0 2px 8px hsl(0 0% 0% / 0.4);
@@ -140,15 +140,15 @@ All colors MUST be HSL.
   .literary-shadow {
     box-shadow: var(--shadow-elegant);
   }
-  
+
   .card-shadow {
     box-shadow: var(--shadow-card);
   }
-  
+
   .hero-bg {
     background: var(--gradient-hero);
   }
-  
+
   .card-bg {
     background: var(--gradient-card);
   }

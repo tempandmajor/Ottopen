@@ -86,9 +86,12 @@ export function useComponentPerformance(componentName: string) {
     }
   }, [componentName])
 
-  const trackInteraction = useCallback((action: string, metadata?: Record<string, any>) => {
-    monitoring.trackUserAction(`${componentName}_${action}`, metadata)
-  }, [componentName])
+  const trackInteraction = useCallback(
+    (action: string, metadata?: Record<string, any>) => {
+      monitoring.trackUserAction(`${componentName}_${action}`, metadata)
+    },
+    [componentName]
+  )
 
   return { trackInteraction }
 }
@@ -100,25 +103,25 @@ export function useIntersectionObserver(
   const observerRef = useRef<IntersectionObserver | null>(null)
   const elementRef = useRef<Element | null>(null)
 
-  const setElement = useCallback((element: Element | null) => {
-    if (elementRef.current && observerRef.current) {
-      observerRef.current.unobserve(elementRef.current)
-    }
-
-    elementRef.current = element
-
-    if (element) {
-      if (!observerRef.current) {
-        observerRef.current = new IntersectionObserver(
-          (entries) => {
-            entries.forEach(callback)
-          },
-          options
-        )
+  const setElement = useCallback(
+    (element: Element | null) => {
+      if (elementRef.current && observerRef.current) {
+        observerRef.current.unobserve(elementRef.current)
       }
-      observerRef.current.observe(element)
-    }
-  }, [callback, options])
+
+      elementRef.current = element
+
+      if (element) {
+        if (!observerRef.current) {
+          observerRef.current = new IntersectionObserver(entries => {
+            entries.forEach(callback)
+          }, options)
+        }
+        observerRef.current.observe(element)
+      }
+    },
+    [callback, options]
+  )
 
   useEffect(() => {
     return () => {

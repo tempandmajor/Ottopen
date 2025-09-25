@@ -65,9 +65,8 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 })
 
 // Wrap with Sentry config if Sentry DSN is provided
-const withSentry = process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN
-  ? withSentryConfig
-  : (config) => config
+const withSentry =
+  process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN ? withSentryConfig : config => config
 
 module.exports = withSentry(
   withBundleAnalyzer(nextConfig),
@@ -91,7 +90,7 @@ module.exports = withSentry(
     transpileClientSDK: false,
 
     // Routes browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers (increases server load)
-    tunnelRoute: "/monitoring",
+    tunnelRoute: '/monitoring',
 
     // Hides source maps from generated client bundles
     hideSourceMaps: true,

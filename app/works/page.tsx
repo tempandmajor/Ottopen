@@ -1,89 +1,93 @@
-"use client";
+'use client'
 
-import { Navigation } from "@/src/components/navigation";
-import { Button } from "@/src/components/ui/button";
-import { Input } from "@/src/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/tabs";
-import { Badge } from "@/src/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/src/components/ui/avatar";
-import { Search, Filter, BookOpen, Star, Eye, Heart, Calendar, User, Loader2 } from "lucide-react";
-import Link from "next/link";
-import { useState, useEffect } from "react";
-import { dbService } from "@/src/lib/database";
-import type { Post } from "@/src/lib/supabase";
-import { toast } from "react-hot-toast";
+import { Navigation } from '@/src/components/navigation'
+import { Button } from '@/src/components/ui/button'
+import { Input } from '@/src/components/ui/input'
+import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/components/ui/tabs'
+import { Badge } from '@/src/components/ui/badge'
+import { Avatar, AvatarFallback, AvatarImage } from '@/src/components/ui/avatar'
+import { Search, Filter, BookOpen, Star, Eye, Heart, Calendar, User, Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import { useState, useEffect } from 'react'
+import { dbService } from '@/src/lib/database'
+import type { Post } from '@/src/lib/supabase'
+import { toast } from 'react-hot-toast'
 
 export default function Works() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<Post[]>([]);
-  const [searching, setSearching] = useState(false);
+  const [posts, setPosts] = useState<Post[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<Post[]>([])
+  const [searching, setSearching] = useState(false)
   const [worksStats, setWorksStats] = useState({
     total: 0,
     newThisWeek: 0,
     totalReads: 0,
-    totalLikes: 0
-  });
+    totalLikes: 0,
+  })
 
   // Load posts on mount
   useEffect(() => {
-    loadPosts();
-  }, []);
+    loadPosts()
+  }, [])
 
   // Search functionality
   useEffect(() => {
     if (searchQuery.trim()) {
-      handleSearch();
+      handleSearch()
     } else {
-      setSearchResults([]);
+      setSearchResults([])
     }
-  }, [searchQuery]);
+  }, [searchQuery])
 
   const loadPosts = async () => {
     try {
-      setLoading(true);
-      const allPosts = await dbService.getPosts({ limit: 50, published: true });
-      setPosts(allPosts);
+      setLoading(true)
+      const allPosts = await dbService.getPosts({ limit: 50, published: true })
+      setPosts(allPosts)
       setWorksStats({
         total: allPosts.length,
-        newThisWeek: allPosts.filter(p =>
-          new Date(p.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        newThisWeek: allPosts.filter(
+          p => new Date(p.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
         ).length,
         totalReads: allPosts.reduce((sum, p) => sum + (p.likes_count || 0), 0), // Using likes as reads proxy
-        totalLikes: allPosts.reduce((sum, p) => sum + (p.likes_count || 0), 0)
-      });
+        totalLikes: allPosts.reduce((sum, p) => sum + (p.likes_count || 0), 0),
+      })
     } catch (error) {
-      console.error("Failed to load posts:", error);
-      toast.error("Failed to load works");
+      console.error('Failed to load posts:', error)
+      toast.error('Failed to load works')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim()) return
 
     try {
-      setSearching(true);
-      const results = await dbService.searchPosts(searchQuery, 20);
-      setSearchResults(results);
+      setSearching(true)
+      const results = await dbService.searchPosts(searchQuery, 20)
+      setSearchResults(results)
     } catch (error) {
-      console.error("Search failed:", error);
-      toast.error("Search failed");
+      console.error('Search failed:', error)
+      toast.error('Search failed')
     } finally {
-      setSearching(false);
+      setSearching(false)
     }
-  };
+  }
 
-  const filteredPosts = searchQuery.trim() ? searchResults : posts;
-  const featuredWorks = filteredPosts.slice(0, 6);
-  const newReleases = filteredPosts.filter(post =>
-    new Date(post.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-  );
-  const popular = [...filteredPosts].sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0)).slice(0, 4);
-  const trending = [...filteredPosts].sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0)).slice(0, 4);
+  const filteredPosts = searchQuery.trim() ? searchResults : posts
+  const featuredWorks = filteredPosts.slice(0, 6)
+  const newReleases = filteredPosts.filter(
+    post => new Date(post.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+  )
+  const popular = [...filteredPosts]
+    .sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0))
+    .slice(0, 4)
+  const trending = [...filteredPosts]
+    .sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0))
+    .slice(0, 4)
 
   // Create WorkCard component for real posts
   const WorkCard = ({ post }: { post: Post }) => (
@@ -104,7 +108,7 @@ export default function Works() {
                   href={`/profile/${post.user?.username || 'unknown'}`}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                 >
-                  by {post.user?.display_name || "Unknown Author"}
+                  by {post.user?.display_name || 'Unknown Author'}
                 </Link>
               </div>
               <div className="flex items-center space-x-2 flex-shrink-0">
@@ -116,7 +120,7 @@ export default function Works() {
             </div>
 
             <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-              {post.excerpt || post.content?.substring(0, 150) + "..."}
+              {post.excerpt || post.content?.substring(0, 150) + '...'}
             </p>
 
             <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground mb-4">
@@ -124,12 +128,12 @@ export default function Works() {
                 <Calendar className="h-3 w-3 mr-1" />
                 {new Date(post.created_at).toLocaleDateString('en-US', {
                   year: 'numeric',
-                  month: 'short'
+                  month: 'short',
                 })}
               </div>
               <div className="flex items-center">
                 <User className="h-3 w-3 mr-1" />
-                {post.user?.display_name || "Unknown"}
+                {post.user?.display_name || 'Unknown'}
               </div>
             </div>
 
@@ -155,13 +159,22 @@ export default function Works() {
         </div>
       </CardContent>
     </Card>
-  );
+  )
 
   const genres = [
-    "Literary Fiction", "Mystery & Thriller", "Romance", "Science Fiction",
-    "Fantasy", "Poetry", "Non-Fiction", "Young Adult", "Historical Fiction",
-    "Horror", "Drama", "Comedy"
-  ];
+    'Literary Fiction',
+    'Mystery & Thriller',
+    'Romance',
+    'Science Fiction',
+    'Fantasy',
+    'Poetry',
+    'Non-Fiction',
+    'Young Adult',
+    'Historical Fiction',
+    'Horror',
+    'Drama',
+    'Comedy',
+  ]
 
   return (
     <div className="min-h-screen bg-background">
@@ -173,7 +186,8 @@ export default function Works() {
           <div className="text-center space-y-4 mb-8">
             <h1 className="font-serif text-3xl sm:text-4xl font-bold">Literary Works</h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Explore novels, short stories, poetry, and plays from our community of writers. Discover your next great read.
+              Explore novels, short stories, poetry, and plays from our community of writers.
+              Discover your next great read.
             </p>
           </div>
 
@@ -186,7 +200,7 @@ export default function Works() {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onChange={e => setSearchQuery(e.target.value)}
                       placeholder="Search works by title, author, or genre..."
                       className="pl-10 border-literary-border"
                     />
@@ -201,7 +215,7 @@ export default function Works() {
                 <div className="mt-4 pt-4 border-t border-literary-border">
                   <p className="text-sm font-medium mb-3">Browse by Genre</p>
                   <div className="flex flex-wrap gap-2">
-                    {genres.map((genre) => (
+                    {genres.map(genre => (
                       <Badge
                         key={genre}
                         variant="secondary"
@@ -223,7 +237,11 @@ export default function Works() {
                 <div className="flex items-center justify-center space-x-2 mb-2">
                   <BookOpen className="h-5 w-5 text-primary" />
                   <span className="text-2xl font-bold">
-                    {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : worksStats.total.toLocaleString()}
+                    {loading ? (
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    ) : (
+                      worksStats.total.toLocaleString()
+                    )}
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground">Total Works</p>
@@ -234,7 +252,11 @@ export default function Works() {
                 <div className="flex items-center justify-center space-x-2 mb-2">
                   <Star className="h-5 w-5 text-primary" />
                   <span className="text-2xl font-bold">
-                    {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : worksStats.newThisWeek}
+                    {loading ? (
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    ) : (
+                      worksStats.newThisWeek
+                    )}
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground">New This Week</p>
@@ -245,7 +267,11 @@ export default function Works() {
                 <div className="flex items-center justify-center space-x-2 mb-2">
                   <Eye className="h-5 w-5 text-primary" />
                   <span className="text-2xl font-bold">
-                    {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : worksStats.totalReads.toLocaleString()}
+                    {loading ? (
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    ) : (
+                      worksStats.totalReads.toLocaleString()
+                    )}
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground">Total Reads</p>
@@ -256,7 +282,11 @@ export default function Works() {
                 <div className="flex items-center justify-center space-x-2 mb-2">
                   <Heart className="h-5 w-5 text-primary" />
                   <span className="text-2xl font-bold">
-                    {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : worksStats.totalLikes.toLocaleString()}
+                    {loading ? (
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    ) : (
+                      worksStats.totalLikes.toLocaleString()
+                    )}
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground">Total Likes</p>
@@ -290,9 +320,7 @@ export default function Works() {
               ) : (
                 <div className="space-y-4">
                   {featuredWorks.length > 0 ? (
-                    featuredWorks.map((post) => (
-                      <WorkCard key={post.id} post={post} />
-                    ))
+                    featuredWorks.map(post => <WorkCard key={post.id} post={post} />)
                   ) : (
                     <div className="text-center py-8">
                       <p className="text-muted-foreground">No featured works found</p>
@@ -305,9 +333,7 @@ export default function Works() {
             <TabsContent value="new" className="space-y-6">
               <div className="space-y-4">
                 {newReleases.length > 0 ? (
-                  newReleases.map((post) => (
-                    <WorkCard key={post.id} post={post} />
-                  ))
+                  newReleases.map(post => <WorkCard key={post.id} post={post} />)
                 ) : (
                   <div className="text-center py-8">
                     <p className="text-muted-foreground">No new releases found</p>
@@ -319,9 +345,7 @@ export default function Works() {
             <TabsContent value="popular" className="space-y-6">
               <div className="space-y-4">
                 {popular.length > 0 ? (
-                  popular.map((post) => (
-                    <WorkCard key={post.id} post={post} />
-                  ))
+                  popular.map(post => <WorkCard key={post.id} post={post} />)
                 ) : (
                   <div className="text-center py-8">
                     <p className="text-muted-foreground">No popular works found</p>
@@ -333,9 +357,7 @@ export default function Works() {
             <TabsContent value="trending" className="space-y-6">
               <div className="space-y-4">
                 {trending.length > 0 ? (
-                  trending.map((post) => (
-                    <WorkCard key={post.id} post={post} />
-                  ))
+                  trending.map(post => <WorkCard key={post.id} post={post} />)
                 ) : (
                   <div className="text-center py-8">
                     <p className="text-muted-foreground">No trending works found</p>
@@ -354,5 +376,5 @@ export default function Works() {
         </div>
       </div>
     </div>
-  );
+  )
 }

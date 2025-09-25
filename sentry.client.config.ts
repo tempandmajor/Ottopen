@@ -2,9 +2,9 @@
 // The config you add here will be used whenever a page is visited.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
-import * as Sentry from "@sentry/nextjs";
+import * as Sentry from '@sentry/nextjs'
 
-const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN;
+const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN
 
 if (SENTRY_DSN) {
   Sentry.init({
@@ -20,21 +20,20 @@ if (SENTRY_DSN) {
       // Filter out development errors
       if (process.env.NODE_ENV === 'development') {
         // Only send errors in development if they're not common dev errors
-        const isDevError = event.exception?.values?.some(exception =>
-          exception.value?.includes('ChunkLoadError') ||
-          exception.value?.includes('Loading chunk') ||
-          exception.value?.includes('Loading CSS chunk')
-        );
+        const isDevError = event.exception?.values?.some(
+          exception =>
+            exception.value?.includes('ChunkLoadError') ||
+            exception.value?.includes('Loading chunk') ||
+            exception.value?.includes('Loading CSS chunk')
+        )
 
         if (isDevError) {
-          return null;
+          return null
         }
       }
 
-      return event;
+      return event
     },
-    integrations: [
-      Sentry.browserTracingIntegration(),
-    ],
-  });
+    integrations: [Sentry.browserTracingIntegration()],
+  })
 }

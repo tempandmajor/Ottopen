@@ -1,8 +1,8 @@
-import { Navigation } from "@/src/components/navigation";
-import { Button } from "@/src/components/ui/button";
-import { Card, CardContent } from "@/src/components/ui/card";
-import { Home, ArrowLeft, Search } from "lucide-react";
-import Link from "next/link";
+import { Navigation } from '@/src/components/navigation'
+import { Button } from '@/src/components/ui/button'
+import { Card, CardContent } from '@/src/components/ui/card'
+import { Home, ArrowLeft, Search } from 'lucide-react'
+import Link from 'next/link'
 
 export default function NotFound() {
   return (
@@ -18,9 +18,7 @@ export default function NotFound() {
                   <h1 className="font-serif text-6xl sm:text-8xl font-bold text-literary-accent">
                     404
                   </h1>
-                  <h2 className="font-serif text-2xl sm:text-3xl font-semibold">
-                    Page Not Found
-                  </h2>
+                  <h2 className="font-serif text-2xl sm:text-3xl font-semibold">Page Not Found</h2>
                   <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
                     The page you&apos;re looking for doesn&apos;t exist. It might have been moved,
                     deleted, or you entered the wrong URL.
@@ -54,5 +52,5 @@ export default function NotFound() {
         </div>
       </div>
     </div>
-  );
+  )
 }

@@ -2,9 +2,9 @@
 // The config you add here will be used whenever the server handles a request.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
-import * as Sentry from "@sentry/nextjs";
+import * as Sentry from '@sentry/nextjs'
 
-const SENTRY_DSN = process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN;
+const SENTRY_DSN = process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN
 
 if (SENTRY_DSN) {
   Sentry.init({
@@ -19,21 +19,22 @@ if (SENTRY_DSN) {
     beforeSend(event) {
       // Filter out development and common errors
       if (process.env.NODE_ENV === 'development') {
-        return null;
+        return null
       }
 
       // Filter out common user errors that don't need tracking
-      const isUserError = event.exception?.values?.some(exception =>
-        exception.value?.includes('ValidationError') ||
-        exception.value?.includes('User not found') ||
-        exception.value?.includes('Invalid credentials')
-      );
+      const isUserError = event.exception?.values?.some(
+        exception =>
+          exception.value?.includes('ValidationError') ||
+          exception.value?.includes('User not found') ||
+          exception.value?.includes('Invalid credentials')
+      )
 
       if (isUserError) {
-        return null;
+        return null
       }
 
-      return event;
+      return event
     },
-  });
+  })
 }

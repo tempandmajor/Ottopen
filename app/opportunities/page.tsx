@@ -1,17 +1,23 @@
-"use client";
+'use client'
 
-import { Navigation } from "@/src/components/navigation";
-import { Footer } from "@/src/components/footer";
-import { ProtectedRoute } from "@/src/components/auth/protected-route";
-import { Button } from "@/src/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
-import { Input } from "@/src/components/ui/input";
-import { Label } from "@/src/components/ui/label";
-import { Textarea } from "@/src/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/tabs";
-import { Badge } from "@/src/components/ui/badge";
-import { Separator } from "@/src/components/ui/separator";
+import { Navigation } from '@/src/components/navigation'
+import { Footer } from '@/src/components/footer'
+import { ProtectedRoute } from '@/src/components/auth/protected-route'
+import { Button } from '@/src/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card'
+import { Input } from '@/src/components/ui/input'
+import { Label } from '@/src/components/ui/label'
+import { Textarea } from '@/src/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/src/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/components/ui/tabs'
+import { Badge } from '@/src/components/ui/badge'
+import { Separator } from '@/src/components/ui/separator'
 import {
   Briefcase,
   MapPin,
@@ -29,193 +35,201 @@ import {
   ChevronRight,
   ExternalLink,
   Send,
-  BookmarkCheck
-} from "lucide-react";
-import { useState, useEffect } from "react";
-import { useAuth } from "@/src/contexts/auth-context";
-import { toast } from "react-hot-toast";
+  BookmarkCheck,
+} from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useAuth } from '@/src/contexts/auth-context'
+import { toast } from 'react-hot-toast'
 
 interface Job {
-  id: string;
-  title: string;
-  company: string;
-  location: string;
-  remoteOk: boolean;
-  jobType: string;
-  category: string;
-  experienceLevel: string;
-  description: string;
-  requirements: string;
-  compensationType: string;
-  compensationMin?: number;
-  compensationMax?: number;
-  currency: string;
-  deadline?: string;
-  isFeatured: boolean;
-  applicationsCount: number;
-  postedAt: string;
+  id: string
+  title: string
+  company: string
+  location: string
+  remoteOk: boolean
+  jobType: string
+  category: string
+  experienceLevel: string
+  description: string
+  requirements: string
+  compensationType: string
+  compensationMin?: number
+  compensationMax?: number
+  currency: string
+  deadline?: string
+  isFeatured: boolean
+  applicationsCount: number
+  postedAt: string
   poster: {
-    displayName: string;
-    company?: string;
-    accountType: string;
-  };
+    displayName: string
+    company?: string
+    accountType: string
+  }
 }
 
 export default function Opportunities() {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("browse");
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedJobType, setSelectedJobType] = useState("all");
-  const [selectedExperience, setSelectedExperience] = useState("all");
-  const [savedJobs, setSavedJobs] = useState<string[]>([]);
+  const { user } = useAuth()
+  const [activeTab, setActiveTab] = useState('browse')
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('all')
+  const [selectedJobType, setSelectedJobType] = useState('all')
+  const [selectedExperience, setSelectedExperience] = useState('all')
+  const [savedJobs, setSavedJobs] = useState<string[]>([])
 
   // Mock data for demo
   useEffect(() => {
     setTimeout(() => {
       setJobs([
         {
-          id: "1",
-          title: "Senior Screenwriter - Sci-Fi Series",
-          company: "Stellar Productions",
-          location: "Los Angeles, CA",
+          id: '1',
+          title: 'Senior Screenwriter - Sci-Fi Series',
+          company: 'Stellar Productions',
+          location: 'Los Angeles, CA',
           remoteOk: true,
-          jobType: "contract",
-          category: "screenwriting",
-          experienceLevel: "senior",
-          description: "We're seeking an experienced screenwriter to join our team for an upcoming sci-fi series. You'll be responsible for writing compelling episodes that blend character development with cutting-edge science fiction concepts.",
-          requirements: "• 5+ years of screenwriting experience\n• Previous work on serialized television\n• Strong understanding of sci-fi genre\n• Ability to work with writers' room dynamics",
-          compensationType: "project",
+          jobType: 'contract',
+          category: 'screenwriting',
+          experienceLevel: 'senior',
+          description:
+            "We're seeking an experienced screenwriter to join our team for an upcoming sci-fi series. You'll be responsible for writing compelling episodes that blend character development with cutting-edge science fiction concepts.",
+          requirements:
+            "• 5+ years of screenwriting experience\n• Previous work on serialized television\n• Strong understanding of sci-fi genre\n• Ability to work with writers' room dynamics",
+          compensationType: 'project',
           compensationMin: 25000,
           compensationMax: 50000,
-          currency: "USD",
-          deadline: "2024-02-15",
+          currency: 'USD',
+          deadline: '2024-02-15',
           isFeatured: true,
           applicationsCount: 23,
-          postedAt: "2024-01-10",
+          postedAt: '2024-01-10',
           poster: {
-            displayName: "Sarah Chen",
-            company: "Stellar Productions",
-            accountType: "producer"
-          }
+            displayName: 'Sarah Chen',
+            company: 'Stellar Productions',
+            accountType: 'producer',
+          },
         },
         {
-          id: "2",
-          title: "Literary Agent Assistant",
-          company: "Premier Literary Agency",
-          location: "New York, NY",
+          id: '2',
+          title: 'Literary Agent Assistant',
+          company: 'Premier Literary Agency',
+          location: 'New York, NY',
           remoteOk: false,
-          jobType: "full_time",
-          category: "representation",
-          experienceLevel: "entry",
-          description: "Entry-level position supporting senior agents in manuscript evaluation, client communication, and submission tracking. Perfect opportunity to learn the publishing industry from the inside.",
-          requirements: "• Bachelor's degree in English, Literature, or related field\n• Strong written communication skills\n• Passion for books and publishing\n• Detail-oriented with excellent organizational skills",
-          compensationType: "salary",
+          jobType: 'full_time',
+          category: 'representation',
+          experienceLevel: 'entry',
+          description:
+            'Entry-level position supporting senior agents in manuscript evaluation, client communication, and submission tracking. Perfect opportunity to learn the publishing industry from the inside.',
+          requirements:
+            "• Bachelor's degree in English, Literature, or related field\n• Strong written communication skills\n• Passion for books and publishing\n• Detail-oriented with excellent organizational skills",
+          compensationType: 'salary',
           compensationMin: 35000,
           compensationMax: 45000,
-          currency: "USD",
+          currency: 'USD',
           isFeatured: false,
           applicationsCount: 67,
-          postedAt: "2024-01-08",
+          postedAt: '2024-01-08',
           poster: {
-            displayName: "Michael Roberts",
-            company: "Premier Literary Agency",
-            accountType: "external_agent"
-          }
+            displayName: 'Michael Roberts',
+            company: 'Premier Literary Agency',
+            accountType: 'external_agent',
+          },
         },
         {
-          id: "3",
-          title: "Freelance Script Doctor",
-          company: "Independent Film Collective",
-          location: "Remote",
+          id: '3',
+          title: 'Freelance Script Doctor',
+          company: 'Independent Film Collective',
+          location: 'Remote',
           remoteOk: true,
-          jobType: "freelance",
-          category: "editing",
-          experienceLevel: "mid",
-          description: "We need an experienced script doctor to polish and enhance existing screenplays for our upcoming film slate. You'll work directly with directors and producers to strengthen story structure, dialogue, and character development.",
-          requirements: "• 3+ years of script editing experience\n• Strong story analysis skills\n• Experience with feature films\n• Ability to work under tight deadlines",
-          compensationType: "project",
+          jobType: 'freelance',
+          category: 'editing',
+          experienceLevel: 'mid',
+          description:
+            "We need an experienced script doctor to polish and enhance existing screenplays for our upcoming film slate. You'll work directly with directors and producers to strengthen story structure, dialogue, and character development.",
+          requirements:
+            '• 3+ years of script editing experience\n• Strong story analysis skills\n• Experience with feature films\n• Ability to work under tight deadlines',
+          compensationType: 'project',
           compensationMin: 5000,
           compensationMax: 15000,
-          currency: "USD",
-          deadline: "2024-01-25",
+          currency: 'USD',
+          deadline: '2024-01-25',
           isFeatured: false,
           applicationsCount: 12,
-          postedAt: "2024-01-12",
+          postedAt: '2024-01-12',
           poster: {
-            displayName: "Alex Thompson",
-            company: "Independent Film Collective",
-            accountType: "producer"
-          }
-        }
-      ]);
-      setLoading(false);
-    }, 1000);
-  }, []);
+            displayName: 'Alex Thompson',
+            company: 'Independent Film Collective',
+            accountType: 'producer',
+          },
+        },
+      ])
+      setLoading(false)
+    }, 1000)
+  }, [])
 
   const filteredJobs = jobs.filter(job => {
-    const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         job.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || job.category === selectedCategory;
-    const matchesJobType = selectedJobType === "all" || job.jobType === selectedJobType;
-    const matchesExperience = selectedExperience === "all" || job.experienceLevel === selectedExperience;
+    const matchesSearch =
+      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.description.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesCategory = selectedCategory === 'all' || job.category === selectedCategory
+    const matchesJobType = selectedJobType === 'all' || job.jobType === selectedJobType
+    const matchesExperience =
+      selectedExperience === 'all' || job.experienceLevel === selectedExperience
 
-    return matchesSearch && matchesCategory && matchesJobType && matchesExperience;
-  });
+    return matchesSearch && matchesCategory && matchesJobType && matchesExperience
+  })
 
   const handleSaveJob = (jobId: string) => {
     if (savedJobs.includes(jobId)) {
-      setSavedJobs(prev => prev.filter(id => id !== jobId));
-      toast.success("Job removed from saved list");
+      setSavedJobs(prev => prev.filter(id => id !== jobId))
+      toast.success('Job removed from saved list')
     } else {
-      setSavedJobs(prev => [...prev, jobId]);
-      toast.success("Job saved successfully");
+      setSavedJobs(prev => [...prev, jobId])
+      toast.success('Job saved successfully')
     }
-  };
+  }
 
   const formatCompensation = (job: Job) => {
-    if (job.compensationType === "undisclosed") return "Compensation undisclosed";
+    if (job.compensationType === 'undisclosed') return 'Compensation undisclosed'
 
-    const currency = job.currency === "USD" ? "$" : job.currency;
+    const currency = job.currency === 'USD' ? '$' : job.currency
 
     if (job.compensationMin && job.compensationMax) {
-      return `${currency}${job.compensationMin.toLocaleString()} - ${currency}${job.compensationMax.toLocaleString()}`;
+      return `${currency}${job.compensationMin.toLocaleString()} - ${currency}${job.compensationMax.toLocaleString()}`
     } else if (job.compensationMin) {
-      return `${currency}${job.compensationMin.toLocaleString()}+`;
+      return `${currency}${job.compensationMin.toLocaleString()}+`
     }
 
-    return "Competitive compensation";
-  };
+    return 'Competitive compensation'
+  }
 
   const getJobTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      freelance: "Freelance",
-      contract: "Contract",
-      full_time: "Full-time",
-      part_time: "Part-time",
-      project_based: "Project-based"
-    };
-    return labels[type] || type;
-  };
+      freelance: 'Freelance',
+      contract: 'Contract',
+      full_time: 'Full-time',
+      part_time: 'Part-time',
+      project_based: 'Project-based',
+    }
+    return labels[type] || type
+  }
 
   const getCategoryLabel = (category: string) => {
     const labels: Record<string, string> = {
-      writing: "Writing",
-      screenwriting: "Screenwriting",
-      editing: "Editing",
-      development: "Development",
-      production: "Production",
-      representation: "Representation"
-    };
-    return labels[category] || category;
-  };
+      writing: 'Writing',
+      screenwriting: 'Screenwriting',
+      editing: 'Editing',
+      development: 'Development',
+      production: 'Production',
+      representation: 'Representation',
+    }
+    return labels[category] || category
+  }
 
   const canAccessPremiumJobs = () => {
-    return user?.profile?.account_tier !== "free";
-  };
+    return user?.profile?.account_tier !== 'free'
+  }
 
   if (loading) {
     return (
@@ -230,7 +244,7 @@ export default function Opportunities() {
           </div>
         </div>
       </ProtectedRoute>
-    );
+    )
   }
 
   return (
@@ -283,7 +297,7 @@ export default function Opportunities() {
                           id="search"
                           placeholder="Job title, company, keywords..."
                           value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
+                          onChange={e => setSearchTerm(e.target.value)}
                           className="mt-1"
                         />
                       </div>
@@ -347,7 +361,9 @@ export default function Opportunities() {
                         <div className="flex items-center space-x-3">
                           <Crown className="h-5 w-5 text-orange-600" />
                           <div>
-                            <p className="font-medium text-orange-700 dark:text-orange-400">Unlock Premium Opportunities</p>
+                            <p className="font-medium text-orange-700 dark:text-orange-400">
+                              Unlock Premium Opportunities
+                            </p>
                             <p className="text-sm text-orange-600 dark:text-orange-500">
                               Access exclusive high-paying jobs from top industry partners
                             </p>
@@ -363,14 +379,20 @@ export default function Opportunities() {
 
                 {/* Job Listings */}
                 <div className="space-y-4">
-                  {filteredJobs.map((job) => (
-                    <Card key={job.id} className={`transition-all hover:shadow-md ${job.isFeatured ? 'border-primary bg-primary/5' : ''}`}>
+                  {filteredJobs.map(job => (
+                    <Card
+                      key={job.id}
+                      className={`transition-all hover:shadow-md ${job.isFeatured ? 'border-primary bg-primary/5' : ''}`}
+                    >
                       <CardContent className="p-6">
                         <div className="flex justify-between items-start mb-4">
                           <div className="flex-1">
                             <div className="flex items-center space-x-2 mb-2">
                               {job.isFeatured && (
-                                <Badge variant="default" className="bg-yellow-100 text-yellow-800 border-yellow-200">
+                                <Badge
+                                  variant="default"
+                                  className="bg-yellow-100 text-yellow-800 border-yellow-200"
+                                >
                                   <Star className="h-3 w-3 mr-1" />
                                   Featured
                                 </Badge>
@@ -387,18 +409,24 @@ export default function Opportunities() {
                               <div className="flex items-center space-x-1">
                                 <MapPin className="h-4 w-4" />
                                 <span>{job.location}</span>
-                                {job.remoteOk && <span className="text-green-600">• Remote OK</span>}
+                                {job.remoteOk && (
+                                  <span className="text-green-600">• Remote OK</span>
+                                )}
                               </div>
                               <div className="flex items-center space-x-1">
                                 <Calendar className="h-4 w-4" />
                                 <span>Posted {new Date(job.postedAt).toLocaleDateString()}</span>
                               </div>
                             </div>
-                            <p className="text-muted-foreground mb-4 line-clamp-2">{job.description}</p>
+                            <p className="text-muted-foreground mb-4 line-clamp-2">
+                              {job.description}
+                            </p>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-1">
                                 <DollarSign className="h-4 w-4 text-green-600" />
-                                <span className="font-medium text-green-600">{formatCompensation(job)}</span>
+                                <span className="font-medium text-green-600">
+                                  {formatCompensation(job)}
+                                </span>
                               </div>
                               <div className="flex items-center space-x-1 text-sm text-muted-foreground">
                                 <Users className="h-4 w-4" />
@@ -411,7 +439,9 @@ export default function Opportunities() {
                               variant="outline"
                               size="sm"
                               onClick={() => handleSaveJob(job.id)}
-                              className={savedJobs.includes(job.id) ? "bg-primary/10 border-primary" : ""}
+                              className={
+                                savedJobs.includes(job.id) ? 'bg-primary/10 border-primary' : ''
+                              }
                             >
                               {savedJobs.includes(job.id) ? (
                                 <BookmarkCheck className="h-4 w-4" />
@@ -428,7 +458,9 @@ export default function Opportunities() {
                         {job.deadline && (
                           <div className="flex items-center space-x-1 text-sm text-orange-600 bg-orange-50 dark:bg-orange-900/20 p-2 rounded">
                             <Clock className="h-4 w-4" />
-                            <span>Application deadline: {new Date(job.deadline).toLocaleDateString()}</span>
+                            <span>
+                              Application deadline: {new Date(job.deadline).toLocaleDateString()}
+                            </span>
                           </div>
                         )}
                       </CardContent>
@@ -441,7 +473,8 @@ export default function Opportunities() {
                         <Briefcase className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                         <h3 className="text-lg font-medium mb-2">No jobs found</h3>
                         <p className="text-muted-foreground">
-                          Try adjusting your search criteria or check back later for new opportunities.
+                          Try adjusting your search criteria or check back later for new
+                          opportunities.
                         </p>
                       </CardContent>
                     </Card>
@@ -463,9 +496,7 @@ export default function Opportunities() {
                         <p className="text-muted-foreground mb-4">
                           Save interesting opportunities to easily find them later.
                         </p>
-                        <Button onClick={() => setActiveTab("browse")}>
-                          Browse Opportunities
-                        </Button>
+                        <Button onClick={() => setActiveTab('browse')}>Browse Opportunities</Button>
                       </div>
                     ) : (
                       <p className="text-muted-foreground">
@@ -489,9 +520,7 @@ export default function Opportunities() {
                       <p className="text-muted-foreground mb-4">
                         Start applying to opportunities that match your skills and interests.
                       </p>
-                      <Button onClick={() => setActiveTab("browse")}>
-                        Find Opportunities
-                      </Button>
+                      <Button onClick={() => setActiveTab('browse')}>Find Opportunities</Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -507,12 +536,15 @@ export default function Opportunities() {
                     </p>
                   </CardHeader>
                   <CardContent>
-                    {user?.profile?.account_type === "writer" ? (
+                    {user?.profile?.account_type === 'writer' ? (
                       <div className="text-center py-8">
                         <Building className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                        <h3 className="text-lg font-medium mb-2">Industry Partner Access Required</h3>
+                        <h3 className="text-lg font-medium mb-2">
+                          Industry Partner Access Required
+                        </h3>
                         <p className="text-muted-foreground mb-4">
-                          Job posting is available to agents, producers, publishers, and other industry professionals.
+                          Job posting is available to agents, producers, publishers, and other
+                          industry professionals.
                         </p>
                         <Button variant="outline">
                           <ExternalLink className="h-4 w-4 mr-2" />
@@ -522,8 +554,8 @@ export default function Opportunities() {
                     ) : (
                       <div className="space-y-4">
                         <p className="text-muted-foreground">
-                          Job posting feature coming soon for industry partners.
-                          Contact our team to get early access.
+                          Job posting feature coming soon for industry partners. Contact our team to
+                          get early access.
                         </p>
                         <Button>Contact Sales Team</Button>
                       </div>
@@ -538,5 +570,5 @@ export default function Opportunities() {
         <Footer />
       </div>
     </ProtectedRoute>
-  );
+  )
 }

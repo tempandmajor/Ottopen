@@ -1,24 +1,24 @@
-"use client";
+'use client'
 
-import { Card, CardContent } from "@/src/components/ui/card";
-import { Badge } from "@/src/components/ui/badge";
-import { Button } from "@/src/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/src/components/ui/avatar";
-import { MapPin, Book, Users } from "lucide-react";
-import Link from "next/link";
+import { Card, CardContent } from '@/src/components/ui/card'
+import { Badge } from '@/src/components/ui/badge'
+import { Button } from '@/src/components/ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from '@/src/components/ui/avatar'
+import { MapPin, Book, Users } from 'lucide-react'
+import Link from 'next/link'
 
 interface AuthorCardProps {
-  name: string;
-  specialty: string;
-  location: string;
-  works: number;
-  followers: number;
-  bio: string;
-  avatar?: string;
-  tags: string[];
-  username?: string;
-  onFollow?: () => void;
-  isFollowing?: boolean;
+  name: string
+  specialty: string
+  location: string
+  works: number
+  followers: number
+  bio: string
+  avatar?: string
+  tags: string[]
+  username?: string
+  onFollow?: () => void
+  isFollowing?: boolean
 }
 
 export function AuthorCard({
@@ -32,9 +32,12 @@ export function AuthorCard({
   tags,
   username,
   onFollow,
-  isFollowing = false
+  isFollowing = false,
 }: AuthorCardProps) {
-  const initials = name.split(' ').map(n => n[0]).join('');
+  const initials = name
+    .split(' ')
+    .map(n => n[0])
+    .join('')
 
   return (
     <Card className="card-bg card-shadow hover:shadow-lg transition-all duration-300 border-literary-border">
@@ -46,7 +49,7 @@ export function AuthorCard({
               {initials}
             </AvatarFallback>
           </Avatar>
-          
+
           <div className="flex-1 min-w-0">
             <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2 mb-2">
               <Link
@@ -56,26 +59,26 @@ export function AuthorCard({
                 {name}
               </Link>
               <Button
-                variant={isFollowing ? "default" : "outline"}
+                variant={isFollowing ? 'default' : 'outline'}
                 size="sm"
                 className="self-start xs:self-auto text-xs sm:text-sm"
                 onClick={onFollow}
               >
-                {isFollowing ? "Following" : "Follow"}
+                {isFollowing ? 'Following' : 'Follow'}
               </Button>
             </div>
-            
+
             <p className="text-xs sm:text-sm text-literary-accent font-medium mb-2">{specialty}</p>
-            
+
             <div className="flex items-center text-xs sm:text-sm text-muted-foreground mb-3">
               <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
               <span className="truncate">{location}</span>
             </div>
-            
+
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-4 line-clamp-2">
               {bio}
             </p>
-            
+
             <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground mb-4">
               <div className="flex items-center">
                 <Book className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
@@ -86,9 +89,9 @@ export function AuthorCard({
                 <span>{followers.toLocaleString()} followers</span>
               </div>
             </div>
-            
+
             <div className="flex flex-wrap gap-1 sm:gap-2">
-              {tags.map((tag) => (
+              {tags.map(tag => (
                 <Badge key={tag} variant="secondary" className="text-xs">
                   {tag}
                 </Badge>
@@ -98,5 +101,5 @@ export function AuthorCard({
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }

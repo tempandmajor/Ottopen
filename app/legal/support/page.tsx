@@ -1,10 +1,19 @@
-import { Navigation } from "@/src/components/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
-import { Separator } from "@/src/components/ui/separator";
-import { Button } from "@/src/components/ui/button";
-import { Badge } from "@/src/components/ui/badge";
-import { ArrowLeft, HelpCircle, Calendar, Clock, Mail, MessageSquare, AlertCircle, CheckCircle } from "lucide-react";
-import Link from "next/link";
+import { Navigation } from '@/src/components/navigation'
+import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card'
+import { Separator } from '@/src/components/ui/separator'
+import { Button } from '@/src/components/ui/button'
+import { Badge } from '@/src/components/ui/badge'
+import {
+  ArrowLeft,
+  HelpCircle,
+  Calendar,
+  Clock,
+  Mail,
+  MessageSquare,
+  AlertCircle,
+  CheckCircle,
+} from 'lucide-react'
+import Link from 'next/link'
 
 export default function SupportPolicy() {
   return (
@@ -38,15 +47,18 @@ export default function SupportPolicy() {
             <CardContent className="p-6 sm:p-8">
               <div className="prose prose-gray dark:prose-invert max-w-none">
                 <section className="mb-8">
-                  <h2 className="font-serif text-2xl font-semibold mb-4">1. Our Commitment to Support</h2>
+                  <h2 className="font-serif text-2xl font-semibold mb-4">
+                    1. Our Commitment to Support
+                  </h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
-                    At Ottopen, we are committed to providing excellent support to our community of writers, authors,
-                    and literary enthusiasts. This Support Policy outlines our approach to customer service, response
-                    times, and the types of assistance we provide.
+                    At Ottopen, we are committed to providing excellent support to our community of
+                    writers, authors, and literary enthusiasts. This Support Policy outlines our
+                    approach to customer service, response times, and the types of assistance we
+                    provide.
                   </p>
                   <p className="text-muted-foreground leading-relaxed">
-                    We believe that responsive, helpful support is essential to maintaining a thriving literary
-                    community where creators can focus on their craft.
+                    We believe that responsive, helpful support is essential to maintaining a
+                    thriving literary community where creators can focus on their craft.
                   </p>
                 </section>
 
@@ -114,7 +126,8 @@ export default function SupportPolicy() {
                     3. Response Times
                   </h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
-                    We strive to respond to all support requests as quickly as possible. Our target response times are:
+                    We strive to respond to all support requests as quickly as possible. Our target
+                    response times are:
                   </p>
 
                   <div className="space-y-4">
@@ -124,7 +137,9 @@ export default function SupportPolicy() {
                           <AlertCircle className="h-4 w-4 mr-2 text-red-500" />
                           Critical Issues
                         </h4>
-                        <p className="text-sm text-muted-foreground">Account access, security breaches, data loss</p>
+                        <p className="text-sm text-muted-foreground">
+                          Account access, security breaches, data loss
+                        </p>
                       </div>
                       <Badge variant="destructive">4 hours</Badge>
                     </div>
@@ -135,7 +150,9 @@ export default function SupportPolicy() {
                           <AlertCircle className="h-4 w-4 mr-2 text-orange-500" />
                           High Priority
                         </h4>
-                        <p className="text-sm text-muted-foreground">Platform bugs, payment issues, content problems</p>
+                        <p className="text-sm text-muted-foreground">
+                          Platform bugs, payment issues, content problems
+                        </p>
                       </div>
                       <Badge variant="secondary">24 hours</Badge>
                     </div>
@@ -146,7 +163,9 @@ export default function SupportPolicy() {
                           <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
                           General Inquiries
                         </h4>
-                        <p className="text-sm text-muted-foreground">Feature questions, general help, feedback</p>
+                        <p className="text-sm text-muted-foreground">
+                          Feature questions, general help, feedback
+                        </p>
                       </div>
                       <Badge variant="outline">48 hours</Badge>
                     </div>
@@ -163,7 +182,9 @@ export default function SupportPolicy() {
                 <Separator className="my-6" />
 
                 <section className="mb-8">
-                  <h2 className="font-serif text-2xl font-semibold mb-4">4. Types of Support We Provide</h2>
+                  <h2 className="font-serif text-2xl font-semibold mb-4">
+                    4. Types of Support We Provide
+                  </h2>
 
                   <h3 className="font-semibold text-lg mb-3">Technical Support</h3>
                   <ul className="list-disc list-inside text-muted-foreground space-y-2 mb-4">
@@ -205,7 +226,9 @@ export default function SupportPolicy() {
                 <Separator className="my-6" />
 
                 <section className="mb-8">
-                  <h2 className="font-serif text-2xl font-semibold mb-4">5. What We Don&apos;t Support</h2>
+                  <h2 className="font-serif text-2xl font-semibold mb-4">
+                    5. What We Don&apos;t Support
+                  </h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
                     While we strive to be helpful, there are some limitations to our support:
                   </p>
@@ -222,7 +245,9 @@ export default function SupportPolicy() {
                 <Separator className="my-6" />
 
                 <section className="mb-8">
-                  <h2 className="font-serif text-2xl font-semibold mb-4">6. Getting Better Support</h2>
+                  <h2 className="font-serif text-2xl font-semibold mb-4">
+                    6. Getting Better Support
+                  </h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
                     To help us assist you more effectively, please:
                   </p>
@@ -238,8 +263,8 @@ export default function SupportPolicy() {
                   <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 p-4 rounded-lg">
                     <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Pro Tip</h4>
                     <p className="text-sm text-blue-800 dark:text-blue-200">
-                      Check our Help Center first - many common questions are answered there,
-                      and you&apos;ll get an instant solution!
+                      Check our Help Center first - many common questions are answered there, and
+                      you&apos;ll get an instant solution!
                     </p>
                   </div>
                 </section>
@@ -254,7 +279,9 @@ export default function SupportPolicy() {
                   <ol className="list-decimal list-inside text-muted-foreground space-y-2 mb-4">
                     <li>Reply to the support ticket with additional details</li>
                     <li>Request escalation to a senior support specialist</li>
-                    <li>For urgent matters, contact our escalation email: escalation@ottopen.com</li>
+                    <li>
+                      For urgent matters, contact our escalation email: escalation@ottopen.com
+                    </li>
                     <li>As a last resort, contact our support management team</li>
                   </ol>
                 </section>
@@ -262,7 +289,9 @@ export default function SupportPolicy() {
                 <Separator className="my-6" />
 
                 <section className="mb-8">
-                  <h2 className="font-serif text-2xl font-semibold mb-4">8. Support for Premium Users</h2>
+                  <h2 className="font-serif text-2xl font-semibold mb-4">
+                    8. Support for Premium Users
+                  </h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
                     Premium subscribers receive enhanced support benefits:
                   </p>
@@ -278,7 +307,9 @@ export default function SupportPolicy() {
                 <Separator className="my-6" />
 
                 <section className="mb-8">
-                  <h2 className="font-serif text-2xl font-semibold mb-4">9. Feedback and Improvement</h2>
+                  <h2 className="font-serif text-2xl font-semibold mb-4">
+                    9. Feedback and Improvement
+                  </h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
                     We continuously work to improve our support services. After each interaction,
                     you&apos;ll have the opportunity to:
@@ -294,7 +325,9 @@ export default function SupportPolicy() {
                 <Separator className="my-6" />
 
                 <section>
-                  <h2 className="font-serif text-2xl font-semibold mb-4">10. Contact Information</h2>
+                  <h2 className="font-serif text-2xl font-semibold mb-4">
+                    10. Contact Information
+                  </h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
                     Need help? Here&apos;s how to reach us:
                   </p>
@@ -312,23 +345,17 @@ export default function SupportPolicy() {
 
           <div className="mt-8 flex flex-wrap gap-4 justify-center">
             <Button asChild variant="outline">
-              <Link href="/legal/terms">
-                Terms of Service
-              </Link>
+              <Link href="/legal/terms">Terms of Service</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/legal/privacy">
-                Privacy Policy
-              </Link>
+              <Link href="/legal/privacy">Privacy Policy</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/legal/community">
-                Community Guidelines
-              </Link>
+              <Link href="/legal/community">Community Guidelines</Link>
             </Button>
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }

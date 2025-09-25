@@ -7,10 +7,23 @@ export const signUpSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   displayName: z.string().min(2, 'Display name must be at least 2 characters'),
-  username: z.string().min(3, 'Username must be at least 3 characters').regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
+  username: z
+    .string()
+    .min(3, 'Username must be at least 3 characters')
+    .regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
   bio: z.string().optional(),
   specialty: z.string().optional(),
-  accountType: z.enum(['writer', 'platform_agent', 'external_agent', 'producer', 'publisher', 'theater_director', 'reader_evaluator']).optional(),
+  accountType: z
+    .enum([
+      'writer',
+      'platform_agent',
+      'external_agent',
+      'producer',
+      'publisher',
+      'theater_director',
+      'reader_evaluator',
+    ])
+    .optional(),
   companyName: z.string().optional(),
   industryCredentials: z.string().optional(),
   licenseNumber: z.string().optional(),
@@ -65,8 +78,8 @@ export const authService = {
             companyName: validatedData.companyName || null,
             industryCredentials: validatedData.industryCredentials || null,
             licenseNumber: validatedData.licenseNumber || null,
-          }
-        }
+          },
+        },
       })
 
       if (authError) {
@@ -143,12 +156,9 @@ export const authService = {
     try {
       const validatedData = forgotPasswordSchema.parse(data)
 
-      const { error } = await supabase.auth.resetPasswordForEmail(
-        validatedData.email,
-        {
-          redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`,
-        }
-      )
+      const { error } = await supabase.auth.resetPasswordForEmail(validatedData.email, {
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`,
+      })
 
       if (error) {
         logError('Password reset failed', error)
@@ -170,7 +180,10 @@ export const authService = {
     }
 
     try {
-      const { data: { user }, error } = await supabase.auth.getUser()
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser()
 
       if (error) {
         logError('Failed to get current user', error)
@@ -231,7 +244,7 @@ export const authService = {
 
       // Update password directly - user must be authenticated to reach this point
       const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword
+        password: newPassword,
       })
 
       if (updateError) {
@@ -253,7 +266,9 @@ export const authService = {
     }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
       if (!user?.email) {
         return { valid: false, error: 'User not authenticated' }
@@ -282,5 +297,4 @@ export const authService = {
       return { valid: false, error: (error as Error).message }
     }
   },
-
 }

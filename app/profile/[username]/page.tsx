@@ -1,13 +1,13 @@
-"use client";
+'use client'
 
-import { Navigation } from "@/src/components/navigation";
-import { PostCard } from "@/src/components/post-card";
-import { Button } from "@/src/components/ui/button";
-import { Card, CardContent } from "@/src/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/src/components/ui/avatar";
-import { Badge } from "@/src/components/ui/badge";
-import { Textarea } from "@/src/components/ui/textarea";
+import { Navigation } from '@/src/components/navigation'
+import { PostCard } from '@/src/components/post-card'
+import { Button } from '@/src/components/ui/button'
+import { Card, CardContent } from '@/src/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/components/ui/tabs'
+import { Avatar, AvatarFallback, AvatarImage } from '@/src/components/ui/avatar'
+import { Badge } from '@/src/components/ui/badge'
+import { Textarea } from '@/src/components/ui/textarea'
 import {
   MapPin,
   Calendar,
@@ -20,153 +20,152 @@ import {
   Image as ImageIcon,
   Smile,
   Loader2,
-  AlertCircle
-} from "lucide-react";
-import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
-import { useAuth } from "@/src/contexts/auth-context";
-import { dbService } from "@/src/lib/database";
-import type { User, Post } from "@/src/lib/supabase";
-import { toast } from "react-hot-toast";
-import Link from "next/link";
+  AlertCircle,
+} from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useParams } from 'next/navigation'
+import { useAuth } from '@/src/contexts/auth-context'
+import { dbService } from '@/src/lib/database'
+import type { User, Post } from '@/src/lib/supabase'
+import { toast } from 'react-hot-toast'
+import Link from 'next/link'
 
 export default function Profile() {
-  const params = useParams();
-  const username = params.username as string;
-  const { user: currentUser } = useAuth();
+  const params = useParams()
+  const username = params.username as string
+  const { user: currentUser } = useAuth()
 
   // State management
-  const [profile, setProfile] = useState<User | null>(null);
+  const [profile, setProfile] = useState<User | null>(null)
   const [userStats, setUserStats] = useState({
     posts_count: 0,
     followers_count: 0,
-    following_count: 0
-  });
-  const [userPosts, setUserPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [followLoading, setFollowLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("posts");
-  const [newPostContent, setNewPostContent] = useState("");
-  const [creatingPost, setCreatingPost] = useState(false);
+    following_count: 0,
+  })
+  const [userPosts, setUserPosts] = useState<Post[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [isFollowing, setIsFollowing] = useState(false)
+  const [followLoading, setFollowLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState('posts')
+  const [newPostContent, setNewPostContent] = useState('')
+  const [creatingPost, setCreatingPost] = useState(false)
 
   // Load profile data on mount
   useEffect(() => {
     if (username) {
-      loadProfile();
+      loadProfile()
     }
-  }, [username]);
+  }, [username])
 
   // Check if current user is following this profile
   useEffect(() => {
     if (currentUser?.profile && profile && currentUser.profile.id !== profile.id) {
-      checkFollowStatus();
+      checkFollowStatus()
     }
-  }, [currentUser, profile]);
+  }, [currentUser, profile])
 
   const loadProfile = async () => {
     try {
-      setLoading(true);
-      setError(null);
+      setLoading(true)
+      setError(null)
 
       // Load user by username
-      const userData = await dbService.getUserByUsernameLegacy(username);
+      const userData = await dbService.getUserByUsernameLegacy(username)
       if (!userData) {
-        setError("User not found");
-        return;
+        setError('User not found')
+        return
       }
 
-      setProfile(userData);
+      setProfile(userData)
 
       // Load user statistics
-      const stats = await dbService.getUserStats(userData.id);
-      setUserStats(stats);
+      const stats = await dbService.getUserStats(userData.id)
+      setUserStats(stats)
 
       // Load user posts
       const posts = await dbService.getPosts({
         userId: userData.id,
         published: true,
-        limit: 20
-      });
-      setUserPosts(posts);
-
+        limit: 20,
+      })
+      setUserPosts(posts)
     } catch (error) {
-      console.error("Failed to load profile:", error);
-      setError("Failed to load profile");
-      toast.error("Failed to load profile");
+      console.error('Failed to load profile:', error)
+      setError('Failed to load profile')
+      toast.error('Failed to load profile')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const checkFollowStatus = async () => {
-    if (!currentUser?.profile || !profile) return;
+    if (!currentUser?.profile || !profile) return
 
     try {
-      const following = await dbService.isFollowing(currentUser.profile.id, profile.id);
-      setIsFollowing(following);
+      const following = await dbService.isFollowing(currentUser.profile.id, profile.id)
+      setIsFollowing(following)
     } catch (error) {
-      console.error("Failed to check follow status:", error);
+      console.error('Failed to check follow status:', error)
     }
-  };
+  }
 
   const handleFollow = async () => {
-    if (!currentUser?.profile || !profile || currentUser.profile.id === profile.id) return;
+    if (!currentUser?.profile || !profile || currentUser.profile.id === profile.id) return
 
     try {
-      setFollowLoading(true);
-      const nowFollowing = await dbService.toggleFollow(currentUser.profile.id, profile.id);
-      setIsFollowing(nowFollowing);
+      setFollowLoading(true)
+      const nowFollowing = await dbService.toggleFollow(currentUser.profile.id, profile.id)
+      setIsFollowing(nowFollowing)
 
       // Update followers count
       setUserStats(prev => ({
         ...prev,
-        followers_count: nowFollowing ? prev.followers_count + 1 : prev.followers_count - 1
-      }));
+        followers_count: nowFollowing ? prev.followers_count + 1 : prev.followers_count - 1,
+      }))
 
-      toast.success(nowFollowing ? "Following user" : "Unfollowed user");
+      toast.success(nowFollowing ? 'Following user' : 'Unfollowed user')
     } catch (error) {
-      console.error("Failed to toggle follow:", error);
-      toast.error("Failed to update follow status");
+      console.error('Failed to toggle follow:', error)
+      toast.error('Failed to update follow status')
     } finally {
-      setFollowLoading(false);
+      setFollowLoading(false)
     }
-  };
+  }
 
   const handleCreatePost = async () => {
-    if (!currentUser?.profile || !newPostContent.trim()) return;
+    if (!currentUser?.profile || !newPostContent.trim()) return
 
     try {
-      setCreatingPost(true);
+      setCreatingPost(true)
       const post = await dbService.createPost({
         user_id: currentUser.profile.id,
-        title: "Post", // You might want to extract title from content or make it optional
+        title: 'Post', // You might want to extract title from content or make it optional
         content: newPostContent.trim(),
-        published: true
-      });
+        published: true,
+      })
 
       if (post) {
         // If viewing own profile, add the new post to the list
         if (profile?.id === currentUser.profile.id) {
-          setUserPosts(prev => [post, ...prev]);
+          setUserPosts(prev => [post, ...prev])
           setUserStats(prev => ({
             ...prev,
-            posts_count: prev.posts_count + 1
-          }));
+            posts_count: prev.posts_count + 1,
+          }))
         }
-        setNewPostContent("");
-        toast.success("Post created successfully!");
+        setNewPostContent('')
+        toast.success('Post created successfully!')
       }
     } catch (error) {
-      console.error("Failed to create post:", error);
-      toast.error("Failed to create post");
+      console.error('Failed to create post:', error)
+      toast.error('Failed to create post')
     } finally {
-      setCreatingPost(false);
+      setCreatingPost(false)
     }
-  };
+  }
 
-  const isOwnProfile = currentUser?.profile?.id === profile?.id;
+  const isOwnProfile = currentUser?.profile?.id === profile?.id
 
   // Loading state
   if (loading) {
@@ -182,7 +181,7 @@ export default function Profile() {
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   // Error state
@@ -195,13 +194,12 @@ export default function Profile() {
             <div className="text-center py-12">
               <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <h2 className="text-xl font-semibold mb-2">
-                {error === "User not found" ? "User Not Found" : "Error Loading Profile"}
+                {error === 'User not found' ? 'User Not Found' : 'Error Loading Profile'}
               </h2>
               <p className="text-muted-foreground mb-6">
-                {error === "User not found"
+                {error === 'User not found'
                   ? "The user you're looking for doesn't exist or may have been deactivated."
-                  : "We couldn't load this profile. Please try again later."
-                }
+                  : "We couldn't load this profile. Please try again later."}
               </p>
               <Button variant="outline" onClick={() => window.history.back()}>
                 Go Back
@@ -210,17 +208,21 @@ export default function Profile() {
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   const getPostsForTab = () => {
     switch (activeTab) {
-      case "posts": return userPosts;
-      case "likes": return []; // TODO: Implement liked posts functionality
-      case "reshares": return []; // TODO: Implement reshared posts functionality
-      default: return userPosts;
+      case 'posts':
+        return userPosts
+      case 'likes':
+        return [] // TODO: Implement liked posts functionality
+      case 'reshares':
+        return [] // TODO: Implement reshared posts functionality
+      default:
+        return userPosts
     }
-  };
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -238,7 +240,10 @@ export default function Profile() {
                     <Avatar className="h-24 w-24 sm:h-32 sm:w-32 mb-4">
                       <AvatarImage src={profile.avatar_url} alt={profile.display_name} />
                       <AvatarFallback className="bg-literary-subtle text-foreground font-bold text-xl sm:text-2xl">
-                        {profile.display_name.split(' ').map(n => n[0]).join('')}
+                        {profile.display_name
+                          .split(' ')
+                          .map(n => n[0])
+                          .join('')}
                       </AvatarFallback>
                     </Avatar>
 
@@ -246,7 +251,7 @@ export default function Profile() {
                       {!isOwnProfile && (
                         <>
                           <Button
-                            variant={isFollowing ? "outline" : "default"}
+                            variant={isFollowing ? 'outline' : 'default'}
                             size="sm"
                             onClick={handleFollow}
                             disabled={followLoading}
@@ -259,10 +264,15 @@ export default function Profile() {
                             ) : (
                               <UserPlus className="h-4 w-4" />
                             )}
-                            <span>{isFollowing ? "Following" : "Follow"}</span>
+                            <span>{isFollowing ? 'Following' : 'Follow'}</span>
                           </Button>
 
-                          <Button variant="outline" size="sm" className="flex items-center space-x-2" asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center space-x-2"
+                            asChild
+                          >
                             <Link href="/messages">
                               <MessageCircle className="h-4 w-4" />
                               <span className="hidden xs:inline">Message</span>
@@ -280,39 +290,56 @@ export default function Profile() {
                   <div className="flex-1 space-y-4 text-center sm:text-left">
                     <div>
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                        <h1 className="font-serif text-2xl sm:text-3xl font-bold break-words">{profile.display_name}</h1>
+                        <h1 className="font-serif text-2xl sm:text-3xl font-bold break-words">
+                          {profile.display_name}
+                        </h1>
                       </div>
-                      <p className="text-muted-foreground text-base sm:text-lg">@{profile.username}</p>
+                      <p className="text-muted-foreground text-base sm:text-lg">
+                        @{profile.username}
+                      </p>
                       {profile.specialty && (
-                        <p className="text-sm text-literary-accent font-medium mb-2">{profile.specialty}</p>
+                        <p className="text-sm text-literary-accent font-medium mb-2">
+                          {profile.specialty}
+                        </p>
                       )}
                     </div>
 
                     {profile.bio && (
-                      <p className="text-foreground leading-relaxed text-sm sm:text-base">{profile.bio}</p>
+                      <p className="text-foreground leading-relaxed text-sm sm:text-base">
+                        {profile.bio}
+                      </p>
                     )}
 
                     <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                       <div className="flex items-center">
                         <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                        <span>Joined {new Date(profile.created_at).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long'
-                        })}</span>
+                        <span>
+                          Joined{' '}
+                          {new Date(profile.created_at).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                          })}
+                        </span>
                       </div>
                     </div>
 
                     <div className="flex flex-wrap gap-4 sm:gap-6 text-sm justify-center sm:justify-start">
                       <div className="text-center sm:text-left">
-                        <span className="font-semibold text-foreground">{userStats.following_count.toLocaleString()}</span>
+                        <span className="font-semibold text-foreground">
+                          {userStats.following_count.toLocaleString()}
+                        </span>
                         <span className="text-muted-foreground ml-1">Following</span>
                       </div>
                       <div className="text-center sm:text-left">
-                        <span className="font-semibold text-foreground">{userStats.followers_count.toLocaleString()}</span>
+                        <span className="font-semibold text-foreground">
+                          {userStats.followers_count.toLocaleString()}
+                        </span>
                         <span className="text-muted-foreground ml-1">Followers</span>
                       </div>
                       <div className="text-center sm:text-left">
-                        <span className="font-semibold text-foreground">{userStats.posts_count}</span>
+                        <span className="font-semibold text-foreground">
+                          {userStats.posts_count}
+                        </span>
                         <span className="text-muted-foreground ml-1">Posts</span>
                       </div>
                     </div>
@@ -336,16 +363,22 @@ export default function Profile() {
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-start space-x-3 sm:space-x-4">
                   <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
-                    <AvatarImage src={currentUser?.profile?.avatar_url} alt={currentUser?.profile?.display_name} />
+                    <AvatarImage
+                      src={currentUser?.profile?.avatar_url}
+                      alt={currentUser?.profile?.display_name}
+                    />
                     <AvatarFallback className="bg-literary-subtle text-foreground font-medium text-xs sm:text-sm">
-                      {currentUser?.profile?.display_name?.split(' ').map(n => n[0]).join('') || 'You'}
+                      {currentUser?.profile?.display_name
+                        ?.split(' ')
+                        .map(n => n[0])
+                        .join('') || 'You'}
                     </AvatarFallback>
                   </Avatar>
 
                   <div className="flex-1 space-y-3 sm:space-y-4 min-w-0">
                     <Textarea
                       value={newPostContent}
-                      onChange={(e) => setNewPostContent(e.target.value)}
+                      onChange={e => setNewPostContent(e.target.value)}
                       placeholder="Share your latest work, thoughts, or connect with the community..."
                       className="min-h-[60px] sm:min-h-[80px] resize-none border-literary-border text-sm sm:text-base"
                       disabled={creatingPost}
@@ -353,15 +386,30 @@ export default function Profile() {
 
                     <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-3">
                       <div className="flex items-center space-x-2 sm:space-x-3 overflow-x-auto">
-                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap" disabled>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap"
+                          disabled
+                        >
                           <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           <span>Image</span>
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap" disabled>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap"
+                          disabled
+                        >
                           <PenTool className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           <span>Excerpt</span>
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap" disabled>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap"
+                          disabled
+                        >
                           <Smile className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           <span>Mood</span>
                         </Button>
@@ -392,19 +440,28 @@ export default function Profile() {
           {/* Tabs Section */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
             <TabsList className="grid w-full grid-cols-3 h-auto p-1">
-              <TabsTrigger value="posts" className="flex flex-col xs:flex-row xs:items-center xs:space-x-2 p-2 sm:p-3">
+              <TabsTrigger
+                value="posts"
+                className="flex flex-col xs:flex-row xs:items-center xs:space-x-2 p-2 sm:p-3"
+              >
                 <span className="text-xs sm:text-sm">Posts</span>
                 <Badge variant="secondary" className="text-xs mt-1 xs:mt-0">
                   {userPosts.length}
                 </Badge>
               </TabsTrigger>
-              <TabsTrigger value="likes" className="flex flex-col xs:flex-row xs:items-center xs:space-x-2 p-2 sm:p-3">
+              <TabsTrigger
+                value="likes"
+                className="flex flex-col xs:flex-row xs:items-center xs:space-x-2 p-2 sm:p-3"
+              >
                 <span className="text-xs sm:text-sm">Liked</span>
                 <Badge variant="secondary" className="text-xs mt-1 xs:mt-0">
                   0
                 </Badge>
               </TabsTrigger>
-              <TabsTrigger value="reshares" className="flex flex-col xs:flex-row xs:items-center xs:space-x-2 p-2 sm:p-3">
+              <TabsTrigger
+                value="reshares"
+                className="flex flex-col xs:flex-row xs:items-center xs:space-x-2 p-2 sm:p-3"
+              >
                 <span className="text-xs sm:text-sm">Reshared</span>
                 <Badge variant="secondary" className="text-xs mt-1 xs:mt-0">
                   0
@@ -414,16 +471,16 @@ export default function Profile() {
 
             <TabsContent value="posts" className="space-y-4">
               {userPosts.length > 0 ? (
-                userPosts.map((post) => (
+                userPosts.map(post => (
                   <PostCard
                     key={post.id}
-                    author={post.user?.display_name || profile?.display_name || "Unknown"}
+                    author={post.user?.display_name || profile?.display_name || 'Unknown'}
                     avatar={post.user?.avatar_url || profile?.avatar_url}
                     time={new Date(post.created_at).toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',
                       hour: '2-digit',
-                      minute: '2-digit'
+                      minute: '2-digit',
                     })}
                     content={post.content}
                     type="discussion"
@@ -434,7 +491,7 @@ export default function Profile() {
               ) : (
                 <div className="text-center py-12">
                   <p className="text-muted-foreground">
-                    {isOwnProfile ? "You haven't posted anything yet" : "No posts yet"}
+                    {isOwnProfile ? "You haven't posted anything yet" : 'No posts yet'}
                   </p>
                 </div>
               )}
@@ -442,17 +499,13 @@ export default function Profile() {
 
             <TabsContent value="likes" className="space-y-4">
               <div className="text-center py-12">
-                <p className="text-muted-foreground">
-                  Liked posts functionality coming soon
-                </p>
+                <p className="text-muted-foreground">Liked posts functionality coming soon</p>
               </div>
             </TabsContent>
 
             <TabsContent value="reshares" className="space-y-4">
               <div className="text-center py-12">
-                <p className="text-muted-foreground">
-                  Reshared posts functionality coming soon
-                </p>
+                <p className="text-muted-foreground">Reshared posts functionality coming soon</p>
               </div>
             </TabsContent>
           </Tabs>
@@ -466,5 +519,5 @@ export default function Profile() {
         </div>
       </div>
     </div>
-  );
+  )
 }

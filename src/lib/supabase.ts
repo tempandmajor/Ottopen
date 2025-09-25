@@ -1,14 +1,33 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Hardcoded configuration as fallback (since bundling is not working)
-const FALLBACK_CONFIG = {
-  url: 'https://wkvatudgffosjfwqyxgt.supabase.co',
-  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrdmF0dWRnZmZvc2pmd3F5eGd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1OTIwNzYsImV4cCI6MjA3NDE2ODA3Nn0.d2KK6lraqrJ519T1ek3tDimJxP7lmNsdUib7l4Dyugs'
+// Configuration management with security considerations
+function getSupabaseConfig() {
+  // Primary: Environment variables (production/development)
+  const envUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const envKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (envUrl && envKey) {
+    return { url: envUrl, anonKey: envKey }
+  }
+
+  // Fallback: Only in development or when explicitly allowed
+  if (process.env.NODE_ENV === 'development' || process.env.ALLOW_FALLBACK_CONFIG === 'true') {
+    console.warn(
+      '⚠️  Using fallback Supabase configuration. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY for production.'
+    )
+    return {
+      url: 'https://wkvatudgffosjfwqyxgt.supabase.co',
+      anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrdmF0dWRnZmZvc2pmd3F5eGd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1OTIwNzYsImV4cCI6MjA3NDE2ODA3Nn0.d2KK6lraqrJ519T1ek3tDimJxP7lmNsdUib7l4Dyugs',
+    }
+  }
+
+  throw new Error(
+    'Supabase configuration is missing. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.'
+  )
 }
 
-// Try to get from environment variables first, fallback to hardcoded values
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || FALLBACK_CONFIG.url
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || FALLBACK_CONFIG.anonKey
+const { url: supabaseUrl, anonKey: supabaseAnonKey } = getSupabaseConfig()
 
 // Client-side Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -16,7 +35,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    flowType: 'pkce'
+    flowType: 'pkce',
   },
 })
 
@@ -27,17 +46,12 @@ export const isSupabaseConfigured = () => {
     return false
   }
 
-  // Check if we have valid (non-placeholder) Supabase credentials
-  // Either from env vars or fallback config
-  const hasValidUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || FALLBACK_CONFIG.url) &&
-    (process.env.NEXT_PUBLIC_SUPABASE_URL || FALLBACK_CONFIG.url) !== 'https://your-project.supabase.co' &&
-    !(process.env.NEXT_PUBLIC_SUPABASE_URL || FALLBACK_CONFIG.url).includes('placeholder')
-
-  const hasValidKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || FALLBACK_CONFIG.anonKey) &&
-    (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || FALLBACK_CONFIG.anonKey) !== 'your_anon_key_here' &&
-    !(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || FALLBACK_CONFIG.anonKey).includes('placeholder')
-
-  return !!(hasValidUrl && hasValidKey)
+  try {
+    getSupabaseConfig()
+    return true
+  } catch {
+    return false
+  }
 }
 
 // Database types
@@ -50,7 +64,14 @@ export interface User {
   specialty?: string
   avatar_url?: string
   stripe_customer_id?: string
-  account_type: 'writer' | 'platform_agent' | 'external_agent' | 'producer' | 'publisher' | 'theater_director' | 'reader_evaluator'
+  account_type:
+    | 'writer'
+    | 'platform_agent'
+    | 'external_agent'
+    | 'producer'
+    | 'publisher'
+    | 'theater_director'
+    | 'reader_evaluator'
   account_tier: 'free' | 'premium' | 'pro' | 'industry_basic' | 'industry_premium'
   verification_status: 'pending' | 'verified' | 'rejected'
   industry_credentials?: string
@@ -187,7 +208,13 @@ export interface Job {
   location: string
   remote_ok: boolean
   job_type: 'freelance' | 'contract' | 'full_time' | 'part_time' | 'project_based'
-  category: 'writing' | 'screenwriting' | 'editing' | 'development' | 'production' | 'representation'
+  category:
+    | 'writing'
+    | 'screenwriting'
+    | 'editing'
+    | 'development'
+    | 'production'
+    | 'representation'
   experience_level: 'entry' | 'mid' | 'senior' | 'executive'
   description: string
   requirements: string

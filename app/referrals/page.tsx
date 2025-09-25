@@ -1,16 +1,16 @@
-"use client";
+'use client'
 
-import { Navigation } from "@/src/components/navigation";
-import { Footer } from "@/src/components/footer";
-import { ProtectedRoute } from "@/src/components/auth/protected-route";
-import { Button } from "@/src/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
-import { Input } from "@/src/components/ui/input";
-import { Label } from "@/src/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/tabs";
-import { Badge } from "@/src/components/ui/badge";
-import { Progress } from "@/src/components/ui/progress";
-import { Separator } from "@/src/components/ui/separator";
+import { Navigation } from '@/src/components/navigation'
+import { Footer } from '@/src/components/footer'
+import { ProtectedRoute } from '@/src/components/auth/protected-route'
+import { Button } from '@/src/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card'
+import { Input } from '@/src/components/ui/input'
+import { Label } from '@/src/components/ui/label'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/components/ui/tabs'
+import { Badge } from '@/src/components/ui/badge'
+import { Progress } from '@/src/components/ui/progress'
+import { Separator } from '@/src/components/ui/separator'
 import {
   Gift,
   Users,
@@ -29,41 +29,41 @@ import {
   Mail,
   MessageSquare,
   TrendingUp,
-  Award
-} from "lucide-react";
-import { useState, useEffect } from "react";
-import { useAuth } from "@/src/contexts/auth-context";
-import { toast } from "react-hot-toast";
+  Award,
+} from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useAuth } from '@/src/contexts/auth-context'
+import { toast } from 'react-hot-toast'
 
 interface ReferralStats {
-  totalReferrals: number;
-  confirmedReferrals: number;
-  pendingReferrals: number;
-  totalCredits: number;
-  usedCredits: number;
-  availableCredits: number;
-  currentStreak: number;
+  totalReferrals: number
+  confirmedReferrals: number
+  pendingReferrals: number
+  totalCredits: number
+  usedCredits: number
+  availableCredits: number
+  currentStreak: number
   milestoneProgress: {
-    current: number;
-    next: number;
-    nextMilestone: string;
-  };
+    current: number
+    next: number
+    nextMilestone: string
+  }
 }
 
 interface Referral {
-  id: string;
-  referredEmail: string;
-  status: string;
-  creditAmount: number;
-  referredTier: string;
-  createdAt: string;
-  confirmedAt?: string;
+  id: string
+  referredEmail: string
+  status: string
+  creditAmount: number
+  referredTier: string
+  createdAt: string
+  confirmedAt?: string
 }
 
 export default function Referrals() {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("overview");
-  const [referralCode, setReferralCode] = useState("");
+  const { user } = useAuth()
+  const [activeTab, setActiveTab] = useState('overview')
+  const [referralCode, setReferralCode] = useState('')
   const [stats, setStats] = useState<ReferralStats>({
     totalReferrals: 0,
     confirmedReferrals: 0,
@@ -75,17 +75,19 @@ export default function Referrals() {
     milestoneProgress: {
       current: 0,
       next: 5,
-      nextMilestone: "Ambassador"
-    }
-  });
-  const [referrals, setReferrals] = useState<Referral[]>([]);
-  const [loading, setLoading] = useState(true);
+      nextMilestone: 'Ambassador',
+    },
+  })
+  const [referrals, setReferrals] = useState<Referral[]>([])
+  const [loading, setLoading] = useState(true)
 
   // Mock data for demo
   useEffect(() => {
     // Generate unique referral code
-    const username = user?.profile?.username || user?.email?.split('@')[0] || 'user';
-    setReferralCode(`${username.toUpperCase()}${Math.random().toString(36).substring(2, 8).toUpperCase()}`);
+    const username = user?.profile?.username || user?.email?.split('@')[0] || 'user'
+    setReferralCode(
+      `${username.toUpperCase()}${Math.random().toString(36).substring(2, 8).toUpperCase()}`
+    )
 
     // Mock referral data
     setTimeout(() => {
@@ -100,93 +102,108 @@ export default function Referrals() {
         milestoneProgress: {
           current: 6,
           next: 10,
-          nextMilestone: "Champion"
-        }
-      });
+          nextMilestone: 'Champion',
+        },
+      })
 
       setReferrals([
         {
-          id: "1",
-          referredEmail: "jane.doe@email.com",
-          status: "confirmed",
+          id: '1',
+          referredEmail: 'jane.doe@email.com',
+          status: 'confirmed',
           creditAmount: 30,
-          referredTier: "premium",
-          createdAt: "2024-01-15",
-          confirmedAt: "2024-01-16"
+          referredTier: 'premium',
+          createdAt: '2024-01-15',
+          confirmedAt: '2024-01-16',
         },
         {
-          id: "2",
-          referredEmail: "mike.writer@email.com",
-          status: "confirmed",
+          id: '2',
+          referredEmail: 'mike.writer@email.com',
+          status: 'confirmed',
           creditAmount: 60,
-          referredTier: "pro",
-          createdAt: "2024-01-20",
-          confirmedAt: "2024-01-22"
+          referredTier: 'pro',
+          createdAt: '2024-01-20',
+          confirmedAt: '2024-01-22',
         },
         {
-          id: "3",
-          referredEmail: "sarah.agent@email.com",
-          status: "pending",
+          id: '3',
+          referredEmail: 'sarah.agent@email.com',
+          status: 'pending',
           creditAmount: 90,
-          referredTier: "external_agent",
-          createdAt: "2024-01-25"
-        }
-      ]);
+          referredTier: 'external_agent',
+          createdAt: '2024-01-25',
+        },
+      ])
 
-      setLoading(false);
-    }, 1000);
-  }, [user]);
+      setLoading(false)
+    }, 1000)
+  }, [user])
 
   const copyReferralLink = () => {
-    const referralLink = `${window.location.origin}/auth/signup?ref=${referralCode}`;
-    navigator.clipboard.writeText(referralLink);
-    toast.success("Referral link copied to clipboard!");
-  };
+    const referralLink = `${window.location.origin}/auth/signup?ref=${referralCode}`
+    navigator.clipboard.writeText(referralLink)
+    toast.success('Referral link copied to clipboard!')
+  }
 
   const shareOnSocial = (platform: string) => {
-    const referralLink = `${window.location.origin}/auth/signup?ref=${referralCode}`;
-    const message = "Join me on Ottopen - the platform where writers get professional literary representation! Use my referral link:";
+    const referralLink = `${window.location.origin}/auth/signup?ref=${referralCode}`
+    const message =
+      'Join me on Ottopen - the platform where writers get professional literary representation! Use my referral link:'
 
     const urls = {
       twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}&url=${encodeURIComponent(referralLink)}`,
       linkedin: `https://linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(referralLink)}`,
-      email: `mailto:?subject=${encodeURIComponent("Join Ottopen - Professional Literary Platform")}&body=${encodeURIComponent(`${message} ${referralLink}`)}`
-    };
+      email: `mailto:?subject=${encodeURIComponent('Join Ottopen - Professional Literary Platform')}&body=${encodeURIComponent(`${message} ${referralLink}`)}`,
+    }
 
-    window.open(urls[platform as keyof typeof urls], '_blank');
-  };
+    window.open(urls[platform as keyof typeof urls], '_blank')
+  }
 
   const getMilestoneIcon = (milestone: string) => {
     switch (milestone) {
-      case "Ambassador": return <Star className="h-5 w-5 text-yellow-500" />;
-      case "Champion": return <Trophy className="h-5 w-5 text-blue-500" />;
-      case "Legend": return <Crown className="h-5 w-5 text-purple-500" />;
-      default: return <Award className="h-5 w-5 text-green-500" />;
+      case 'Ambassador':
+        return <Star className="h-5 w-5 text-yellow-500" />
+      case 'Champion':
+        return <Trophy className="h-5 w-5 text-blue-500" />
+      case 'Legend':
+        return <Crown className="h-5 w-5 text-purple-500" />
+      default:
+        return <Award className="h-5 w-5 text-green-500" />
     }
-  };
+  }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "confirmed":
-        return <Badge className="bg-green-100 text-green-800 border-green-200"><CheckCircle className="h-3 w-3 mr-1" />Confirmed</Badge>;
-      case "pending":
-        return <Badge variant="outline" className="border-yellow-200 text-yellow-800"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
+      case 'confirmed':
+        return (
+          <Badge className="bg-green-100 text-green-800 border-green-200">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Confirmed
+          </Badge>
+        )
+      case 'pending':
+        return (
+          <Badge variant="outline" className="border-yellow-200 text-yellow-800">
+            <Clock className="h-3 w-3 mr-1" />
+            Pending
+          </Badge>
+        )
       default:
-        return <Badge variant="secondary">Unknown</Badge>;
+        return <Badge variant="secondary">Unknown</Badge>
     }
-  };
+  }
 
   const getTierLabel = (tier: string) => {
     const labels: Record<string, string> = {
-      free: "Free",
-      premium: "Premium",
-      pro: "Pro",
-      external_agent: "Agent",
-      producer: "Producer",
-      publisher: "Publisher"
-    };
-    return labels[tier] || tier;
-  };
+      free: 'Free',
+      premium: 'Premium',
+      pro: 'Pro',
+      external_agent: 'Agent',
+      producer: 'Producer',
+      publisher: 'Publisher',
+    }
+    return labels[tier] || tier
+  }
 
   if (loading) {
     return (
@@ -201,7 +218,7 @@ export default function Referrals() {
           </div>
         </div>
       </ProtectedRoute>
-    );
+    )
   }
 
   return (
@@ -314,7 +331,9 @@ export default function Referrals() {
                         </div>
                         <div>
                           <p className="font-medium">Share your unique link</p>
-                          <p className="text-sm text-muted-foreground">Send your referral link to writers and industry professionals</p>
+                          <p className="text-sm text-muted-foreground">
+                            Send your referral link to writers and industry professionals
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-start space-x-3">
@@ -323,7 +342,9 @@ export default function Referrals() {
                         </div>
                         <div>
                           <p className="font-medium">They sign up & subscribe</p>
-                          <p className="text-sm text-muted-foreground">When they create a paid account, you both get credits</p>
+                          <p className="text-sm text-muted-foreground">
+                            When they create a paid account, you both get credits
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-start space-x-3">
@@ -332,7 +353,9 @@ export default function Referrals() {
                         </div>
                         <div>
                           <p className="font-medium">Earn free subscription time</p>
-                          <p className="text-sm text-muted-foreground">Credits automatically apply to extend your subscription</p>
+                          <p className="text-sm text-muted-foreground">
+                            Credits automatically apply to extend your subscription
+                          </p>
                         </div>
                       </div>
                     </CardContent>
@@ -380,11 +403,7 @@ export default function Referrals() {
                     <div className="space-y-2">
                       <Label>Referral Code</Label>
                       <div className="flex space-x-2">
-                        <Input
-                          value={referralCode}
-                          readOnly
-                          className="font-mono"
-                        />
+                        <Input value={referralCode} readOnly className="font-mono" />
                         <Button variant="outline" onClick={copyReferralLink}>
                           <Copy className="h-4 w-4" />
                         </Button>
@@ -435,19 +454,31 @@ export default function Referrals() {
                     <div className="space-y-3 text-sm">
                       <div className="flex items-start space-x-2">
                         <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2"></div>
-                        <p><strong>Target the right audience:</strong> Focus on writers, screenwriters, agents, and producers who would benefit from our platform</p>
+                        <p>
+                          <strong>Target the right audience:</strong> Focus on writers,
+                          screenwriters, agents, and producers who would benefit from our platform
+                        </p>
                       </div>
                       <div className="flex items-start space-x-2">
                         <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2"></div>
-                        <p><strong>Personalize your message:</strong> Explain how Ottopen has helped your career and why they should join</p>
+                        <p>
+                          <strong>Personalize your message:</strong> Explain how Ottopen has helped
+                          your career and why they should join
+                        </p>
                       </div>
                       <div className="flex items-start space-x-2">
                         <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2"></div>
-                        <p><strong>Share success stories:</strong> Mention specific benefits like manuscript representation or job opportunities</p>
+                        <p>
+                          <strong>Share success stories:</strong> Mention specific benefits like
+                          manuscript representation or job opportunities
+                        </p>
                       </div>
                       <div className="flex items-start space-x-2">
                         <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2"></div>
-                        <p><strong>Follow up:</strong> Check if they need help with their account setup or have questions about the platform</p>
+                        <p>
+                          <strong>Follow up:</strong> Check if they need help with their account
+                          setup or have questions about the platform
+                        </p>
                       </div>
                     </div>
                   </CardContent>
@@ -468,14 +499,15 @@ export default function Referrals() {
                         <p className="text-muted-foreground mb-4">
                           Start inviting friends to earn your first credits!
                         </p>
-                        <Button onClick={() => setActiveTab("invite")}>
-                          Start Referring
-                        </Button>
+                        <Button onClick={() => setActiveTab('invite')}>Start Referring</Button>
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {referrals.map((referral) => (
-                          <div key={referral.id} className="border border-literary-border rounded-lg p-4">
+                        {referrals.map(referral => (
+                          <div
+                            key={referral.id}
+                            className="border border-literary-border rounded-lg p-4"
+                          >
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center space-x-3">
                                 <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
@@ -522,11 +554,15 @@ export default function Referrals() {
                           <Star className="h-6 w-6 text-yellow-500" />
                           <div>
                             <p className="font-medium">Ambassador (5 referrals)</p>
-                            <p className="text-sm text-muted-foreground">20% platform fee discount + special badge</p>
+                            <p className="text-sm text-muted-foreground">
+                              20% platform fee discount + special badge
+                            </p>
                           </div>
                         </div>
-                        <Badge variant={stats.confirmedReferrals >= 5 ? "default" : "outline"}>
-                          {stats.confirmedReferrals >= 5 ? "Achieved" : `${stats.confirmedReferrals}/5`}
+                        <Badge variant={stats.confirmedReferrals >= 5 ? 'default' : 'outline'}>
+                          {stats.confirmedReferrals >= 5
+                            ? 'Achieved'
+                            : `${stats.confirmedReferrals}/5`}
                         </Badge>
                       </div>
 
@@ -535,11 +571,15 @@ export default function Referrals() {
                           <Trophy className="h-6 w-6 text-blue-500" />
                           <div>
                             <p className="font-medium">Champion (10 referrals)</p>
-                            <p className="text-sm text-muted-foreground">3 months Pro upgrade + priority support</p>
+                            <p className="text-sm text-muted-foreground">
+                              3 months Pro upgrade + priority support
+                            </p>
                           </div>
                         </div>
-                        <Badge variant={stats.confirmedReferrals >= 10 ? "default" : "outline"}>
-                          {stats.confirmedReferrals >= 10 ? "Achieved" : `${stats.confirmedReferrals}/10`}
+                        <Badge variant={stats.confirmedReferrals >= 10 ? 'default' : 'outline'}>
+                          {stats.confirmedReferrals >= 10
+                            ? 'Achieved'
+                            : `${stats.confirmedReferrals}/10`}
                         </Badge>
                       </div>
 
@@ -548,11 +588,15 @@ export default function Referrals() {
                           <Crown className="h-6 w-6 text-purple-500" />
                           <div>
                             <p className="font-medium">Legend (25 referrals)</p>
-                            <p className="text-sm text-muted-foreground">1 year Pro subscription + VIP networking events</p>
+                            <p className="text-sm text-muted-foreground">
+                              1 year Pro subscription + VIP networking events
+                            </p>
                           </div>
                         </div>
-                        <Badge variant={stats.confirmedReferrals >= 25 ? "default" : "outline"}>
-                          {stats.confirmedReferrals >= 25 ? "Achieved" : `${stats.confirmedReferrals}/25`}
+                        <Badge variant={stats.confirmedReferrals >= 25 ? 'default' : 'outline'}>
+                          {stats.confirmedReferrals >= 25
+                            ? 'Achieved'
+                            : `${stats.confirmedReferrals}/25`}
                         </Badge>
                       </div>
 
@@ -561,11 +605,15 @@ export default function Referrals() {
                           <Award className="h-6 w-6 text-green-500" />
                           <div>
                             <p className="font-medium">Elite Partner (50+ referrals)</p>
-                            <p className="text-sm text-muted-foreground">Custom partnership + revenue sharing opportunity</p>
+                            <p className="text-sm text-muted-foreground">
+                              Custom partnership + revenue sharing opportunity
+                            </p>
                           </div>
                         </div>
-                        <Badge variant={stats.confirmedReferrals >= 50 ? "default" : "outline"}>
-                          {stats.confirmedReferrals >= 50 ? "Achieved" : `${stats.confirmedReferrals}/50`}
+                        <Badge variant={stats.confirmedReferrals >= 50 ? 'default' : 'outline'}>
+                          {stats.confirmedReferrals >= 50
+                            ? 'Achieved'
+                            : `${stats.confirmedReferrals}/50`}
                         </Badge>
                       </div>
                     </div>
@@ -589,10 +637,13 @@ export default function Referrals() {
                       <Separator />
                       <div className="flex items-center justify-between">
                         <span className="font-medium">Available Credits:</span>
-                        <span className="font-bold text-green-600">{stats.availableCredits} days</span>
+                        <span className="font-bold text-green-600">
+                          {stats.availableCredits} days
+                        </span>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Credits automatically apply to extend your subscription. Credits expire after 12 months.
+                        Credits automatically apply to extend your subscription. Credits expire
+                        after 12 months.
                       </p>
                     </div>
                   </CardContent>
@@ -605,5 +656,5 @@ export default function Referrals() {
         <Footer />
       </div>
     </ProtectedRoute>
-  );
+  )
 }

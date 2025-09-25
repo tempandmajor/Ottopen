@@ -57,7 +57,9 @@ describe('Auth Validation Schemas', () => {
       const result = signUpSchema.safeParse(invalidData)
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error.errors[0].message).toBe('Username can only contain letters, numbers, and underscores')
+        expect(result.error.errors[0].message).toBe(
+          'Username can only contain letters, numbers, and underscores'
+        )
       }
     })
 

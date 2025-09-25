@@ -39,26 +39,30 @@ export async function POST(request: Request) {
       console.log('Profile result:', {
         hasProfile: !!profile,
         error: profileError?.message,
-        profile: profile ? {
-          id: profile.id,
-          email: profile.email,
-          display_name: profile.display_name,
-          username: profile.username
-        } : null
+        profile: profile
+          ? {
+              id: profile.id,
+              email: profile.email,
+              display_name: profile.display_name,
+              username: profile.username,
+            }
+          : null,
       })
     }
 
     return NextResponse.json({
       success: true,
       user: data.user,
-      session: !!data.session
+      session: !!data.session,
     })
-
   } catch (error) {
     console.error('Debug signin error:', error)
-    return NextResponse.json({
-      success: false,
-      error: error.message
-    }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'An unknown error occurred',
+      },
+      { status: 500 }
+    )
   }
 }

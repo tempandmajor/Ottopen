@@ -1,9 +1,9 @@
-import { Navigation } from "@/src/components/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
-import { Separator } from "@/src/components/ui/separator";
-import { Button } from "@/src/components/ui/button";
-import { ArrowLeft, FileText, Calendar } from "lucide-react";
-import Link from "next/link";
+import { Navigation } from '@/src/components/navigation'
+import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card'
+import { Separator } from '@/src/components/ui/separator'
+import { Button } from '@/src/components/ui/button'
+import { ArrowLeft, FileText, Calendar } from 'lucide-react'
+import Link from 'next/link'
 
 export default function TermsOfService() {
   return (
@@ -39,22 +39,27 @@ export default function TermsOfService() {
                 <section className="mb-8">
                   <h2 className="font-serif text-2xl font-semibold mb-4">1. Acceptance of Terms</h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
-                    By accessing and using Ottopen (&quot;the Service&quot;), you accept and agree to be bound by the terms and
-                    provision of this agreement. If you do not agree to abide by the above, please do not use this service.
+                    By accessing and using Ottopen (&quot;the Service&quot;), you accept and agree
+                    to be bound by the terms and provision of this agreement. If you do not agree to
+                    abide by the above, please do not use this service.
                   </p>
                   <p className="text-muted-foreground leading-relaxed">
-                    These Terms of Service govern your use of our literary social network platform, including all content,
-                    services, and products available at or through the service.
+                    These Terms of Service govern your use of our literary social network platform,
+                    including all content, services, and products available at or through the
+                    service.
                   </p>
                 </section>
 
                 <Separator className="my-6" />
 
                 <section className="mb-8">
-                  <h2 className="font-serif text-2xl font-semibold mb-4">2. Description of Service</h2>
+                  <h2 className="font-serif text-2xl font-semibold mb-4">
+                    2. Description of Service
+                  </h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
-                    Ottopen is a social networking platform designed specifically for writers, authors, screenwriters,
-                    playwrights, and literary enthusiasts. The service allows users to:
+                    Ottopen is a social networking platform designed specifically for writers,
+                    authors, screenwriters, playwrights, and literary enthusiasts. The service
+                    allows users to:
                   </p>
                   <ul className="list-disc list-inside text-muted-foreground space-y-2 mb-4">
                     <li>Create and maintain personal profiles</li>
@@ -68,10 +73,12 @@ export default function TermsOfService() {
                 <Separator className="my-6" />
 
                 <section className="mb-8">
-                  <h2 className="font-serif text-2xl font-semibold mb-4">3. User Accounts and Registration</h2>
+                  <h2 className="font-serif text-2xl font-semibold mb-4">
+                    3. User Accounts and Registration
+                  </h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
-                    To access certain features of the Service, you must register for an account. When you register,
-                    you agree to:
+                    To access certain features of the Service, you must register for an account.
+                    When you register, you agree to:
                   </p>
                   <ul className="list-disc list-inside text-muted-foreground space-y-2 mb-4">
                     <li>Provide accurate, current, and complete information</li>
@@ -84,12 +91,14 @@ export default function TermsOfService() {
                 <Separator className="my-6" />
 
                 <section className="mb-8">
-                  <h2 className="font-serif text-2xl font-semibold mb-4">4. Content and Intellectual Property</h2>
+                  <h2 className="font-serif text-2xl font-semibold mb-4">
+                    4. Content and Intellectual Property
+                  </h2>
                   <h3 className="font-semibold text-lg mb-3">Your Content</h3>
                   <p className="text-muted-foreground leading-relaxed mb-4">
-                    You retain ownership of any intellectual property rights in the content you post to Ottopen.
-                    By posting content, you grant us a non-exclusive, royalty-free, worldwide license to use,
-                    display, and distribute your content on the platform.
+                    You retain ownership of any intellectual property rights in the content you post
+                    to Ottopen. By posting content, you grant us a non-exclusive, royalty-free,
+                    worldwide license to use, display, and distribute your content on the platform.
                   </p>
 
                   <h3 className="font-semibold text-lg mb-3">Prohibited Content</h3>
@@ -110,7 +119,8 @@ export default function TermsOfService() {
                 <section className="mb-8">
                   <h2 className="font-serif text-2xl font-semibold mb-4">5. User Conduct</h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
-                    Users are expected to maintain a respectful and professional environment. Prohibited behaviors include:
+                    Users are expected to maintain a respectful and professional environment.
+                    Prohibited behaviors include:
                   </p>
                   <ul className="list-disc list-inside text-muted-foreground space-y-2 mb-4">
                     <li>Harassment, bullying, or intimidation of other users</li>
@@ -126,8 +136,9 @@ export default function TermsOfService() {
                 <section className="mb-8">
                   <h2 className="font-serif text-2xl font-semibold mb-4">6. Privacy Policy</h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
-                    Your privacy is important to us. Please review our Privacy Policy, which also governs your use
-                    of the Service, to understand our practices regarding the collection and use of your information.
+                    Your privacy is important to us. Please review our Privacy Policy, which also
+                    governs your use of the Service, to understand our practices regarding the
+                    collection and use of your information.
                   </p>
                   <Link href="/legal/privacy" className="text-primary hover:underline">
                     View Privacy Policy →
@@ -139,9 +150,9 @@ export default function TermsOfService() {
                 <section className="mb-8">
                   <h2 className="font-serif text-2xl font-semibold mb-4">7. Termination</h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
-                    We may terminate or suspend your account and access to the Service immediately, without prior notice,
-                    for any reason, including breach of these Terms. You may also terminate your account at any time
-                    through your account settings.
+                    We may terminate or suspend your account and access to the Service immediately,
+                    without prior notice, for any reason, including breach of these Terms. You may
+                    also terminate your account at any time through your account settings.
                   </p>
                 </section>
 
@@ -150,18 +161,22 @@ export default function TermsOfService() {
                 <section className="mb-8">
                   <h2 className="font-serif text-2xl font-semibold mb-4">8. Disclaimer</h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
-                    The Service is provided &quot;as is&quot; without any representations or warranties. We do not warrant that
-                    the Service will be uninterrupted, secure, or error-free. Your use of the Service is at your own risk.
+                    The Service is provided &quot;as is&quot; without any representations or
+                    warranties. We do not warrant that the Service will be uninterrupted, secure, or
+                    error-free. Your use of the Service is at your own risk.
                   </p>
                 </section>
 
                 <Separator className="my-6" />
 
                 <section className="mb-8">
-                  <h2 className="font-serif text-2xl font-semibold mb-4">9. Limitation of Liability</h2>
+                  <h2 className="font-serif text-2xl font-semibold mb-4">
+                    9. Limitation of Liability
+                  </h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
-                    To the maximum extent permitted by law, Ottopen shall not be liable for any indirect, incidental,
-                    special, consequential, or punitive damages arising out of your use of the Service.
+                    To the maximum extent permitted by law, Ottopen shall not be liable for any
+                    indirect, incidental, special, consequential, or punitive damages arising out of
+                    your use of the Service.
                   </p>
                 </section>
 
@@ -170,23 +185,27 @@ export default function TermsOfService() {
                 <section className="mb-8">
                   <h2 className="font-serif text-2xl font-semibold mb-4">10. Changes to Terms</h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
-                    We reserve the right to modify these Terms at any time. We will notify users of any material changes
-                    via email or through the Service. Your continued use of the Service after such modifications constitutes
-                    acceptance of the updated Terms.
+                    We reserve the right to modify these Terms at any time. We will notify users of
+                    any material changes via email or through the Service. Your continued use of the
+                    Service after such modifications constitutes acceptance of the updated Terms.
                   </p>
                 </section>
 
                 <Separator className="my-6" />
 
                 <section>
-                  <h2 className="font-serif text-2xl font-semibold mb-4">11. Contact Information</h2>
+                  <h2 className="font-serif text-2xl font-semibold mb-4">
+                    11. Contact Information
+                  </h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
                     If you have any questions about these Terms of Service, please contact us at:
                   </p>
                   <div className="bg-muted/50 p-4 rounded-lg">
                     <p className="font-medium">Ottopen Legal Team</p>
                     <p className="text-muted-foreground">Email: legal@ottopen.com</p>
-                    <p className="text-muted-foreground">Address: 123 Literary Lane, San Francisco, CA 94103</p>
+                    <p className="text-muted-foreground">
+                      Address: 123 Literary Lane, San Francisco, CA 94103
+                    </p>
                   </div>
                 </section>
               </div>
@@ -195,13 +214,11 @@ export default function TermsOfService() {
 
           <div className="mt-8 text-center">
             <Button asChild variant="outline">
-              <Link href="/legal/privacy">
-                View Privacy Policy
-              </Link>
+              <Link href="/legal/privacy">View Privacy Policy</Link>
             </Button>
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }

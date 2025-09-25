@@ -49,17 +49,13 @@ export class DatabaseService {
     }
 
     try {
-      const { data, error } = await this.supabase
-        .from('users')
-        .select('*')
-        .eq('id', id)
-        .single()
+      const { data, error } = await this.supabase.from('users').select('*').eq('id', id).single()
 
       if (error) {
         return {
           data: null,
           error: this.handleError('Get user', error),
-          success: false
+          success: false,
         }
       }
 
@@ -68,7 +64,7 @@ export class DatabaseService {
       return {
         data: null,
         error: this.handleError('Get user', error),
-        success: false
+        success: false,
       }
     }
   }
@@ -101,7 +97,7 @@ export class DatabaseService {
         return {
           data: null,
           error: this.handleError('Get user by username', error),
-          success: false
+          success: false,
         }
       }
 
@@ -110,7 +106,7 @@ export class DatabaseService {
       return {
         data: null,
         error: this.handleError('Get user by username', error),
-        success: false
+        success: false,
       }
     }
   }
@@ -139,8 +135,7 @@ export class DatabaseService {
 
   async getUserStats(userId: string) {
     try {
-      const { data, error } = await this.supabase
-        .rpc('get_user_stats', { user_uuid: userId })
+      const { data, error } = await this.supabase.rpc('get_user_stats', { user_uuid: userId })
 
       if (error) {
         logError('Failed to get user stats', error)
@@ -155,12 +150,14 @@ export class DatabaseService {
   }
 
   // Post operations
-  async getPosts(options: {
-    limit?: number
-    offset?: number
-    userId?: string
-    published?: boolean
-  } = {}): Promise<Post[]> {
+  async getPosts(
+    options: {
+      limit?: number
+      offset?: number
+      userId?: string
+      published?: boolean
+    } = {}
+  ): Promise<Post[]> {
     if (!this.checkSupabaseConfig()) {
       return []
     }
@@ -219,11 +216,7 @@ export class DatabaseService {
 
   async createPost(post: Omit<Post, 'id' | 'created_at' | 'updated_at'>): Promise<Post | null> {
     try {
-      const { data, error } = await this.supabase
-        .from('posts')
-        .insert(post)
-        .select()
-        .single()
+      const { data, error } = await this.supabase.from('posts').insert(post).select().single()
 
       if (error) {
         logError('Failed to create post', error)
@@ -262,10 +255,7 @@ export class DatabaseService {
 
   async deletePost(id: string): Promise<boolean> {
     try {
-      const { error } = await this.supabase
-        .from('posts')
-        .delete()
-        .eq('id', id)
+      const { error } = await this.supabase.from('posts').delete().eq('id', id)
 
       if (error) {
         logError('Failed to delete post', error)
@@ -307,10 +297,12 @@ export class DatabaseService {
     try {
       const { data, error } = await this.supabase
         .from('comments')
-        .select(`
+        .select(
+          `
           *,
           user:users(*)
-        `)
+        `
+        )
         .eq('post_id', postId)
         .order('created_at', { ascending: true })
 
@@ -331,10 +323,12 @@ export class DatabaseService {
       const { data, error } = await this.supabase
         .from('comments')
         .insert(comment)
-        .select(`
+        .select(
+          `
           *,
           user:users(*)
-        `)
+        `
+        )
         .single()
 
       if (error) {
@@ -488,9 +482,11 @@ export class DatabaseService {
     try {
       const { data, error } = await this.supabase
         .from('follows')
-        .select(`
+        .select(
+          `
           follower:users!follower_id(*)
-        `)
+        `
+        )
         .eq('following_id', userId)
 
       if (error) {
@@ -509,9 +505,11 @@ export class DatabaseService {
     try {
       const { data, error } = await this.supabase
         .from('follows')
-        .select(`
+        .select(
+          `
           following:users!following_id(*)
-        `)
+        `
+        )
         .eq('follower_id', userId)
 
       if (error) {
@@ -556,12 +554,14 @@ export class DatabaseService {
     try {
       const { data, error } = await this.supabase
         .from('conversations')
-        .select(`
+        .select(
+          `
           *,
           user1:users!user1_id(*),
           user2:users!user2_id(*),
           last_message:messages!last_message_id(*)
-        `)
+        `
+        )
         .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
         .order('updated_at', { ascending: false })
 
@@ -585,11 +585,13 @@ export class DatabaseService {
     try {
       const { data, error } = await this.supabase
         .from('messages')
-        .select(`
+        .select(
+          `
           *,
           sender:users!sender_id(*),
           receiver:users!receiver_id(*)
-        `)
+        `
+        )
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true })
         .limit(limit)
@@ -621,7 +623,10 @@ export class DatabaseService {
 
       // If no conversation ID provided, create or get existing conversation
       if (!conversationId) {
-        const conversation = await this.createOrGetConversation(params.sender_id, params.receiver_id)
+        const conversation = await this.createOrGetConversation(
+          params.sender_id,
+          params.receiver_id
+        )
         if (!conversation) {
           logError('Failed to create or get conversation')
           return null
@@ -636,13 +641,15 @@ export class DatabaseService {
           sender_id: params.sender_id,
           receiver_id: params.receiver_id,
           content: params.content,
-          read: false
+          read: false,
         })
-        .select(`
+        .select(
+          `
           *,
           sender:users!sender_id(*),
           receiver:users!receiver_id(*)
-        `)
+        `
+        )
         .single()
 
       if (error) {
@@ -655,7 +662,7 @@ export class DatabaseService {
         .from('conversations')
         .update({
           last_message_id: data.id,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq('id', conversationId)
 
@@ -716,7 +723,7 @@ export class DatabaseService {
         .from('conversations')
         .insert({
           user1_id: user1Id,
-          user2_id: user2Id
+          user2_id: user2Id,
         })
         .select()
         .single()

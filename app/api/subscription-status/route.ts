@@ -1,16 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
-import Stripe from 'stripe';
+import { NextRequest, NextResponse } from 'next/server'
+import Stripe from 'stripe'
 
 // Check if Stripe is configured
 const isStripeConfigured = () => {
-  return !!(process.env.STRIPE_SECRET_KEY);
-};
+  return !!process.env.STRIPE_SECRET_KEY
+}
 
 const stripe = isStripeConfigured()
   ? new Stripe(process.env.STRIPE_SECRET_KEY!, {
       apiVersion: '2025-08-27.basil',
     })
-  : null;
+  : null
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,12 +23,12 @@ export async function GET(request: NextRequest) {
         currency: 'usd',
         interval: '',
         currentPeriodEnd: '',
-        cancelAtPeriodEnd: false
-      });
+        cancelAtPeriodEnd: false,
+      })
     }
 
-    const { searchParams } = new URL(request.url);
-    const customerId = searchParams.get('customerId');
+    const { searchParams } = new URL(request.url)
+    const customerId = searchParams.get('customerId')
 
     if (!customerId) {
       return NextResponse.json({
@@ -38,8 +38,8 @@ export async function GET(request: NextRequest) {
         currency: 'usd',
         interval: '',
         currentPeriodEnd: '',
-        cancelAtPeriodEnd: false
-      });
+        cancelAtPeriodEnd: false,
+      })
     }
 
     // Get active subscriptions for the customer
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       customer: customerId,
       status: 'all',
       limit: 1,
-    });
+    })
 
     if (subscriptions.data.length === 0) {
       return NextResponse.json({
@@ -57,12 +57,12 @@ export async function GET(request: NextRequest) {
         currency: 'usd',
         interval: '',
         currentPeriodEnd: '',
-        cancelAtPeriodEnd: false
-      });
+        cancelAtPeriodEnd: false,
+      })
     }
 
-    const subscription = subscriptions.data[0];
-    const price = subscription.items.data[0]?.price;
+    const subscription = subscriptions.data[0]
+    const price = subscription.items.data[0]?.price
 
     return NextResponse.json({
       status: subscription.status,
@@ -71,10 +71,10 @@ export async function GET(request: NextRequest) {
       currency: price?.currency || 'usd',
       interval: price?.recurring?.interval || '',
       currentPeriodEnd: new Date((subscription as any).current_period_end * 1000).toISOString(),
-      cancelAtPeriodEnd: subscription.cancel_at_period_end
-    });
+      cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    })
   } catch (error) {
-    console.error('Error fetching subscription status:', error);
+    console.error('Error fetching subscription status:', error)
     return NextResponse.json({
       status: 'none',
       planName: '',
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
       currency: 'usd',
       interval: '',
       currentPeriodEnd: '',
-      cancelAtPeriodEnd: false
-    });
+      cancelAtPeriodEnd: false,
+    })
   }
 }

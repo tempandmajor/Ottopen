@@ -17,7 +17,7 @@ const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>
 const mockPush = jest.fn()
 
 beforeEach(() => {
-  (mockUseRouter as jest.Mock).mockReturnValue({
+  ;(mockUseRouter as jest.Mock).mockReturnValue({
     push: mockPush,
     replace: jest.fn(),
     prefetch: jest.fn(),

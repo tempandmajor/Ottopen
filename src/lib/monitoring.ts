@@ -47,7 +47,7 @@ class MonitoringService {
       const result = fn()
 
       if (result instanceof Promise) {
-        return result.then(measure).catch((error) => {
+        return result.then(measure).catch(error => {
           this.captureError(error, { action: name })
           throw error
         })
@@ -87,7 +87,7 @@ class MonitoringService {
     logError('Error captured', error, context)
 
     if (process.env.NODE_ENV === 'production') {
-      Sentry.withScope((scope) => {
+      Sentry.withScope(scope => {
         if (context?.userId) {
           scope.setUser({ id: context.userId })
         }
@@ -117,11 +117,15 @@ class MonitoringService {
     }
   }
 
-  captureMessage(message: string, level: 'info' | 'warning' | 'error' = 'info', context?: ErrorContext) {
+  captureMessage(
+    message: string,
+    level: 'info' | 'warning' | 'error' = 'info',
+    context?: ErrorContext
+  ) {
     logInfo(message, context)
 
     if (process.env.NODE_ENV === 'production') {
-      Sentry.withScope((scope) => {
+      Sentry.withScope(scope => {
         if (context?.userId) {
           scope.setUser({ id: context.userId })
         }
@@ -148,7 +152,7 @@ class MonitoringService {
   }
 
   private measureCLS() {
-    new PerformanceObserver((list) => {
+    new PerformanceObserver(list => {
       for (const entry of list.getEntries()) {
         if (entry.entryType === 'layout-shift' && !(entry as any).hadRecentInput) {
           this.recordMetric({
@@ -163,7 +167,7 @@ class MonitoringService {
   }
 
   private measureFID() {
-    new PerformanceObserver((list) => {
+    new PerformanceObserver(list => {
       for (const entry of list.getEntries()) {
         this.recordMetric({
           name: 'FID',
@@ -176,7 +180,7 @@ class MonitoringService {
   }
 
   private measureLCP() {
-    new PerformanceObserver((list) => {
+    new PerformanceObserver(list => {
       const entries = list.getEntries()
       const lastEntry = entries[entries.length - 1]
       this.recordMetric({
@@ -189,7 +193,7 @@ class MonitoringService {
   }
 
   private measureFCP() {
-    new PerformanceObserver((list) => {
+    new PerformanceObserver(list => {
       for (const entry of list.getEntries()) {
         if (entry.name === 'first-contentful-paint') {
           this.recordMetric({
@@ -204,7 +208,9 @@ class MonitoringService {
   }
 
   private measureTTFB() {
-    const navigationEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming
+    const navigationEntry = performance.getEntriesByType(
+      'navigation'
+    )[0] as PerformanceNavigationTiming
     if (navigationEntry) {
       this.recordMetric({
         name: 'TTFB',

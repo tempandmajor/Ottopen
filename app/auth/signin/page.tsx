@@ -1,90 +1,90 @@
-"use client";
+'use client'
 
-import { Button } from "@/src/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
-import { Input } from "@/src/components/ui/input";
-import { Label } from "@/src/components/ui/label";
-import { PenTool, Eye, EyeOff } from "lucide-react";
-import Link from "next/link";
-import { useState, useEffect, Suspense } from "react";
-import { useAuth } from "@/src/contexts/auth-context";
-import { useRouter, useSearchParams } from "next/navigation";
-import { toast } from "react-hot-toast";
+import { Button } from '@/src/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card'
+import { Input } from '@/src/components/ui/input'
+import { Label } from '@/src/components/ui/label'
+import { PenTool, Eye, EyeOff } from 'lucide-react'
+import Link from 'next/link'
+import { useState, useEffect, Suspense } from 'react'
+import { useAuth } from '@/src/contexts/auth-context'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { toast } from 'react-hot-toast'
 
 // Component to handle search params with Suspense
 function SearchParamsHandler() {
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()
 
   useEffect(() => {
-    const message = searchParams.get('message');
+    const message = searchParams.get('message')
     if (message === 'confirm-email') {
       toast('Please check your email and click the confirmation link before signing in.', {
         duration: 5000,
         icon: '📧',
-      });
+      })
     }
-  }, [searchParams]);
+  }, [searchParams])
 
-  return null;
+  return null
 }
 
 export default function SignIn() {
-  const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const { signIn } = useAuth();
-  const router = useRouter();
+  const { signIn } = useAuth()
+  const router = useRouter()
 
   const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+    e.preventDefault()
+    setLoading(true)
 
-    console.log('=== SIGNIN PROCESS START ===');
-    console.log('Email:', email);
+    console.log('=== SIGNIN PROCESS START ===')
+    console.log('Email:', email)
 
     try {
-      console.log('Calling signIn from auth context...');
-      const { error } = await signIn(email, password);
+      console.log('Calling signIn from auth context...')
+      const { error } = await signIn(email, password)
 
-      console.log('SignIn result:', { error });
+      console.log('SignIn result:', { error })
 
       if (error) {
-        console.log('SignIn failed with error:', error);
-        toast.error(error);
-        return;
+        console.log('SignIn failed with error:', error)
+        toast.error(error)
+        return
       }
 
-      console.log('SignIn success! Testing direct API...');
+      console.log('SignIn success! Testing direct API...')
       // Test direct API call for comparison
       try {
         const response = await fetch('/api/debug-signin', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
-        const debugResult = await response.json();
-        console.log('Debug signin API result:', debugResult);
+          body: JSON.stringify({ email, password }),
+        })
+        const debugResult = await response.json()
+        console.log('Debug signin API result:', debugResult)
       } catch (debugError) {
-        console.log('Debug API failed:', debugError);
+        console.log('Debug API failed:', debugError)
       }
 
-      toast.success("Signed in successfully!");
+      toast.success('Signed in successfully!')
 
-      console.log('Waiting for auth state to update...');
+      console.log('Waiting for auth state to update...')
       // Test redirect to non-protected page first
       setTimeout(() => {
-        console.log('Attempting redirect to homepage...');
-        router.push("/");
-      }, 1000);
+        console.log('Attempting redirect to homepage...')
+        router.push('/')
+      }, 1000)
     } catch (error) {
-      console.log('SignIn exception:', error);
-      toast.error("An unexpected error occurred");
+      console.log('SignIn exception:', error)
+      toast.error('An unexpected error occurred')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
@@ -94,7 +94,10 @@ export default function SignIn() {
       <div className="w-full max-w-md space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <Link href="/" className="inline-flex items-center space-x-2 hover:opacity-80 transition-opacity">
+          <Link
+            href="/"
+            className="inline-flex items-center space-x-2 hover:opacity-80 transition-opacity"
+          >
             <PenTool className="h-8 w-8" />
             <h1 className="font-serif text-2xl font-semibold">Ottopen</h1>
           </Link>
@@ -115,7 +118,7 @@ export default function SignIn() {
                   type="email"
                   placeholder="Enter your email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={e => setEmail(e.target.value)}
                   className="border-literary-border"
                   required
                 />
@@ -126,10 +129,10 @@ export default function SignIn() {
                 <div className="relative">
                   <Input
                     id="password"
-                    type={showPassword ? "text" : "password"}
+                    type={showPassword ? 'text' : 'password'}
                     placeholder="Enter your password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={e => setPassword(e.target.value)}
                     className="border-literary-border pr-10"
                     required
                   />
@@ -146,16 +149,13 @@ export default function SignIn() {
               </div>
 
               <div className="flex items-center justify-between">
-                <Link
-                  href="/auth/forgot-password"
-                  className="text-sm text-primary hover:underline"
-                >
+                <Link href="/auth/forgot-password" className="text-sm text-primary hover:underline">
                   Forgot password?
                 </Link>
               </div>
 
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Signing in..." : "Sign In"}
+                {loading ? 'Signing in...' : 'Sign In'}
               </Button>
             </form>
 
@@ -170,13 +170,17 @@ export default function SignIn() {
 
         <div className="text-center text-xs text-muted-foreground">
           <p>
-            By continuing, you agree to our{" "}
-            <Link href="/legal/terms" className="hover:underline">Terms of Service</Link>
-            {" "}and{" "}
-            <Link href="/legal/privacy" className="hover:underline">Privacy Policy</Link>
+            By continuing, you agree to our{' '}
+            <Link href="/legal/terms" className="hover:underline">
+              Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link href="/legal/privacy" className="hover:underline">
+              Privacy Policy
+            </Link>
           </p>
         </div>
       </div>
     </div>
-  );
+  )
 }

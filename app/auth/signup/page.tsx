@@ -1,60 +1,73 @@
-"use client";
+'use client'
 
-import { Button } from "@/src/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
-import { Input } from "@/src/components/ui/input";
-import { Label } from "@/src/components/ui/label";
-import { Textarea } from "@/src/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
-import { Checkbox } from "@/src/components/ui/checkbox";
-import { PenTool, Eye, EyeOff } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
-import { useAuth } from "@/src/contexts/auth-context";
-import { useRouter } from "next/navigation";
-import { toast } from "react-hot-toast";
+import { Button } from '@/src/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card'
+import { Input } from '@/src/components/ui/input'
+import { Label } from '@/src/components/ui/label'
+import { Textarea } from '@/src/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/src/components/ui/select'
+import { Checkbox } from '@/src/components/ui/checkbox'
+import { PenTool, Eye, EyeOff } from 'lucide-react'
+import Link from 'next/link'
+import { useState } from 'react'
+import { useAuth } from '@/src/contexts/auth-context'
+import { useRouter } from 'next/navigation'
+import { toast } from 'react-hot-toast'
 
 export default function SignUp() {
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
-    displayName: "",
-    username: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    bio: "",
-    specialty: "",
-    accountType: "writer" as 'writer' | 'platform_agent' | 'external_agent' | 'producer' | 'publisher' | 'theater_director' | 'reader_evaluator',
-    companyName: "",
-    industryCredentials: "",
-    licenseNumber: "",
-    agreedToTerms: false
-  });
+    displayName: '',
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    bio: '',
+    specialty: '',
+    accountType: 'writer' as
+      | 'writer'
+      | 'platform_agent'
+      | 'external_agent'
+      | 'producer'
+      | 'publisher'
+      | 'theater_director'
+      | 'reader_evaluator',
+    companyName: '',
+    industryCredentials: '',
+    licenseNumber: '',
+    agreedToTerms: false,
+  })
 
-  const { signUp } = useAuth();
-  const router = useRouter();
+  const { signUp } = useAuth()
+  const router = useRouter()
 
   const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     if (!formData.agreedToTerms) {
-      toast.error("Please agree to the terms and conditions");
-      return;
+      toast.error('Please agree to the terms and conditions')
+      return
     }
 
     if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
+      toast.error('Passwords do not match')
+      return
     }
 
     if (formData.password.length < 8) {
-      toast.error("Password must be at least 8 characters long");
-      return;
+      toast.error('Password must be at least 8 characters long')
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
 
     try {
       const { error } = await signUp({
@@ -68,36 +81,41 @@ export default function SignUp() {
         companyName: formData.companyName || undefined,
         industryCredentials: formData.industryCredentials || undefined,
         licenseNumber: formData.licenseNumber || undefined,
-      });
+      })
 
       if (error) {
-        toast.error(error);
-        return;
+        toast.error(error)
+        return
       }
 
-      toast.success("Account created successfully! Please check your email to confirm your account before signing in.");
+      toast.success(
+        'Account created successfully! Please check your email to confirm your account before signing in.'
+      )
 
       // Show confirmation message and don't redirect immediately
       setTimeout(() => {
-        router.push("/auth/signin?message=confirm-email");
-      }, 3000);
+        router.push('/auth/signin?message=confirm-email')
+      }, 3000)
     } catch (error) {
-      toast.error("An unexpected error occurred");
+      toast.error('An unexpected error occurred')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+    setFormData(prev => ({ ...prev, [field]: value }))
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <Link href="/" className="inline-flex items-center space-x-2 hover:opacity-80 transition-opacity">
+          <Link
+            href="/"
+            className="inline-flex items-center space-x-2 hover:opacity-80 transition-opacity"
+          >
             <PenTool className="h-8 w-8" />
             <h1 className="font-serif text-2xl font-semibold">Ottopen</h1>
           </Link>
@@ -118,7 +136,7 @@ export default function SignUp() {
                     id="displayName"
                     placeholder="Maya Rodriguez"
                     value={formData.displayName}
-                    onChange={(e) => handleInputChange("displayName", e.target.value)}
+                    onChange={e => handleInputChange('displayName', e.target.value)}
                     className="border-literary-border"
                     required
                   />
@@ -129,7 +147,7 @@ export default function SignUp() {
                     id="username"
                     placeholder="maya_writes"
                     value={formData.username}
-                    onChange={(e) => handleInputChange("username", e.target.value)}
+                    onChange={e => handleInputChange('username', e.target.value)}
                     className="border-literary-border"
                     required
                   />
@@ -143,7 +161,7 @@ export default function SignUp() {
                   type="email"
                   placeholder="maya@example.com"
                   value={formData.email}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
+                  onChange={e => handleInputChange('email', e.target.value)}
                   className="border-literary-border"
                   required
                 />
@@ -154,10 +172,10 @@ export default function SignUp() {
                 <div className="relative">
                   <Input
                     id="password"
-                    type={showPassword ? "text" : "password"}
+                    type={showPassword ? 'text' : 'password'}
                     placeholder="Create a strong password"
                     value={formData.password}
-                    onChange={(e) => handleInputChange("password", e.target.value)}
+                    onChange={e => handleInputChange('password', e.target.value)}
                     className="border-literary-border pr-10"
                     required
                   />
@@ -181,10 +199,10 @@ export default function SignUp() {
                 <div className="relative">
                   <Input
                     id="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
+                    type={showConfirmPassword ? 'text' : 'password'}
                     placeholder="Confirm your password"
                     value={formData.confirmPassword}
-                    onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+                    onChange={e => handleInputChange('confirmPassword', e.target.value)}
                     className="border-literary-border pr-10"
                     required
                   />
@@ -195,19 +213,24 @@ export default function SignUp() {
                     className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
-                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
                 {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                  <p className="text-xs text-red-500">
-                    Passwords do not match
-                  </p>
+                  <p className="text-xs text-red-500">Passwords do not match</p>
                 )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="accountType">Account Type</Label>
-                <Select value={formData.accountType} onValueChange={(value) => handleInputChange("accountType", value)}>
+                <Select
+                  value={formData.accountType}
+                  onValueChange={value => handleInputChange('accountType', value)}
+                >
                   <SelectTrigger className="border-literary-border">
                     <SelectValue placeholder="Select your account type" />
                   </SelectTrigger>
@@ -224,7 +247,7 @@ export default function SignUp() {
               </div>
 
               {/* Professional fields - shown for non-writer account types */}
-              {formData.accountType !== "writer" && (
+              {formData.accountType !== 'writer' && (
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="companyName">Company/Organization Name</Label>
@@ -232,7 +255,7 @@ export default function SignUp() {
                       id="companyName"
                       placeholder="e.g., Literary Agency Inc."
                       value={formData.companyName}
-                      onChange={(e) => handleInputChange("companyName", e.target.value)}
+                      onChange={e => handleInputChange('companyName', e.target.value)}
                       className="border-literary-border"
                     />
                   </div>
@@ -243,7 +266,7 @@ export default function SignUp() {
                       id="industryCredentials"
                       placeholder="e.g., AAR Member, MFA in Writing"
                       value={formData.industryCredentials}
-                      onChange={(e) => handleInputChange("industryCredentials", e.target.value)}
+                      onChange={e => handleInputChange('industryCredentials', e.target.value)}
                       className="border-literary-border"
                     />
                   </div>
@@ -254,7 +277,7 @@ export default function SignUp() {
                       id="licenseNumber"
                       placeholder="Professional license number if applicable"
                       value={formData.licenseNumber}
-                      onChange={(e) => handleInputChange("licenseNumber", e.target.value)}
+                      onChange={e => handleInputChange('licenseNumber', e.target.value)}
                       className="border-literary-border"
                     />
                   </div>
@@ -262,8 +285,13 @@ export default function SignUp() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="specialty">{formData.accountType === "writer" ? "Writing Specialty" : "Specialty/Focus Area"}</Label>
-                <Select value={formData.specialty} onValueChange={(value) => handleInputChange("specialty", value)}>
+                <Label htmlFor="specialty">
+                  {formData.accountType === 'writer' ? 'Writing Specialty' : 'Specialty/Focus Area'}
+                </Label>
+                <Select
+                  value={formData.specialty}
+                  onValueChange={value => handleInputChange('specialty', value)}
+                >
                   <SelectTrigger className="border-literary-border">
                     <SelectValue placeholder="Select your specialty" />
                   </SelectTrigger>
@@ -290,7 +318,7 @@ export default function SignUp() {
                   id="bio"
                   placeholder="Tell us about your writing journey..."
                   value={formData.bio}
-                  onChange={(e) => handleInputChange("bio", e.target.value)}
+                  onChange={e => handleInputChange('bio', e.target.value)}
                   className="min-h-[80px] border-literary-border"
                 />
               </div>
@@ -299,22 +327,28 @@ export default function SignUp() {
                 <Checkbox
                   id="terms"
                   checked={formData.agreedToTerms}
-                  onCheckedChange={(checked) => handleInputChange("agreedToTerms", checked as boolean)}
+                  onCheckedChange={checked =>
+                    handleInputChange('agreedToTerms', checked as boolean)
+                  }
                 />
                 <Label htmlFor="terms" className="text-sm">
-                  I agree to the{" "}
+                  I agree to the{' '}
                   <Link href="/legal/terms" className="text-primary hover:underline">
                     Terms of Service
-                  </Link>
-                  {" "}and{" "}
+                  </Link>{' '}
+                  and{' '}
                   <Link href="/legal/privacy" className="text-primary hover:underline">
                     Privacy Policy
                   </Link>
                 </Label>
               </div>
 
-              <Button type="submit" className="w-full" disabled={!formData.agreedToTerms || loading}>
-                {loading ? "Creating Account..." : "Create Account"}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={!formData.agreedToTerms || loading}
+              >
+                {loading ? 'Creating Account...' : 'Create Account'}
               </Button>
             </form>
 
@@ -328,5 +362,5 @@ export default function SignUp() {
         </Card>
       </div>
     </div>
-  );
+  )
 }

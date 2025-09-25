@@ -1,103 +1,104 @@
-"use client";
+'use client'
 
-import { Navigation } from "@/src/components/navigation";
-import { Footer } from "@/src/components/footer";
-import { AuthorCard } from "@/src/components/author-card";
-import { PostCard } from "@/src/components/post-card";
-import { Button } from "@/src/components/ui/button";
-import { Input } from "@/src/components/ui/input";
-import { Search, TrendingUp, Star, BookOpen } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import { useAuth } from "@/src/contexts/auth-context";
-import { useState, useEffect } from "react";
-import { dbService } from "@/src/lib/database";
-import type { User, Post } from "@/src/lib/supabase";
+import { Navigation } from '@/src/components/navigation'
+import { Footer } from '@/src/components/footer'
+import { AuthorCard } from '@/src/components/author-card'
+import { PostCard } from '@/src/components/post-card'
+import { Button } from '@/src/components/ui/button'
+import { Input } from '@/src/components/ui/input'
+import { Search, TrendingUp, Star, BookOpen } from 'lucide-react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { useAuth } from '@/src/contexts/auth-context'
+import { useState, useEffect } from 'react'
+import { dbService } from '@/src/lib/database'
+import type { User, Post } from '@/src/lib/supabase'
 
 export default function Home() {
-  const { user } = useAuth();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [recentPosts, setRecentPosts] = useState<Post[]>([]);
-  const [featuredAuthors, setFeaturedAuthors] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [recentPosts, setRecentPosts] = useState<Post[]>([])
+  const [featuredAuthors, setFeaturedAuthors] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
 
   // Load data on component mount
   useEffect(() => {
     const loadData = async () => {
       try {
-        setLoading(true);
+        setLoading(true)
 
         // Load recent posts
-        const posts = await dbService.getPosts({ limit: 6, published: true });
-        setRecentPosts(posts);
+        const posts = await dbService.getPosts({ limit: 6, published: true })
+        setRecentPosts(posts)
 
         // Load featured authors (users with most followers or posts)
-        const authors = await dbService.searchUsers("", 6);
-        setFeaturedAuthors(authors);
+        const authors = await dbService.searchUsers('', 6)
+        setFeaturedAuthors(authors)
       } catch (error) {
-        console.error("Failed to load homepage data:", error);
+        console.error('Failed to load homepage data:', error)
         // Fallback to mock data if database fails
         setRecentPosts([
           {
-            id: "1",
-            user_id: "1",
-            title: "Welcome to Ottopen",
-            content: "Welcome to Ottopen, a literary social network for authors, screenwriters, and playwrights. Share your work, discover new voices, and build meaningful connections in the literary world.",
+            id: '1',
+            user_id: '1',
+            title: 'Welcome to Ottopen',
+            content:
+              'Welcome to Ottopen, a literary social network for authors, screenwriters, and playwrights. Share your work, discover new voices, and build meaningful connections in the literary world.',
             published: true,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
             user: {
-              id: "1",
-              email: "demo@ottopen.com",
-              display_name: "Ottopen Team",
-              username: "ottopen",
-              bio: "The official Ottopen team account",
-              specialty: "Platform",
+              id: '1',
+              email: 'demo@ottopen.com',
+              display_name: 'Ottopen Team',
+              username: 'ottopen',
+              bio: 'The official Ottopen team account',
+              specialty: 'Platform',
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
             },
             likes_count: 24,
             comments_count: 8,
-          }
-        ] as Post[]);
+          },
+        ] as Post[])
 
         setFeaturedAuthors([
           {
-            id: "1",
-            email: "demo@ottopen.com",
-            display_name: "Maya Rodriguez",
-            username: "maya_rodriguez",
+            id: '1',
+            email: 'demo@ottopen.com',
+            display_name: 'Maya Rodriguez',
+            username: 'maya_rodriguez',
             bio: "Award-winning novelist exploring themes of identity and belonging. Author of 'The Bridge Between Worlds' and upcoming 'Echoes of Tomorrow'.",
-            specialty: "Literary Fiction",
+            specialty: 'Literary Fiction',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           },
           {
-            id: "2",
-            email: "demo2@ottopen.com",
-            display_name: "James Chen",
-            username: "james_chen",
-            bio: "Emmy-nominated screenwriter for drama series. Currently developing new projects for streaming platforms.",
-            specialty: "Screenwriter",
+            id: '2',
+            email: 'demo2@ottopen.com',
+            display_name: 'James Chen',
+            username: 'james_chen',
+            bio: 'Emmy-nominated screenwriter for drama series. Currently developing new projects for streaming platforms.',
+            specialty: 'Screenwriter',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-          }
-        ] as User[]);
+          },
+        ] as User[])
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    loadData();
-  }, []);
+    loadData()
+  }, [])
 
   // Handle search
   const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     if (searchQuery.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`;
+      window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`
     }
-  };
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -181,7 +182,7 @@ export default function Home() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={e => setSearchQuery(e.target.value)}
                   placeholder="Search authors, works, or discussions..."
                   className="pl-10 h-12 text-base"
                 />
@@ -211,7 +212,7 @@ export default function Home() {
                     <p className="mt-2 text-muted-foreground">Loading posts...</p>
                   </div>
                 ) : recentPosts.length > 0 ? (
-                  recentPosts.map((post) => (
+                  recentPosts.map(post => (
                     <PostCard
                       key={post.id}
                       author={post.user?.display_name || post.user?.username || 'Unknown Author'}
@@ -230,8 +231,8 @@ export default function Home() {
                       <p className="mt-2">
                         <Link href="/auth/signup" className="text-primary hover:underline">
                           Join the community
-                        </Link>
-                        {" "}to start sharing your work!
+                        </Link>{' '}
+                        to start sharing your work!
                       </p>
                     )}
                   </div>
@@ -250,7 +251,7 @@ export default function Home() {
                       <p className="mt-2 text-sm text-muted-foreground">Loading authors...</p>
                     </div>
                   ) : featuredAuthors.length > 0 ? (
-                    featuredAuthors.map((author) => (
+                    featuredAuthors.map(author => (
                       <AuthorCard
                         key={author.id}
                         name={author.display_name || author.username}
@@ -277,5 +278,5 @@ export default function Home() {
 
       <Footer />
     </div>
-  );
+  )
 }

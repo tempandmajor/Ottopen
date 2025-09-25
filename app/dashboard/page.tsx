@@ -1,15 +1,15 @@
-"use client";
+'use client'
 
-import { Navigation } from "@/src/components/navigation";
-import { PostCard } from "@/src/components/post-card";
-import { AuthorCard } from "@/src/components/author-card";
-import { Button } from "@/src/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/tabs";
-import { Badge } from "@/src/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/src/components/ui/avatar";
-import { Progress } from "@/src/components/ui/progress";
-import { ProtectedRoute } from "@/src/components/auth/protected-route";
+import { Navigation } from '@/src/components/navigation'
+import { PostCard } from '@/src/components/post-card'
+import { AuthorCard } from '@/src/components/author-card'
+import { Button } from '@/src/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/components/ui/tabs'
+import { Badge } from '@/src/components/ui/badge'
+import { Avatar, AvatarFallback, AvatarImage } from '@/src/components/ui/avatar'
+import { Progress } from '@/src/components/ui/progress'
+import { ProtectedRoute } from '@/src/components/auth/protected-route'
 import {
   BookOpen,
   Users,
@@ -22,75 +22,75 @@ import {
   Target,
   Award,
   Eye,
-  Loader2
-} from "lucide-react";
-import { useState, useEffect } from "react";
-import { useAuth } from "@/src/contexts/auth-context";
-import { dbService } from "@/src/lib/database";
-import type { Post, User } from "@/src/lib/supabase";
-import { toast } from "react-hot-toast";
-import Link from "next/link";
+  Loader2,
+} from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useAuth } from '@/src/contexts/auth-context'
+import { dbService } from '@/src/lib/database'
+import type { Post, User } from '@/src/lib/supabase'
+import { toast } from 'react-hot-toast'
+import Link from 'next/link'
 
 function DashboardContent() {
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth()
+  const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
     totalWorks: 0,
     totalFollowers: 0,
     totalLikes: 0,
     totalViews: 0,
     wordsThisMonth: 0,
-    postsThisMonth: 0
-  });
-  const [recentActivity, setRecentActivity] = useState<Post[]>([]);
-  const [suggestedAuthors, setSuggestedAuthors] = useState<User[]>([]);
+    postsThisMonth: 0,
+  })
+  const [recentActivity, setRecentActivity] = useState<Post[]>([])
+  const [suggestedAuthors, setSuggestedAuthors] = useState<User[]>([])
 
   // Mock writing goals - these would ideally be stored in the database
   const writingGoals = [
     {
-      title: "Weekly Writing Goal",
+      title: 'Weekly Writing Goal',
       current: 3420,
       target: 5000,
-      unit: "words"
+      unit: 'words',
     },
     {
-      title: "Monthly Posts",
+      title: 'Monthly Posts',
       current: stats.postsThisMonth,
       target: 30,
-      unit: "posts"
+      unit: 'posts',
     },
     {
-      title: "Reading Goal",
+      title: 'Reading Goal',
       current: 18,
       target: 24,
-      unit: "books"
-    }
-  ];
+      unit: 'books',
+    },
+  ]
 
   useEffect(() => {
     const loadDashboardData = async () => {
-      if (!user?.profile?.id) return;
+      if (!user?.profile?.id) return
 
       try {
-        setLoading(true);
+        setLoading(true)
 
         // Get user's posts for statistics
         const userPosts = await dbService.getPosts({
           userId: user.profile.id,
-          limit: 100
-        });
+          limit: 100,
+        })
 
         // Get user's follower count
-        const followers = await dbService.getFollowers(user.profile.id);
+        const followers = await dbService.getFollowers(user.profile.id)
 
         // Calculate statistics
-        const totalLikes = userPosts.reduce((sum, post) => sum + (post.likes_count || 0), 0);
-        const totalViews = userPosts.reduce((sum, post) => sum + (post.likes_count || 0), 0); // Using likes as proxy for views
-        const thisMonth = new Date();
-        thisMonth.setMonth(thisMonth.getMonth() - 1);
-        const postsThisMonth = userPosts.filter(post =>
-          new Date(post.created_at) > thisMonth
-        ).length;
+        const totalLikes = userPosts.reduce((sum, post) => sum + (post.likes_count || 0), 0)
+        const totalViews = userPosts.reduce((sum, post) => sum + (post.likes_count || 0), 0) // Using likes as proxy for views
+        const thisMonth = new Date()
+        thisMonth.setMonth(thisMonth.getMonth() - 1)
+        const postsThisMonth = userPosts.filter(
+          post => new Date(post.created_at) > thisMonth
+        ).length
 
         setStats({
           totalWorks: userPosts.length,
@@ -98,32 +98,31 @@ function DashboardContent() {
           totalLikes,
           totalViews,
           wordsThisMonth: Math.floor(Math.random() * 15000) + 5000, // Mock data for words
-          postsThisMonth
-        });
+          postsThisMonth,
+        })
 
         // Get recent activity from followed users
         const recentPosts = await dbService.getPosts({
           limit: 5,
-          published: true
-        });
-        setRecentActivity(recentPosts);
+          published: true,
+        })
+        setRecentActivity(recentPosts)
 
         // Get suggested authors (users with most followers)
-        const authors = await dbService.searchUsers("", 4);
-        setSuggestedAuthors(authors.filter(author => author.id !== user.profile?.id));
-
+        const authors = await dbService.searchUsers('', 4)
+        setSuggestedAuthors(authors.filter(author => author.id !== user.profile?.id))
       } catch (error) {
-        console.error("Failed to load dashboard data:", error);
-        toast.error("Failed to load dashboard data");
+        console.error('Failed to load dashboard data:', error)
+        toast.error('Failed to load dashboard data')
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    loadDashboardData();
-  }, [user]);
+    loadDashboardData()
+  }, [user])
 
-  const progressPercentage = (writingGoals[0].current / writingGoals[0].target) * 100;
+  const progressPercentage = (writingGoals[0].current / writingGoals[0].target) * 100
 
   return (
     <div className="min-h-screen bg-background">
@@ -137,7 +136,8 @@ function DashboardContent() {
               Welcome back, {user?.profile?.display_name || user?.email}! ✨
             </h1>
             <p className="text-muted-foreground">
-              Ready to continue your literary journey? Here&apos;s what&apos;s happening in your world.
+              Ready to continue your literary journey? Here&apos;s what&apos;s happening in your
+              world.
             </p>
           </div>
 
@@ -150,7 +150,11 @@ function DashboardContent() {
                   <CardContent className="p-4 text-center">
                     <BookOpen className="h-5 w-5 text-primary mx-auto mb-2" />
                     <div className="text-2xl font-bold">
-                      {loading ? <Loader2 className="h-6 w-6 animate-spin mx-auto" /> : stats.totalWorks}
+                      {loading ? (
+                        <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                      ) : (
+                        stats.totalWorks
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground">Works</p>
                   </CardContent>
@@ -159,7 +163,11 @@ function DashboardContent() {
                   <CardContent className="p-4 text-center">
                     <Users className="h-5 w-5 text-primary mx-auto mb-2" />
                     <div className="text-2xl font-bold">
-                      {loading ? <Loader2 className="h-6 w-6 animate-spin mx-auto" /> : stats.totalFollowers.toLocaleString()}
+                      {loading ? (
+                        <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                      ) : (
+                        stats.totalFollowers.toLocaleString()
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground">Followers</p>
                   </CardContent>
@@ -168,7 +176,13 @@ function DashboardContent() {
                   <CardContent className="p-4 text-center">
                     <Heart className="h-5 w-5 text-primary mx-auto mb-2" />
                     <div className="text-2xl font-bold">
-                      {loading ? <Loader2 className="h-6 w-6 animate-spin mx-auto" /> : (stats.totalLikes > 1000 ? (stats.totalLikes / 1000).toFixed(1) + 'K' : stats.totalLikes)}
+                      {loading ? (
+                        <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                      ) : stats.totalLikes > 1000 ? (
+                        (stats.totalLikes / 1000).toFixed(1) + 'K'
+                      ) : (
+                        stats.totalLikes
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground">Likes</p>
                   </CardContent>
@@ -177,7 +191,13 @@ function DashboardContent() {
                   <CardContent className="p-4 text-center">
                     <Eye className="h-5 w-5 text-primary mx-auto mb-2" />
                     <div className="text-2xl font-bold">
-                      {loading ? <Loader2 className="h-6 w-6 animate-spin mx-auto" /> : (stats.totalViews > 1000 ? (stats.totalViews / 1000).toFixed(0) + 'K' : stats.totalViews)}
+                      {loading ? (
+                        <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                      ) : stats.totalViews > 1000 ? (
+                        (stats.totalViews / 1000).toFixed(0) + 'K'
+                      ) : (
+                        stats.totalViews
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground">Views</p>
                   </CardContent>
@@ -237,10 +257,12 @@ function DashboardContent() {
                         <p className="mt-2 text-sm text-muted-foreground">Loading activity...</p>
                       </div>
                     ) : recentActivity.length > 0 ? (
-                      recentActivity.map((post) => (
+                      recentActivity.map(post => (
                         <PostCard
                           key={post.id}
-                          author={post.user?.display_name || post.user?.username || 'Unknown Author'}
+                          author={
+                            post.user?.display_name || post.user?.username || 'Unknown Author'
+                          }
                           avatar={post.user?.avatar_url}
                           time={new Date(post.created_at).toLocaleDateString()}
                           content={post.content}
@@ -306,7 +328,7 @@ function DashboardContent() {
                         <p className="mt-2 text-sm text-muted-foreground">Loading authors...</p>
                       </div>
                     ) : suggestedAuthors.length > 0 ? (
-                      suggestedAuthors.map((author) => (
+                      suggestedAuthors.map(author => (
                         <AuthorCard
                           key={author.id}
                           name={author.display_name || author.username}
@@ -368,7 +390,7 @@ function DashboardContent() {
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 export default function Dashboard() {
@@ -376,5 +398,5 @@ export default function Dashboard() {
     <ProtectedRoute>
       <DashboardContent />
     </ProtectedRoute>
-  );
+  )
 }
