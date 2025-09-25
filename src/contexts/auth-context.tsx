@@ -35,25 +35,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   console.log('AuthProvider render - userExists:', !!user, 'loading:', loading)
 
-  // Session timeout management - only active when user is authenticated
-  const { extend: extendSession } = useIdleTimeout({
-    timeout: 30 * 60 * 1000, // 30 minutes idle timeout
-    warningTime: 2 * 60 * 1000, // 2 minutes warning before timeout
-    onWarning: (timeLeft) => {
-      if (user) {
-        setTimeoutWarningTime(timeLeft)
-        setShowTimeoutWarning(true)
-      }
-    },
-    onTimeout: () => {
-      if (user) {
-        console.log('Session timeout - signing out user')
-        logAuthEvent('session_timeout', { userId: user.id, email: user.email })
-        signOut()
-        setShowTimeoutWarning(false)
-      }
-    },
-  })
+  // Session timeout management - temporarily disabled for debugging
+  // const { extend: extendSession } = useIdleTimeout({
+  //   timeout: 30 * 60 * 1000, // 30 minutes idle timeout
+  //   warningTime: 2 * 60 * 1000, // 2 minutes warning before timeout
+  //   onWarning: (timeLeft) => {
+  //     if (user && !loading) {
+  //       setTimeoutWarningTime(timeLeft)
+  //       setShowTimeoutWarning(true)
+  //     }
+  //   },
+  //   onTimeout: () => {
+  //     if (user && !loading) {
+  //       console.log('Session timeout - signing out user')
+  //       logAuthEvent('session_timeout', { userId: user.id, email: user.email })
+  //       signOut()
+  //       setShowTimeoutWarning(false)
+  //     }
+  //   },
+  // })
+
+  // Temporary placeholder for session extension
+  const extendSession = () => {}
 
   // Reset warning when user signs out
   useEffect(() => {

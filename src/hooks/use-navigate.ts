@@ -13,22 +13,20 @@ export function useNavigate() {
     async (path: string, options: NavigationOptions = {}) => {
       const { replace = false, timeout = 100 } = options
 
+      // For authentication redirects, use window.location for more reliability
+      if (replace) {
+        window.location.replace(path)
+        return
+      }
+
       try {
-        if (replace) {
-          await router.replace(path)
-        } else {
-          await router.push(path)
-        }
+        await router.push(path)
       } catch (error) {
         console.warn('Router navigation failed, using window.location', error)
 
         // Fallback to window.location with small delay
         setTimeout(() => {
-          if (replace) {
-            window.location.replace(path)
-          } else {
-            window.location.href = path
-          }
+          window.location.href = path
         }, timeout)
       }
     },

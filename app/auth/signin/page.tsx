@@ -34,9 +34,10 @@ export default function SignIn() {
     if (!loading && user && !redirecting) {
       console.log('SignIn: User already authenticated, redirecting to feed')
       setRedirecting(true)
-      navigate('/feed', { replace: true })
+      // Use window.location for more reliable redirect when already authenticated
+      window.location.replace('/feed')
     }
-  }, [user, loading, redirecting, navigate])
+  }, [user, loading, redirecting])
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -68,8 +69,8 @@ export default function SignIn() {
         // Reset rate limiter on success
         rateLimiter.recordAttempt(true)
 
-        // Navigate to feed with consistent pattern
-        navigate('/feed', { replace: true })
+        // Use window.location for immediate, reliable redirect
+        window.location.href = '/feed'
       } else {
         console.log('SignIn failed:', result.error)
         toast.error(result.error || 'Sign in failed')
