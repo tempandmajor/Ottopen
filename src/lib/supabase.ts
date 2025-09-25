@@ -13,7 +13,21 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 // Check if Supabase is properly configured
 export const isSupabaseConfigured = () => {
-  return !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+  // If explicitly disabled, return false
+  if (process.env.DISABLE_SUPABASE === 'true') {
+    return false
+  }
+
+  // Check if we have valid (non-placeholder) Supabase credentials
+  const hasValidUrl = process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://your-project.supabase.co' &&
+    !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder')
+
+  const hasValidKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY !== 'your_anon_key_here' &&
+    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.includes('placeholder')
+
+  return !!(hasValidUrl && hasValidKey)
 }
 
 // Database types

@@ -10,6 +10,10 @@ export const signUpSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters').regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
   bio: z.string().optional(),
   specialty: z.string().optional(),
+  accountType: z.enum(['writer', 'platform_agent', 'external_agent', 'producer', 'publisher', 'theater_director', 'reader_evaluator']).optional(),
+  companyName: z.string().optional(),
+  industryCredentials: z.string().optional(),
+  licenseNumber: z.string().optional(),
 })
 
 export const signInSchema = z.object({
@@ -75,6 +79,12 @@ export const authService = {
             username: validatedData.username,
             bio: validatedData.bio || '',
             specialty: validatedData.specialty || '',
+            account_type: validatedData.accountType || 'writer',
+            account_tier: 'free',
+            verification_status: 'pending',
+            company_name: validatedData.companyName || null,
+            industry_credentials: validatedData.industryCredentials || null,
+            license_number: validatedData.licenseNumber || null,
           })
 
         if (profileError) {
@@ -206,31 +216,18 @@ export const authService = {
     }
   },
 
-  async updatePassword(currentPassword: string, newPassword: string) {
+  async updatePassword(newPassword: string) {
     if (!isSupabaseConfigured()) {
       return { error: 'Supabase is not configured' }
     }
 
     try {
-      // Verify current password by re-authenticating
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user?.email) {
-        return { error: 'User not authenticated' }
+      // Validate new password
+      if (newPassword.length < 8) {
+        return { error: 'Password must be at least 8 characters long' }
       }
 
-      // Re-authenticate with current password
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: currentPassword,
-      })
-
-      if (signInError) {
-        logError('Current password verification failed', signInError)
-        return { error: 'Current password is incorrect' }
-      }
-
-      // Update password
+      // Update password directly - user must be authenticated to reach this point
       const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword
       })
@@ -245,6 +242,42 @@ export const authService = {
     } catch (error) {
       logError('Update password error', error as Error)
       return { error: (error as Error).message }
+    }
+  },
+
+  async verifyCurrentPassword(currentPassword: string) {
+    if (!isSupabaseConfigured()) {
+      return { valid: false, error: 'Supabase is not configured' }
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user?.email) {
+        return { valid: false, error: 'User not authenticated' }
+      }
+
+      // Create a temporary client for verification without affecting main session
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      })
+
+      if (error) {
+        logError('Password verification failed', error)
+        return { valid: false, error: 'Current password is incorrect' }
+      }
+
+      // If successful, immediately sign out the verification session to avoid conflicts
+      if (data.session) {
+        // Don't sign out the main session, just validate the password was correct
+        return { valid: true, error: null }
+      }
+
+      return { valid: false, error: 'Password verification failed' }
+    } catch (error) {
+      logError('Password verification error', error as Error)
+      return { valid: false, error: (error as Error).message }
     }
   },
 

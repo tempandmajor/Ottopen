@@ -269,8 +269,17 @@ export default function Settings() {
       setSaving(true);
       setErrors({});
 
+      // First verify the current password
+      const verifyResult = await authService.verifyCurrentPassword(passwordForm.currentPassword);
+
+      if (!verifyResult.valid) {
+        setErrors({ currentPassword: verifyResult.error || 'Current password is incorrect' });
+        toast.error(verifyResult.error || 'Current password is incorrect');
+        return;
+      }
+
+      // Update to new password
       const result = await authService.updatePassword(
-        passwordForm.currentPassword,
         passwordForm.newPassword
       );
 

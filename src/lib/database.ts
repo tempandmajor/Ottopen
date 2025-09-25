@@ -2,6 +2,24 @@ import { supabase, isSupabaseConfigured } from './supabase'
 import { logError, logInfo } from './logger'
 import type { User, Post, Comment, Like, Follow, Message, Conversation } from './supabase'
 
+// Standardized return types for better error handling
+export interface DatabaseResult<T> {
+  data: T | null
+  error: string | null
+  success: boolean
+}
+
+export interface DatabaseListResult<T> {
+  data: T[]
+  error: string | null
+  success: boolean
+}
+
+export interface DatabaseBooleanResult {
+  success: boolean
+  error: string | null
+}
+
 export class DatabaseService {
   private supabase: typeof supabase
 
@@ -9,18 +27,25 @@ export class DatabaseService {
     this.supabase = client || supabase
   }
 
-  private checkSupabaseConfig(): boolean {
+  private checkSupabaseConfig(): DatabaseBooleanResult {
     if (!isSupabaseConfigured()) {
       logInfo('Supabase not configured, returning empty data')
-      return false
+      return { success: false, error: 'Supabase is not configured' }
     }
-    return true
+    return { success: true, error: null }
+  }
+
+  private handleError(operation: string, error: any): string {
+    const errorMessage = typeof error === 'string' ? error : error?.message || 'Unknown error'
+    logError(`${operation} failed`, error)
+    return errorMessage
   }
 
   // User operations
-  async getUser(id: string): Promise<User | null> {
-    if (!this.checkSupabaseConfig()) {
-      return null
+  async getUser(id: string): Promise<DatabaseResult<User>> {
+    const configCheck = this.checkSupabaseConfig()
+    if (!configCheck.success) {
+      return { data: null, error: configCheck.error, success: false }
     }
 
     try {
@@ -31,18 +56,40 @@ export class DatabaseService {
         .single()
 
       if (error) {
-        logError('Failed to get user', error)
-        return null
+        return {
+          data: null,
+          error: this.handleError('Get user', error),
+          success: false
+        }
       }
 
-      return data
+      return { data, error: null, success: true }
     } catch (error) {
-      logError('Get user error', error as Error)
-      return null
+      return {
+        data: null,
+        error: this.handleError('Get user', error),
+        success: false
+      }
     }
   }
 
-  async getUserByUsername(username: string): Promise<User | null> {
+  // Legacy methods for backward compatibility
+  async getUserLegacy(id: string): Promise<User | null> {
+    const result = await this.getUser(id)
+    return result.data
+  }
+
+  async getUserByUsernameLegacy(username: string): Promise<User | null> {
+    const result = await this.getUserByUsername(username)
+    return result.data
+  }
+
+  async getUserByUsername(username: string): Promise<DatabaseResult<User>> {
+    const configCheck = this.checkSupabaseConfig()
+    if (!configCheck.success) {
+      return { data: null, error: configCheck.error, success: false }
+    }
+
     try {
       const { data, error } = await this.supabase
         .from('users')
@@ -51,14 +98,20 @@ export class DatabaseService {
         .single()
 
       if (error) {
-        logError('Failed to get user by username', error)
-        return null
+        return {
+          data: null,
+          error: this.handleError('Get user by username', error),
+          success: false
+        }
       }
 
-      return data
+      return { data, error: null, success: true }
     } catch (error) {
-      logError('Get user by username error', error as Error)
-      return null
+      return {
+        data: null,
+        error: this.handleError('Get user by username', error),
+        success: false
+      }
     }
   }
 

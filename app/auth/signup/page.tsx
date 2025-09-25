@@ -16,14 +16,20 @@ import { toast } from "react-hot-toast";
 
 export default function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     displayName: "",
     username: "",
     email: "",
     password: "",
+    confirmPassword: "",
     bio: "",
     specialty: "",
+    accountType: "writer" as 'writer' | 'platform_agent' | 'external_agent' | 'producer' | 'publisher' | 'theater_director' | 'reader_evaluator',
+    companyName: "",
+    industryCredentials: "",
+    licenseNumber: "",
     agreedToTerms: false
   });
 
@@ -38,6 +44,16 @@ export default function SignUp() {
       return;
     }
 
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      toast.error("Password must be at least 8 characters long");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -48,6 +64,10 @@ export default function SignUp() {
         username: formData.username,
         bio: formData.bio,
         specialty: formData.specialty,
+        accountType: formData.accountType,
+        companyName: formData.companyName || undefined,
+        industryCredentials: formData.industryCredentials || undefined,
+        licenseNumber: formData.licenseNumber || undefined,
       });
 
       if (error) {
@@ -153,7 +173,92 @@ export default function SignUp() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="specialty">Writing Specialty</Label>
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Confirm your password"
+                    value={formData.confirmPassword}
+                    onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+                    className="border-literary-border pr-10"
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
+                {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                  <p className="text-xs text-red-500">
+                    Passwords do not match
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="accountType">Account Type</Label>
+                <Select value={formData.accountType} onValueChange={(value) => handleInputChange("accountType", value)}>
+                  <SelectTrigger className="border-literary-border">
+                    <SelectValue placeholder="Select your account type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="writer">Writer</SelectItem>
+                    <SelectItem value="platform_agent">Literary Agent (Platform)</SelectItem>
+                    <SelectItem value="external_agent">Literary Agent (External)</SelectItem>
+                    <SelectItem value="producer">Producer</SelectItem>
+                    <SelectItem value="publisher">Publisher</SelectItem>
+                    <SelectItem value="theater_director">Theater Director</SelectItem>
+                    <SelectItem value="reader_evaluator">Reader/Evaluator</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Professional fields - shown for non-writer account types */}
+              {formData.accountType !== "writer" && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="companyName">Company/Organization Name</Label>
+                    <Input
+                      id="companyName"
+                      placeholder="e.g., Literary Agency Inc."
+                      value={formData.companyName}
+                      onChange={(e) => handleInputChange("companyName", e.target.value)}
+                      className="border-literary-border"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="industryCredentials">Industry Credentials (Optional)</Label>
+                    <Input
+                      id="industryCredentials"
+                      placeholder="e.g., AAR Member, MFA in Writing"
+                      value={formData.industryCredentials}
+                      onChange={(e) => handleInputChange("industryCredentials", e.target.value)}
+                      className="border-literary-border"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="licenseNumber">License Number (Optional)</Label>
+                    <Input
+                      id="licenseNumber"
+                      placeholder="Professional license number if applicable"
+                      value={formData.licenseNumber}
+                      onChange={(e) => handleInputChange("licenseNumber", e.target.value)}
+                      className="border-literary-border"
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="specialty">{formData.accountType === "writer" ? "Writing Specialty" : "Specialty/Focus Area"}</Label>
                 <Select value={formData.specialty} onValueChange={(value) => handleInputChange("specialty", value)}>
                   <SelectTrigger className="border-literary-border">
                     <SelectValue placeholder="Select your specialty" />

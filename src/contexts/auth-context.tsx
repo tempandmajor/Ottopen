@@ -18,6 +18,10 @@ interface AuthContextType {
     username: string
     bio?: string
     specialty?: string
+    accountType?: 'writer' | 'platform_agent' | 'external_agent' | 'producer' | 'publisher' | 'theater_director' | 'reader_evaluator'
+    companyName?: string
+    industryCredentials?: string
+    licenseNumber?: string
   }) => Promise<{ error?: string }>
   signOut: () => Promise<void>
   forgotPassword: (email: string) => Promise<{ error?: string }>
@@ -80,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     if (!isSupabaseConfigured()) {
-      return { error: 'Supabase is not configured' }
+      return { error: 'Authentication is not configured. Please set up your Supabase credentials in .env.local to enable sign in.' }
     }
 
     try {
@@ -104,9 +108,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     username: string
     bio?: string
     specialty?: string
+    accountType?: 'writer' | 'platform_agent' | 'external_agent' | 'producer' | 'publisher' | 'theater_director' | 'reader_evaluator'
+    companyName?: string
+    industryCredentials?: string
+    licenseNumber?: string
   }) => {
     if (!isSupabaseConfigured()) {
-      return { error: 'Supabase is not configured' }
+      return { error: 'Authentication is not configured. Please set up your Supabase credentials in .env.local to enable user registration.' }
     }
 
     try {
@@ -138,7 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const forgotPassword = async (email: string) => {
     if (!isSupabaseConfigured()) {
-      return { error: 'Supabase is not configured' }
+      return { error: 'Authentication is not configured. Please set up your Supabase credentials in .env.local to enable password reset.' }
     }
 
     try {

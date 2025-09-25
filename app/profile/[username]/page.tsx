@@ -71,7 +71,7 @@ export default function Profile() {
       setError(null);
 
       // Load user by username
-      const userData = await dbService.getUserByUsername(username);
+      const userData = await dbService.getUserByUsernameLegacy(username);
       if (!userData) {
         setError("User not found");
         return;
