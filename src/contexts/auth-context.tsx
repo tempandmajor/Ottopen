@@ -52,6 +52,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  // Helper to sync current session to server cookies and attach profile locally
+  const syncSessionAndAttachProfile = async () => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (session?.user) {
+        try {
+          if (session.access_token && session.refresh_token) {
+            await fetch('/api/auth/set-session', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                access_token: session.access_token,
+                refresh_token: session.refresh_token,
+              }),
+            })
+          }
+        } catch (e) {
+          console.warn('Failed to sync session to server (manual)', e)
+        }
+        const userWithProfile = await fetchUserProfile(session.user)
+        setUser(userWithProfile)
+        return true
+      }
+    } catch (e) {
+      console.warn('syncSessionAndAttachProfile error', e)
+    }
+    return false
+  }
+
   // Session timeout management - re-enabled with proper timing
   const { extend: extendSession } = useIdleTimeout({
     timeout: 30 * 60 * 1000, // 30 minutes idle timeout
@@ -226,8 +257,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           userId: data.user.id,
           email: data.user.email,
         })
-        // Don't set loading to false here - let the auth state change handler do it
-        // The user state will be updated by the onAuthStateChange listener
+        // Proactively sync session and attach profile to avoid UI stalling
+        await syncSessionAndAttachProfile()
+        // Safety: end loading if auth change event is delayed
+        setTimeout(() => {
+          setLoading(false)
+        }, 2000)
         return { success: true }
       }
 
@@ -294,6 +329,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           userId: authData.user.id,
           email: authData.user.email,
         })
+        await syncSessionAndAttachProfile()
+        setTimeout(() => {
+          setLoading(false)
+        }, 2000)
         return { success: true }
       }
 
@@ -379,6 +418,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setShowTimeoutWarning(false)
     signOut()
   }
+
+  // Watchdog: if loading persists abnormally, probe server auth and resync cookies once
+  useEffect(() => {
+    if (!loading) return
+    let cancelled = false
+    const t = setTimeout(async () => {
+      if (cancelled) return
+      try {
+        const { data: sessionData } = await supabase.auth.getSession()
+        const clientHasSession = !!sessionData.session?.user
+        const statusResp = await fetch('/api/auth/status')
+        const status = await statusResp.json().catch(() => ({ authenticated: false }))
+        const serverHasUser = !!status?.authenticated
+        if (clientHasSession && !serverHasUser) {
+          // Attempt a resync once
+          await syncSessionAndAttachProfile()
+        }
+      } catch (e) {
+        // ignore
+      } finally {
+        // Do not keep the app in spinner forever
+        if (!cancelled) setLoading(false)
+      }
+    }, 6000) // 6s watchdog
+    return () => {
+      cancelled = true
+      clearTimeout(t)
+    }
+  }, [loading])
 
   const value = {
     user,
