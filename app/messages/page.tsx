@@ -296,7 +296,7 @@ export default function Messages() {
                               variant="ghost"
                               size="sm"
                               className="p-2"
-                              onClick={() => toast.error('Voice calls coming soon!')}
+                              onClick={() => toast('Voice calls are not available yet')}
                             >
                               <Phone className="h-4 w-4" />
                             </Button>
@@ -304,7 +304,7 @@ export default function Messages() {
                               variant="ghost"
                               size="sm"
                               className="p-2"
-                              onClick={() => toast.error('Video calls coming soon!')}
+                              onClick={() => toast('Video calls are not available yet')}
                             >
                               <Video className="h-4 w-4" />
                             </Button>
@@ -393,10 +393,20 @@ export default function Messages() {
                       <div className="p-4 sm:p-6 border-t border-literary-border">
                         <div className="flex items-end space-x-2">
                           <div className="flex space-x-2">
-                            <Button variant="ghost" size="sm" className="p-2" disabled>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="p-2"
+                              onClick={() => toast('File attachments will be available soon')}
+                            >
                               <Paperclip className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" className="p-2" disabled>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="p-2"
+                              onClick={() => toast('Image sharing will be available soon')}
+                            >
                               <ImageIcon className="h-4 w-4" />
                             </Button>
                           </div>
@@ -414,7 +424,7 @@ export default function Messages() {
                               variant="ghost"
                               size="sm"
                               className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1"
-                              disabled
+                              onClick={() => toast('Emoji picker will be available soon')}
                             >
                               <Smile className="h-4 w-4" />
                             </Button>

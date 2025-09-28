@@ -12,6 +12,13 @@ import type {
   WritingSession,
   UserStatistics,
   ApplicationStatistics,
+  Job,
+  JobApplication,
+  Manuscript,
+  Submission,
+  ReferralCode,
+  Referral,
+  ReferralCredit,
 } from './supabase'
 
 // Standardized return types for better error handling
@@ -371,7 +378,7 @@ export class DatabaseService {
     }
   }
 
-  async searchPosts(query: string, limit = 20): Promise<Post[]> {
+  async searchPosts(query: string, limit = 20, offset = 0): Promise<Post[]> {
     try {
       const { data, error } = await this.supabase
         .from('posts_with_stats')
@@ -379,7 +386,7 @@ export class DatabaseService {
         .or(`title.ilike.%${query}%, content.ilike.%${query}%`)
         .eq('published', true)
         .order('created_at', { ascending: false })
-        .limit(limit)
+        .range(offset, offset + limit - 1)
 
       if (error) {
         logError('Failed to search posts', error)
@@ -628,13 +635,13 @@ export class DatabaseService {
   }
 
   // Search operations
-  async searchUsers(query: string, limit = 20): Promise<User[]> {
+  async searchUsers(query: string, limit = 20, offset = 0): Promise<User[]> {
     try {
       const { data, error } = await this.supabase
         .from('user_public_profiles')
         .select('*')
         .or(`display_name.ilike.%${query}%, username.ilike.%${query}%, bio.ilike.%${query}%`)
-        .limit(limit)
+        .range(offset, offset + limit - 1)
 
       if (error) {
         logError('Failed to search users', error)
@@ -1141,6 +1148,649 @@ export class DatabaseService {
     } catch (error) {
       logError('Get post views error', error as Error)
       return 0
+    }
+  }
+
+  // Job-related functions
+  async getJobs(options?: {
+    limit?: number
+    category?: string
+    jobType?: string
+    experienceLevel?: string
+    featured?: boolean
+  }): Promise<Job[]> {
+    if (!this.checkSupabaseConfig()) {
+      return []
+    }
+
+    try {
+      let query = this.supabase
+        .from('jobs')
+        .select(
+          `
+          *,
+          poster:users!jobs_poster_id_fkey(id, username, display_name, avatar_url, account_type)
+        `
+        )
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+
+      if (options?.limit) {
+        query = query.limit(options.limit)
+      }
+
+      if (options?.category && options.category !== 'all') {
+        query = query.eq('category', options.category)
+      }
+
+      if (options?.jobType && options.jobType !== 'all') {
+        query = query.eq('job_type', options.jobType)
+      }
+
+      if (options?.experienceLevel && options.experienceLevel !== 'all') {
+        query = query.eq('experience_level', options.experienceLevel)
+      }
+
+      if (options?.featured) {
+        query = query.eq('is_featured', true)
+      }
+
+      const { data, error } = await query
+
+      if (error) {
+        logError('Failed to fetch jobs', error)
+        return []
+      }
+
+      return data || []
+    } catch (error) {
+      logError('Get jobs error', error as Error)
+      return []
+    }
+  }
+
+  async createJob(
+    job: Omit<Job, 'id' | 'created_at' | 'updated_at' | 'applications_count'>
+  ): Promise<Job | null> {
+    if (!this.checkSupabaseConfig()) {
+      return null
+    }
+
+    try {
+      const { data, error } = await this.supabase.from('jobs').insert(job).select().single()
+
+      if (error) {
+        logError('Failed to create job', error)
+        return null
+      }
+
+      return data
+    } catch (error) {
+      logError('Create job error', error as Error)
+      return null
+    }
+  }
+
+  async applyToJob(
+    jobId: string,
+    applicantId: string,
+    coverLetter: string,
+    portfolioLinks?: string
+  ): Promise<JobApplication | null> {
+    if (!this.checkSupabaseConfig()) {
+      return null
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('job_applications')
+        .insert({
+          job_id: jobId,
+          applicant_id: applicantId,
+          cover_letter: coverLetter,
+          portfolio_links: portfolioLinks,
+          status: 'pending',
+        })
+        .select()
+        .single()
+
+      if (error) {
+        logError('Failed to apply to job', error)
+        return null
+      }
+
+      // Update applications count
+      await this.supabase.rpc('increment_job_applications', { job_id: jobId })
+
+      return data
+    } catch (error) {
+      logError('Apply to job error', error as Error)
+      return null
+    }
+  }
+
+  async getSavedJobs(userId: string): Promise<string[]> {
+    if (!this.checkSupabaseConfig()) {
+      return []
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('job_saves')
+        .select('job_id')
+        .eq('user_id', userId)
+
+      if (error) {
+        logError('Failed to get saved jobs', error)
+        return []
+      }
+
+      return data?.map(save => save.job_id) || []
+    } catch (error) {
+      logError('Get saved jobs error', error as Error)
+      return []
+    }
+  }
+
+  async saveJob(userId: string, jobId: string): Promise<boolean> {
+    if (!this.checkSupabaseConfig()) {
+      return false
+    }
+
+    try {
+      const { error } = await this.supabase
+        .from('job_saves')
+        .insert({ user_id: userId, job_id: jobId })
+
+      if (error) {
+        logError('Failed to save job', error)
+        return false
+      }
+
+      return true
+    } catch (error) {
+      logError('Save job error', error as Error)
+      return false
+    }
+  }
+
+  async unsaveJob(userId: string, jobId: string): Promise<boolean> {
+    if (!this.checkSupabaseConfig()) {
+      return false
+    }
+
+    try {
+      const { error } = await this.supabase
+        .from('job_saves')
+        .delete()
+        .eq('user_id', userId)
+        .eq('job_id', jobId)
+
+      if (error) {
+        logError('Failed to unsave job', error)
+        return false
+      }
+
+      return true
+    } catch (error) {
+      logError('Unsave job error', error as Error)
+      return false
+    }
+  }
+
+  async getUserJobApplications(userId: string): Promise<JobApplication[]> {
+    if (!this.checkSupabaseConfig()) {
+      return []
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('job_applications')
+        .select(
+          `
+          *,
+          job:jobs(id, title, company, location, status)
+        `
+        )
+        .eq('applicant_id', userId)
+        .order('applied_at', { ascending: false })
+
+      if (error) {
+        logError('Failed to get user job applications', error)
+        return []
+      }
+
+      return data || []
+    } catch (error) {
+      logError('Get user job applications error', error as Error)
+      return []
+    }
+  }
+
+  // Manuscript and Submission functions
+  async getUserManuscripts(userId: string): Promise<Manuscript[]> {
+    if (!this.checkSupabaseConfig()) {
+      return []
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('manuscripts')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        logError('Failed to get user manuscripts', error)
+        return []
+      }
+
+      return data || []
+    } catch (error) {
+      logError('Get user manuscripts error', error as Error)
+      return []
+    }
+  }
+
+  async createManuscript(
+    manuscript: Omit<Manuscript, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<Manuscript | null> {
+    if (!this.checkSupabaseConfig()) {
+      return null
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('manuscripts')
+        .insert(manuscript)
+        .select()
+        .single()
+
+      if (error) {
+        logError('Failed to create manuscript', error)
+        return null
+      }
+
+      return data
+    } catch (error) {
+      logError('Create manuscript error', error as Error)
+      return null
+    }
+  }
+
+  async getUserSubmissions(userId: string): Promise<Submission[]> {
+    if (!this.checkSupabaseConfig()) {
+      return []
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('submissions')
+        .select(
+          `
+          *,
+          manuscript:manuscripts(id, title, type, genre)
+        `
+        )
+        .eq('submitter_id', userId)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        logError('Failed to get user submissions', error)
+        return []
+      }
+
+      return data || []
+    } catch (error) {
+      logError('Get user submissions error', error as Error)
+      return []
+    }
+  }
+
+  async createSubmission(
+    submission: Omit<Submission, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<Submission | null> {
+    if (!this.checkSupabaseConfig()) {
+      return null
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('submissions')
+        .insert({
+          ...submission,
+          status: 'pending',
+        })
+        .select()
+        .single()
+
+      if (error) {
+        logError('Failed to create submission', error)
+        return null
+      }
+
+      return data
+    } catch (error) {
+      logError('Create submission error', error as Error)
+      return null
+    }
+  }
+
+  // Get user's liked posts
+  async getUserLikedPosts(userId: string): Promise<Post[]> {
+    if (!this.checkSupabaseConfig()) {
+      return []
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('likes')
+        .select(
+          `
+          post:posts(
+            *,
+            user:users!posts_user_id_fkey(id, username, display_name, avatar_url, account_type),
+            likes_count,
+            comments_count,
+            views_count
+          )
+        `
+        )
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        logError('Failed to get user liked posts', error)
+        return []
+      }
+
+      // Extract posts from the likes and filter out null posts
+      const posts = data?.map(like => (like as any).post).filter(post => post) || []
+      return posts
+    } catch (error) {
+      logError('Get user liked posts error', error as Error)
+      return []
+    }
+  }
+
+  // Get user's reshared posts (posts they've shared)
+  async getUserResharedPosts(userId: string): Promise<Post[]> {
+    if (!this.checkSupabaseConfig()) {
+      return []
+    }
+
+    try {
+      // For now, we'll return posts that mention being reshared by this user
+      // In a real implementation, you might have a separate reshares table
+      const { data, error } = await this.supabase
+        .from('posts')
+        .select(
+          `
+          *,
+          user:users!posts_user_id_fkey(id, username, display_name, avatar_url, account_type),
+          likes_count,
+          comments_count,
+          views_count
+        `
+        )
+        .contains('content', `reshared by ${userId}`) // This is a placeholder implementation
+        .eq('published', true)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        logError('Failed to get user reshared posts', error)
+        return []
+      }
+
+      return data || []
+    } catch (error) {
+      logError('Get user reshared posts error', error as Error)
+      return []
+    }
+  }
+
+  // Referral System functions
+  async getUserReferralCode(userId: string): Promise<ReferralCode | null> {
+    if (!this.checkSupabaseConfig()) {
+      return null
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('referral_codes')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .single()
+
+      if (error && error.code !== 'PGRST116') {
+        logError('Failed to get user referral code', error)
+        return null
+      }
+
+      return data
+    } catch (error) {
+      logError('Get user referral code error', error as Error)
+      return null
+    }
+  }
+
+  async createReferralCode(userId: string): Promise<ReferralCode | null> {
+    if (!this.checkSupabaseConfig()) {
+      return null
+    }
+
+    try {
+      // Generate unique code
+      const userResult = await this.getUser(userId)
+      const username =
+        userResult?.data?.username || userResult?.data?.email?.split('@')[0] || 'user'
+      const code = `${username.toUpperCase()}${Math.random().toString(36).substring(2, 8).toUpperCase()}`
+
+      const { data, error } = await this.supabase
+        .from('referral_codes')
+        .insert({
+          user_id: userId,
+          code,
+          is_active: true,
+          uses_count: 0,
+        })
+        .select()
+        .single()
+
+      if (error) {
+        logError('Failed to create referral code', error)
+        return null
+      }
+
+      return data
+    } catch (error) {
+      logError('Create referral code error', error as Error)
+      return null
+    }
+  }
+
+  async getUserReferrals(userId: string): Promise<Referral[]> {
+    if (!this.checkSupabaseConfig()) {
+      return []
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('referrals')
+        .select(
+          `
+          *,
+          referred:users!referrals_referred_id_fkey(id, username, display_name, email)
+        `
+        )
+        .eq('referrer_id', userId)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        logError('Failed to get user referrals', error)
+        return []
+      }
+
+      return data || []
+    } catch (error) {
+      logError('Get user referrals error', error as Error)
+      return []
+    }
+  }
+
+  async getReferralStats(userId: string): Promise<{
+    totalReferrals: number
+    confirmedReferrals: number
+    pendingReferrals: number
+    totalCredits: number
+    usedCredits: number
+    availableCredits: number
+    currentStreak: number
+  }> {
+    if (!this.checkSupabaseConfig()) {
+      return {
+        totalReferrals: 0,
+        confirmedReferrals: 0,
+        pendingReferrals: 0,
+        totalCredits: 0,
+        usedCredits: 0,
+        availableCredits: 0,
+        currentStreak: 0,
+      }
+    }
+
+    try {
+      // Get referral stats
+      const { data: referrals, error: referralsError } = await this.supabase
+        .from('referrals')
+        .select('status, credit_amount')
+        .eq('referrer_id', userId)
+
+      if (referralsError) {
+        logError('Failed to get referral stats', referralsError)
+        throw referralsError
+      }
+
+      // Get credit stats
+      const { data: credits, error: creditsError } = await this.supabase
+        .from('referral_credits')
+        .select('credit_amount, used_amount')
+        .eq('user_id', userId)
+
+      if (creditsError) {
+        logError('Failed to get referral credits', creditsError)
+        throw creditsError
+      }
+
+      const totalReferrals = referrals?.length || 0
+      const confirmedReferrals =
+        referrals?.filter(r => r.status === 'confirmed' || r.status === 'credited').length || 0
+      const pendingReferrals = referrals?.filter(r => r.status === 'pending').length || 0
+
+      const totalCredits = credits?.reduce((sum, c) => sum + c.credit_amount, 0) || 0
+      const usedCredits = credits?.reduce((sum, c) => sum + c.used_amount, 0) || 0
+      const availableCredits = totalCredits - usedCredits
+
+      // Calculate current streak (consecutive days with referrals)
+      const currentStreak = this.calculateReferralStreak(referrals || [])
+
+      return {
+        totalReferrals,
+        confirmedReferrals,
+        pendingReferrals,
+        totalCredits,
+        usedCredits,
+        availableCredits,
+        currentStreak,
+      }
+    } catch (error) {
+      logError('Get referral stats error', error as Error)
+      return {
+        totalReferrals: 0,
+        confirmedReferrals: 0,
+        pendingReferrals: 0,
+        totalCredits: 0,
+        usedCredits: 0,
+        availableCredits: 0,
+        currentStreak: 0,
+      }
+    }
+  }
+
+  private calculateReferralStreak(referrals: any[]): number {
+    if (!referrals.length) return 0
+
+    // Sort referrals by date
+    const sortedReferrals = referrals
+      .filter(r => r.status === 'confirmed' || r.status === 'credited')
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+    if (!sortedReferrals.length) return 0
+
+    let streak = 1
+    const today = new Date()
+    const mostRecent = new Date(sortedReferrals[0].created_at)
+
+    // Check if most recent referral was within the last 7 days
+    const daysDiff = Math.floor((today.getTime() - mostRecent.getTime()) / (1000 * 60 * 60 * 24))
+    if (daysDiff > 7) return 0
+
+    // Count consecutive weeks with referrals
+    for (let i = 1; i < sortedReferrals.length; i++) {
+      const current = new Date(sortedReferrals[i - 1].created_at)
+      const previous = new Date(sortedReferrals[i].created_at)
+      const weeksDiff = Math.floor(
+        (current.getTime() - previous.getTime()) / (1000 * 60 * 60 * 24 * 7)
+      )
+
+      if (weeksDiff <= 2) {
+        // Allow up to 2 weeks gap
+        streak++
+      } else {
+        break
+      }
+    }
+
+    return streak
+  }
+
+  async getUsersWithFilters(
+    options: {
+      specialty?: string
+      location?: string
+      limit?: number
+      offset?: number
+    } = {}
+  ): Promise<User[]> {
+    if (!this.checkSupabaseConfig()) {
+      return []
+    }
+
+    try {
+      let query = this.supabase.from('user_public_profiles').select('*')
+
+      if (options.specialty && options.specialty !== 'all') {
+        query = query.eq('specialty', options.specialty)
+      }
+
+      if (options.location) {
+        query = query.ilike('location', `%${options.location}%`)
+      }
+
+      const { data, error } = await query
+        .order('created_at', { ascending: false })
+        .range(options.offset || 0, (options.offset || 0) + (options.limit || 20) - 1)
+
+      if (error) {
+        logError('Failed to get users with filters', error)
+        return []
+      }
+
+      return data || []
+    } catch (error) {
+      logError('Get users with filters error', error as Error)
+      return []
     }
   }
 }

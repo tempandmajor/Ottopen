@@ -25,7 +25,12 @@ export default function Authors() {
     newThisMonth: 0,
     publishedWorksTotal: 0,
   })
-  const [authorsWithStats, setAuthorsWithStats] = useState<(User & { works: number; followers: number })[]>([])
+  const [authorsWithStats, setAuthorsWithStats] = useState<
+    (User & { works: number; followers: number })[]
+  >([])
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
+  const [currentOffset, setCurrentOffset] = useState(0)
 
   // Load authors on mount
   useEffect(() => {
@@ -54,7 +59,7 @@ export default function Authors() {
 
       // Load detailed stats for each author
       const authorsWithDetailedStats = await Promise.all(
-        allAuthors.slice(0, 20).map(async (author) => {
+        allAuthors.slice(0, 20).map(async author => {
           const userStats = await dbService.getUserStatistics(author.id)
           const works = userStats?.published_posts_count || 0
           const followers = userStats?.followers_count || 0
@@ -62,19 +67,21 @@ export default function Authors() {
           return {
             ...author,
             works,
-            followers
+            followers,
           }
         })
       )
 
       setAuthorsWithStats(authorsWithDetailedStats)
+      setCurrentOffset(20)
+      setHasMore(allAuthors.length > 20)
 
       // Calculate new this month (users created in the last 30 days)
       const thirtyDaysAgo = new Date()
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-      const newThisMonth = allAuthors.filter(author =>
-        new Date(author.created_at) > thirtyDaysAgo
+      const newThisMonth = allAuthors.filter(
+        author => new Date(author.created_at) > thirtyDaysAgo
       ).length
 
       setAuthorStats({
@@ -105,14 +112,64 @@ export default function Authors() {
     }
   }
 
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return
+
+    try {
+      setLoadingMore(true)
+
+      // Get more authors starting from current offset
+      const moreAuthors = await dbService.searchUsers('', 20, currentOffset)
+
+      if (moreAuthors.length === 0) {
+        setHasMore(false)
+        return
+      }
+
+      // Load detailed stats for new authors
+      const moreAuthorsWithStats = await Promise.all(
+        moreAuthors.map(async author => {
+          const userStats = await dbService.getUserStatistics(author.id)
+          const works = userStats?.published_posts_count || 0
+          const followers = userStats?.followers_count || 0
+
+          return {
+            ...author,
+            works,
+            followers,
+          }
+        })
+      )
+
+      // Append to existing authors
+      setAuthorsWithStats(prev => [...prev, ...moreAuthorsWithStats])
+      setCurrentOffset(prev => prev + moreAuthors.length)
+
+      // Check if we have more
+      if (moreAuthors.length < 20) {
+        setHasMore(false)
+      }
+
+      toast.success(`Loaded ${moreAuthors.length} more authors`)
+    } catch (error) {
+      console.error('Failed to load more authors:', error)
+      toast.error('Failed to load more authors')
+    } finally {
+      setLoadingMore(false)
+    }
+  }
+
   const filteredAuthors = searchQuery.trim() ? searchResults : authors
 
   // Use authors with stats when available, otherwise use regular authors
-  const displayAuthors = authorsWithStats.length > 0 ? authorsWithStats : filteredAuthors.map(author => ({
-    ...author,
-    works: 0,
-    followers: 0
-  }))
+  const displayAuthors =
+    authorsWithStats.length > 0
+      ? authorsWithStats
+      : filteredAuthors.map(author => ({
+          ...author,
+          works: 0,
+          followers: 0,
+        }))
 
   const featuredAuthors = displayAuthors.slice(0, 8)
   const newAuthors = displayAuthors.slice(8, 12)
@@ -378,11 +435,20 @@ export default function Authors() {
           </Tabs>
 
           {/* Load More */}
-          <div className="text-center pt-8">
-            <Button variant="outline" size="lg">
-              Load More Authors
-            </Button>
-          </div>
+          {hasMore && (
+            <div className="text-center pt-8">
+              <Button variant="outline" size="lg" onClick={loadMore} disabled={loadingMore}>
+                {loadingMore ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Loading More Authors...
+                  </>
+                ) : (
+                  'Load More Authors'
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>

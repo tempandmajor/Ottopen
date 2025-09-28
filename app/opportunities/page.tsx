@@ -36,35 +36,317 @@ import {
   ExternalLink,
   Send,
   BookmarkCheck,
+  Loader2,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/src/contexts/auth-context'
+import { dbService } from '@/src/lib/database'
+import type { Job, JobApplication } from '@/src/lib/supabase'
 import { toast } from 'react-hot-toast'
 
-interface Job {
-  id: string
-  title: string
-  company: string
-  location: string
-  remoteOk: boolean
-  jobType: string
-  category: string
-  experienceLevel: string
-  description: string
-  requirements: string
-  compensationType: string
-  compensationMin?: number
-  compensationMax?: number
-  currency: string
-  deadline?: string
-  isFeatured: boolean
-  applicationsCount: number
-  postedAt: string
-  poster: {
-    displayName: string
-    company?: string
-    accountType: string
+interface PostJobFormProps {
+  onJobCreated: () => void
+}
+
+function PostJobForm({ onJobCreated }: PostJobFormProps) {
+  const { user } = useAuth()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [jobData, setJobData] = useState({
+    title: '',
+    company: '',
+    location: '',
+    remote_ok: false,
+    job_type: 'freelance' as const,
+    category: 'writing' as const,
+    experience_level: 'entry' as const,
+    description: '',
+    requirements: '',
+    compensation_type: 'hourly' as const,
+    compensation_min: '',
+    compensation_max: '',
+    currency: 'USD',
+    deadline: '',
+  })
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!user?.profile?.id) {
+      toast.error('Please log in to post jobs')
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const job = await dbService.createJob({
+        poster_id: user.profile.id,
+        title: jobData.title,
+        company: jobData.company,
+        location: jobData.location,
+        remote_ok: jobData.remote_ok,
+        job_type: jobData.job_type,
+        category: jobData.category,
+        experience_level: jobData.experience_level,
+        description: jobData.description,
+        requirements: jobData.requirements,
+        compensation_type: jobData.compensation_type,
+        compensation_min: jobData.compensation_min ? parseInt(jobData.compensation_min) : undefined,
+        compensation_max: jobData.compensation_max ? parseInt(jobData.compensation_max) : undefined,
+        currency: jobData.currency,
+        deadline: jobData.deadline || undefined,
+        is_featured: false,
+        is_active: true,
+      })
+
+      if (job) {
+        // Reset form
+        setJobData({
+          title: '',
+          company: '',
+          location: '',
+          remote_ok: false,
+          job_type: 'freelance',
+          category: 'writing',
+          experience_level: 'entry',
+          description: '',
+          requirements: '',
+          compensation_type: 'hourly',
+          compensation_min: '',
+          compensation_max: '',
+          currency: 'USD',
+          deadline: '',
+        })
+        onJobCreated()
+      } else {
+        toast.error('Failed to create job posting')
+      }
+    } catch (error) {
+      console.error('Failed to create job:', error)
+      toast.error('Failed to create job posting')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="job-title">Job Title *</Label>
+          <Input
+            id="job-title"
+            value={jobData.title}
+            onChange={e => setJobData(prev => ({ ...prev, title: e.target.value }))}
+            placeholder="e.g., Freelance Screenwriter"
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="company">Company/Organization *</Label>
+          <Input
+            id="company"
+            value={jobData.company}
+            onChange={e => setJobData(prev => ({ ...prev, company: e.target.value }))}
+            placeholder="e.g., Creative Studios LLC"
+            required
+          />
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="location">Location *</Label>
+          <Input
+            id="location"
+            value={jobData.location}
+            onChange={e => setJobData(prev => ({ ...prev, location: e.target.value }))}
+            placeholder="e.g., Los Angeles, CA"
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={jobData.remote_ok}
+              onChange={e => setJobData(prev => ({ ...prev, remote_ok: e.target.checked }))}
+            />
+            <span>Remote OK</span>
+          </Label>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="space-y-2">
+          <Label htmlFor="job-type">Job Type *</Label>
+          <Select
+            value={jobData.job_type}
+            onValueChange={value => setJobData(prev => ({ ...prev, job_type: value as any }))}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="freelance">Freelance</SelectItem>
+              <SelectItem value="contract">Contract</SelectItem>
+              <SelectItem value="full_time">Full-time</SelectItem>
+              <SelectItem value="part_time">Part-time</SelectItem>
+              <SelectItem value="project_based">Project-based</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="category">Category *</Label>
+          <Select
+            value={jobData.category}
+            onValueChange={value => setJobData(prev => ({ ...prev, category: value as any }))}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="writing">Writing</SelectItem>
+              <SelectItem value="screenwriting">Screenwriting</SelectItem>
+              <SelectItem value="editing">Editing</SelectItem>
+              <SelectItem value="development">Development</SelectItem>
+              <SelectItem value="production">Production</SelectItem>
+              <SelectItem value="representation">Representation</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="experience">Experience Level *</Label>
+          <Select
+            value={jobData.experience_level}
+            onValueChange={value =>
+              setJobData(prev => ({ ...prev, experience_level: value as any }))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="entry">Entry Level</SelectItem>
+              <SelectItem value="mid">Mid Level</SelectItem>
+              <SelectItem value="senior">Senior Level</SelectItem>
+              <SelectItem value="executive">Executive Level</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="description">Job Description *</Label>
+        <Textarea
+          id="description"
+          value={jobData.description}
+          onChange={e => setJobData(prev => ({ ...prev, description: e.target.value }))}
+          placeholder="Describe the role, responsibilities, and what you're looking for..."
+          className="min-h-[120px]"
+          required
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="requirements">Requirements *</Label>
+        <Textarea
+          id="requirements"
+          value={jobData.requirements}
+          onChange={e => setJobData(prev => ({ ...prev, requirements: e.target.value }))}
+          placeholder="List the skills, experience, and qualifications needed..."
+          className="min-h-[100px]"
+          required
+        />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-4">
+        <div className="space-y-2">
+          <Label htmlFor="comp-type">Compensation Type</Label>
+          <Select
+            value={jobData.compensation_type}
+            onValueChange={value =>
+              setJobData(prev => ({ ...prev, compensation_type: value as any }))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="hourly">Hourly</SelectItem>
+              <SelectItem value="project">Project</SelectItem>
+              <SelectItem value="salary">Salary</SelectItem>
+              <SelectItem value="commission">Commission</SelectItem>
+              <SelectItem value="undisclosed">Undisclosed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="comp-min">Min Amount</Label>
+          <Input
+            id="comp-min"
+            type="number"
+            value={jobData.compensation_min}
+            onChange={e => setJobData(prev => ({ ...prev, compensation_min: e.target.value }))}
+            placeholder="e.g., 50"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="comp-max">Max Amount</Label>
+          <Input
+            id="comp-max"
+            type="number"
+            value={jobData.compensation_max}
+            onChange={e => setJobData(prev => ({ ...prev, compensation_max: e.target.value }))}
+            placeholder="e.g., 100"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="currency">Currency</Label>
+          <Select
+            value={jobData.currency}
+            onValueChange={value => setJobData(prev => ({ ...prev, currency: value }))}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="USD">USD</SelectItem>
+              <SelectItem value="EUR">EUR</SelectItem>
+              <SelectItem value="GBP">GBP</SelectItem>
+              <SelectItem value="CAD">CAD</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="deadline">Application Deadline (Optional)</Label>
+        <Input
+          id="deadline"
+          type="date"
+          value={jobData.deadline}
+          onChange={e => setJobData(prev => ({ ...prev, deadline: e.target.value }))}
+        />
+      </div>
+
+      <Button type="submit" disabled={isSubmitting} className="w-full">
+        {isSubmitting ? (
+          <>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            Posting Job...
+          </>
+        ) : (
+          'Post Job'
+        )}
+      </Button>
+    </form>
+  )
 }
 
 export default function Opportunities() {
@@ -77,28 +359,42 @@ export default function Opportunities() {
   const [selectedJobType, setSelectedJobType] = useState('all')
   const [selectedExperience, setSelectedExperience] = useState('all')
   const [savedJobs, setSavedJobs] = useState<string[]>([])
+  const [userApplications, setUserApplications] = useState<JobApplication[]>([])
 
-  // Load real job data from database
+  // Load jobs and user data
   useEffect(() => {
-    const loadJobs = async () => {
+    const loadData = async () => {
       try {
         setLoading(true)
 
-        // Since we don't have a jobs service yet, show a message about coming soon
-        // In a real implementation, you would call a jobs API here
+        // Load jobs from database
+        const jobsData = await dbService.getJobs({
+          limit: 50,
+          category: selectedCategory,
+          jobType: selectedJobType,
+          experienceLevel: selectedExperience,
+        })
+        setJobs(jobsData)
 
-        // For now, show that the feature is coming soon
-        setJobs([])
+        // Load user's saved jobs
+        if (user?.profile?.id) {
+          const savedJobIds = await dbService.getSavedJobs(user.profile.id)
+          setSavedJobs(savedJobIds)
+
+          // Load user's applications
+          const applications = await dbService.getUserJobApplications(user.profile.id)
+          setUserApplications(applications)
+        }
       } catch (error) {
         console.error('Failed to load jobs:', error)
-        setJobs([])
+        toast.error('Failed to load job opportunities')
       } finally {
         setLoading(false)
       }
     }
 
-    loadJobs()
-  }, [])
+    loadData()
+  }, [user, selectedCategory, selectedJobType, selectedExperience])
 
   const filteredJobs = jobs.filter(job => {
     const matchesSearch =
@@ -106,32 +402,52 @@ export default function Opportunities() {
       job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.description.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesCategory = selectedCategory === 'all' || job.category === selectedCategory
-    const matchesJobType = selectedJobType === 'all' || job.jobType === selectedJobType
+    const matchesJobType = selectedJobType === 'all' || job.job_type === selectedJobType
     const matchesExperience =
-      selectedExperience === 'all' || job.experienceLevel === selectedExperience
+      selectedExperience === 'all' || job.experience_level === selectedExperience
 
     return matchesSearch && matchesCategory && matchesJobType && matchesExperience
   })
 
-  const handleSaveJob = (jobId: string) => {
-    if (savedJobs.includes(jobId)) {
-      setSavedJobs(prev => prev.filter(id => id !== jobId))
-      toast.success('Job removed from saved list')
-    } else {
-      setSavedJobs(prev => [...prev, jobId])
-      toast.success('Job saved successfully')
+  const handleSaveJob = async (jobId: string) => {
+    if (!user?.profile?.id) {
+      toast.error('Please log in to save jobs')
+      return
+    }
+
+    try {
+      if (savedJobs.includes(jobId)) {
+        const success = await dbService.unsaveJob(user.profile.id, jobId)
+        if (success) {
+          setSavedJobs(prev => prev.filter(id => id !== jobId))
+          toast.success('Job removed from saved list')
+        } else {
+          toast.error('Failed to remove job from saved list')
+        }
+      } else {
+        const success = await dbService.saveJob(user.profile.id, jobId)
+        if (success) {
+          setSavedJobs(prev => [...prev, jobId])
+          toast.success('Job saved successfully')
+        } else {
+          toast.error('Failed to save job')
+        }
+      }
+    } catch (error) {
+      console.error('Error saving job:', error)
+      toast.error('An error occurred while saving the job')
     }
   }
 
   const formatCompensation = (job: Job) => {
-    if (job.compensationType === 'undisclosed') return 'Compensation undisclosed'
+    if (job.compensation_type === 'undisclosed') return 'Compensation undisclosed'
 
     const currency = job.currency === 'USD' ? '$' : job.currency
 
-    if (job.compensationMin && job.compensationMax) {
-      return `${currency}${job.compensationMin.toLocaleString()} - ${currency}${job.compensationMax.toLocaleString()}`
-    } else if (job.compensationMin) {
-      return `${currency}${job.compensationMin.toLocaleString()}+`
+    if (job.compensation_min && job.compensation_max) {
+      return `${currency}${job.compensation_min.toLocaleString()} - ${currency}${job.compensation_max.toLocaleString()}`
+    } else if (job.compensation_min) {
+      return `${currency}${job.compensation_min.toLocaleString()}+`
     }
 
     return 'Competitive compensation'
@@ -315,13 +631,13 @@ export default function Opportunities() {
                   {filteredJobs.map(job => (
                     <Card
                       key={job.id}
-                      className={`transition-all hover:shadow-md ${job.isFeatured ? 'border-primary bg-primary/5' : ''}`}
+                      className={`transition-all hover:shadow-md ${job.is_featured ? 'border-primary bg-primary/5' : ''}`}
                     >
                       <CardContent className="p-6">
                         <div className="flex justify-between items-start mb-4">
                           <div className="flex-1">
                             <div className="flex items-center space-x-2 mb-2">
-                              {job.isFeatured && (
+                              {job.is_featured && (
                                 <Badge
                                   variant="default"
                                   className="bg-yellow-100 text-yellow-800 border-yellow-200"
@@ -331,7 +647,7 @@ export default function Opportunities() {
                                 </Badge>
                               )}
                               <Badge variant="outline">{getCategoryLabel(job.category)}</Badge>
-                              <Badge variant="secondary">{getJobTypeLabel(job.jobType)}</Badge>
+                              <Badge variant="secondary">{getJobTypeLabel(job.job_type)}</Badge>
                             </div>
                             <h3 className="text-xl font-semibold mb-2">{job.title}</h3>
                             <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-3">
@@ -342,13 +658,13 @@ export default function Opportunities() {
                               <div className="flex items-center space-x-1">
                                 <MapPin className="h-4 w-4" />
                                 <span>{job.location}</span>
-                                {job.remoteOk && (
+                                {job.remote_ok && (
                                   <span className="text-green-600">• Remote OK</span>
                                 )}
                               </div>
                               <div className="flex items-center space-x-1">
                                 <Calendar className="h-4 w-4" />
-                                <span>Posted {new Date(job.postedAt).toLocaleDateString()}</span>
+                                <span>Posted {new Date(job.created_at).toLocaleDateString()}</span>
                               </div>
                             </div>
                             <p className="text-muted-foreground mb-4 line-clamp-2">
@@ -363,7 +679,7 @@ export default function Opportunities() {
                               </div>
                               <div className="flex items-center space-x-1 text-sm text-muted-foreground">
                                 <Users className="h-4 w-4" />
-                                <span>{job.applicationsCount} applicants</span>
+                                <span>{job.applications_count} applicants</span>
                               </div>
                             </div>
                           </div>
@@ -404,12 +720,12 @@ export default function Opportunities() {
                     <Card>
                       <CardContent className="p-8 text-center">
                         <Briefcase className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                        <h3 className="text-lg font-medium mb-2">Job Board Coming Soon</h3>
+                        <h3 className="text-lg font-medium mb-2">No Jobs Available</h3>
                         <p className="text-muted-foreground mb-4">
-                          We&apos;re building partnerships with industry professionals to bring you exclusive job opportunities.
+                          There are currently no job opportunities matching your criteria.
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Check back soon for opportunities from agents, producers, publishers, and studios.
+                          Try adjusting your filters or check back later for new opportunities.
                         </p>
                       </CardContent>
                     </Card>
@@ -434,9 +750,38 @@ export default function Opportunities() {
                         <Button onClick={() => setActiveTab('browse')}>Browse Opportunities</Button>
                       </div>
                     ) : (
-                      <p className="text-muted-foreground">
-                        You have {savedJobs.length} saved job{savedJobs.length !== 1 ? 's' : ''}.
-                      </p>
+                      <div className="space-y-4">
+                        {jobs
+                          .filter(job => savedJobs.includes(job.id))
+                          .map(job => (
+                            <Card key={job.id} className="hover:shadow-md transition-all">
+                              <CardContent className="p-4">
+                                <div className="flex items-start justify-between">
+                                  <div>
+                                    <h3 className="font-semibold mb-1">{job.title}</h3>
+                                    <p className="text-sm text-muted-foreground mb-2">
+                                      {job.company} • {job.location}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      Saved • {getCategoryLabel(job.category)} •{' '}
+                                      {getJobTypeLabel(job.job_type)}
+                                    </p>
+                                  </div>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleSaveJob(job.id)}
+                                  >
+                                    <BookmarkCheck className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        <p className="text-sm text-muted-foreground text-center">
+                          You have {savedJobs.length} saved job{savedJobs.length !== 1 ? 's' : ''}.
+                        </p>
+                      </div>
                     )}
                   </CardContent>
                 </Card>
@@ -449,14 +794,56 @@ export default function Opportunities() {
                     <CardTitle>My Applications</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-center py-8">
-                      <Send className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                      <h3 className="text-lg font-medium mb-2">No applications yet</h3>
-                      <p className="text-muted-foreground mb-4">
-                        Start applying to opportunities that match your skills and interests.
-                      </p>
-                      <Button onClick={() => setActiveTab('browse')}>Find Opportunities</Button>
-                    </div>
+                    {userApplications.length === 0 ? (
+                      <div className="text-center py-8">
+                        <Send className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                        <h3 className="text-lg font-medium mb-2">No applications yet</h3>
+                        <p className="text-muted-foreground mb-4">
+                          Start applying to opportunities that match your skills and interests.
+                        </p>
+                        <Button onClick={() => setActiveTab('browse')}>Find Opportunities</Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {userApplications.map(application => (
+                          <Card key={application.id} className="hover:shadow-md transition-all">
+                            <CardContent className="p-4">
+                              <div className="flex items-start justify-between">
+                                <div>
+                                  <h3 className="font-semibold mb-1">
+                                    {(application as any).job?.title || 'Unknown Job'}
+                                  </h3>
+                                  <p className="text-sm text-muted-foreground mb-2">
+                                    {(application as any).job?.company} •{' '}
+                                    {(application as any).job?.location}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Applied {new Date(application.applied_at).toLocaleDateString()}
+                                  </p>
+                                </div>
+                                <Badge
+                                  variant={
+                                    application.status === 'hired'
+                                      ? 'default'
+                                      : application.status === 'shortlisted'
+                                        ? 'secondary'
+                                        : application.status === 'rejected'
+                                          ? 'destructive'
+                                          : 'outline'
+                                  }
+                                >
+                                  {application.status.replace('_', ' ')}
+                                </Badge>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                        <p className="text-sm text-muted-foreground text-center">
+                          You have {userApplications.length} application
+                          {userApplications.length !== 1 ? 's' : ''}.
+                        </p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -487,13 +874,26 @@ export default function Opportunities() {
                         </Button>
                       </div>
                     ) : (
-                      <div className="space-y-4">
-                        <p className="text-muted-foreground">
-                          Job posting will be available once we launch our industry partner program.
-                          We&apos;re working to connect writers with verified agents, producers, and publishers.
-                        </p>
-                        <Button disabled>Coming Soon</Button>
-                      </div>
+                      <PostJobForm
+                        onJobCreated={() => {
+                          // Refresh jobs list
+                          const loadData = async () => {
+                            try {
+                              const jobsData = await dbService.getJobs({
+                                limit: 50,
+                                category: selectedCategory,
+                                jobType: selectedJobType,
+                                experienceLevel: selectedExperience,
+                              })
+                              setJobs(jobsData)
+                              toast.success('Job posted successfully!')
+                            } catch (error) {
+                              console.error('Failed to refresh jobs:', error)
+                            }
+                          }
+                          loadData()
+                        }}
+                      />
                     )}
                   </CardContent>
                 </Card>

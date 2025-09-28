@@ -50,6 +50,13 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState('posts')
   const [newPostContent, setNewPostContent] = useState('')
   const [creatingPost, setCreatingPost] = useState(false)
+  const [likedPosts, setLikedPosts] = useState<Post[]>([])
+  const [resharedPosts, setResharedPosts] = useState<Post[]>([])
+  const [loadingLikes, setLoadingLikes] = useState(false)
+  const [loadingReshares, setLoadingReshares] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
+  const [currentOffset, setCurrentOffset] = useState(0)
 
   // Load profile data on mount
   useEffect(() => {
@@ -90,6 +97,8 @@ export default function Profile() {
         limit: 20,
       })
       setUserPosts(posts)
+      setCurrentOffset(20)
+      setHasMore(posts.length === 20)
     } catch (error) {
       console.error('Failed to load profile:', error)
       setError('Failed to load profile')
@@ -216,11 +225,96 @@ export default function Profile() {
       case 'posts':
         return userPosts
       case 'likes':
-        return [] // TODO: Implement liked posts functionality
+        return likedPosts
       case 'reshares':
-        return [] // TODO: Implement reshared posts functionality
+        return resharedPosts
       default:
         return userPosts
+    }
+  }
+
+  const loadLikedPosts = async () => {
+    if (!profile?.id || loadingLikes) return
+
+    try {
+      setLoadingLikes(true)
+      const posts = await dbService.getUserLikedPosts(profile.id)
+      setLikedPosts(posts)
+    } catch (error) {
+      console.error('Failed to load liked posts:', error)
+      toast.error('Failed to load liked posts')
+    } finally {
+      setLoadingLikes(false)
+    }
+  }
+
+  const loadResharedPosts = async () => {
+    if (!profile?.id || loadingReshares) return
+
+    try {
+      setLoadingReshares(true)
+      const posts = await dbService.getUserResharedPosts(profile.id)
+      setResharedPosts(posts)
+    } catch (error) {
+      console.error('Failed to load reshared posts:', error)
+      toast.error('Failed to load reshared posts')
+    } finally {
+      setLoadingReshares(false)
+    }
+  }
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab)
+
+    // Load data for the selected tab if not already loaded
+    if (tab === 'likes' && likedPosts.length === 0) {
+      loadLikedPosts()
+    } else if (tab === 'reshares' && resharedPosts.length === 0) {
+      loadResharedPosts()
+    }
+  }
+
+  const loadMore = async () => {
+    if (loadingMore || !hasMore || !profile?.id) return
+
+    try {
+      setLoadingMore(true)
+
+      // Load more posts based on current tab
+      if (activeTab === 'posts') {
+        // Get more user posts starting from current offset
+        const morePosts = await dbService.getPosts({
+          userId: profile.id,
+          published: true,
+          limit: 20,
+          offset: currentOffset,
+        })
+
+        if (morePosts.length === 0) {
+          setHasMore(false)
+          return
+        }
+
+        // Append to existing posts
+        setUserPosts(prev => [...prev, ...morePosts])
+        setCurrentOffset(prev => prev + morePosts.length)
+
+        // Check if we have more
+        if (morePosts.length < 20) {
+          setHasMore(false)
+        }
+
+        toast.success(`Loaded ${morePosts.length} more posts`)
+      } else {
+        // For likes and reshares tabs, we don't have pagination yet
+        toast('Pagination not available for this tab yet')
+        setHasMore(false)
+      }
+    } catch (error) {
+      console.error('Failed to load more content:', error)
+      toast.error('Failed to load more content')
+    } finally {
+      setLoadingMore(false)
     }
   }
 
@@ -438,7 +532,11 @@ export default function Profile() {
           )}
 
           {/* Tabs Section */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+          <Tabs
+            value={activeTab}
+            onValueChange={handleTabChange}
+            className="space-y-4 sm:space-y-6"
+          >
             <TabsList className="grid w-full grid-cols-3 h-auto p-1">
               <TabsTrigger
                 value="posts"
@@ -499,23 +597,90 @@ export default function Profile() {
 
             <TabsContent value="likes" className="space-y-4">
               <div className="text-center py-12">
-                <p className="text-muted-foreground">Liked posts functionality coming soon</p>
+                {loadingLikes ? (
+                  <>
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                    <p className="text-muted-foreground">Loading liked posts...</p>
+                  </>
+                ) : likedPosts.length > 0 ? (
+                  <div className="space-y-4">
+                    {likedPosts.map(post => (
+                      <PostCard
+                        key={post.id}
+                        author={post.user?.display_name || post.user?.username || 'Unknown'}
+                        avatar={post.user?.avatar_url}
+                        time={new Date(post.created_at).toLocaleDateString()}
+                        content={post.content}
+                        type={(post as any).type || 'discussion'}
+                        excerpt={post.excerpt}
+                        imageUrl={post.image_url}
+                        mood={post.mood}
+                        likes={post.likes_count || 0}
+                        comments={post.comments_count || 0}
+                        reshares={0}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground">No liked posts yet</p>
+                  </>
+                )}
               </div>
             </TabsContent>
 
             <TabsContent value="reshares" className="space-y-4">
               <div className="text-center py-12">
-                <p className="text-muted-foreground">Reshared posts functionality coming soon</p>
+                {loadingReshares ? (
+                  <>
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                    <p className="text-muted-foreground">Loading reshared posts...</p>
+                  </>
+                ) : resharedPosts.length > 0 ? (
+                  <div className="space-y-4">
+                    {resharedPosts.map(post => (
+                      <PostCard
+                        key={post.id}
+                        author={post.user?.display_name || post.user?.username || 'Unknown'}
+                        avatar={post.user?.avatar_url}
+                        time={new Date(post.created_at).toLocaleDateString()}
+                        content={post.content}
+                        type={(post as any).type || 'discussion'}
+                        excerpt={post.excerpt}
+                        imageUrl={post.image_url}
+                        mood={post.mood}
+                        likes={post.likes_count || 0}
+                        comments={post.comments_count || 0}
+                        reshares={0}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground">No reshared posts yet</p>
+                  </>
+                )}
               </div>
             </TabsContent>
           </Tabs>
 
           {/* Load More */}
-          <div className="text-center pt-8">
-            <Button variant="outline" size="lg">
-              Load More
-            </Button>
-          </div>
+          {hasMore && (
+            <div className="text-center pt-8">
+              <Button variant="outline" size="lg" onClick={loadMore} disabled={loadingMore}>
+                {loadingMore ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Loading More...
+                  </>
+                ) : (
+                  'Load More'
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>

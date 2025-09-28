@@ -33,6 +33,8 @@ import {
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/src/contexts/auth-context'
+import { dbService } from '@/src/lib/database'
+import type { Referral as DbReferral, ReferralCode } from '@/src/lib/supabase'
 import { toast } from 'react-hot-toast'
 
 interface ReferralStats {
@@ -78,65 +80,64 @@ export default function Referrals() {
       nextMilestone: 'Ambassador',
     },
   })
-  const [referrals, setReferrals] = useState<Referral[]>([])
+  const [referrals, setReferrals] = useState<DbReferral[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Mock data for demo
+  // Load real referral data
   useEffect(() => {
-    // Generate unique referral code
-    const username = user?.profile?.username || user?.email?.split('@')[0] || 'user'
-    setReferralCode(
-      `${username.toUpperCase()}${Math.random().toString(36).substring(2, 8).toUpperCase()}`
-    )
+    const loadReferralData = async () => {
+      if (!user?.profile?.id) {
+        setLoading(false)
+        return
+      }
 
-    // Mock referral data
-    setTimeout(() => {
-      setStats({
-        totalReferrals: 8,
-        confirmedReferrals: 6,
-        pendingReferrals: 2,
-        totalCredits: 180, // days
-        usedCredits: 30,
-        availableCredits: 150,
-        currentStreak: 3,
-        milestoneProgress: {
-          current: 6,
-          next: 10,
-          nextMilestone: 'Champion',
-        },
-      })
+      try {
+        setLoading(true)
 
-      setReferrals([
-        {
-          id: '1',
-          referredEmail: 'jane.doe@email.com',
-          status: 'confirmed',
-          creditAmount: 30,
-          referredTier: 'premium',
-          createdAt: '2024-01-15',
-          confirmedAt: '2024-01-16',
-        },
-        {
-          id: '2',
-          referredEmail: 'mike.writer@email.com',
-          status: 'confirmed',
-          creditAmount: 60,
-          referredTier: 'pro',
-          createdAt: '2024-01-20',
-          confirmedAt: '2024-01-22',
-        },
-        {
-          id: '3',
-          referredEmail: 'sarah.agent@email.com',
-          status: 'pending',
-          creditAmount: 90,
-          referredTier: 'external_agent',
-          createdAt: '2024-01-25',
-        },
-      ])
+        // Get or create referral code
+        let code = await dbService.getUserReferralCode(user.profile.id)
+        if (!code) {
+          code = await dbService.createReferralCode(user.profile.id)
+        }
+        setReferralCode(code?.code || '')
 
-      setLoading(false)
-    }, 1000)
+        // Get referral stats
+        const referralStats = await dbService.getReferralStats(user.profile.id)
+        setStats({
+          ...referralStats,
+          milestoneProgress: {
+            current: referralStats.confirmedReferrals,
+            next:
+              referralStats.confirmedReferrals < 5
+                ? 5
+                : referralStats.confirmedReferrals < 10
+                  ? 10
+                  : referralStats.confirmedReferrals < 25
+                    ? 25
+                    : 50,
+            nextMilestone:
+              referralStats.confirmedReferrals < 5
+                ? 'Ambassador'
+                : referralStats.confirmedReferrals < 10
+                  ? 'Champion'
+                  : referralStats.confirmedReferrals < 25
+                    ? 'Elite'
+                    : 'Legend',
+          },
+        })
+
+        // Get referral list
+        const userReferrals = await dbService.getUserReferrals(user.profile.id)
+        setReferrals(userReferrals)
+      } catch (error) {
+        console.error('Failed to load referral data:', error)
+        toast.error('Failed to load referral data')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadReferralData()
   }, [user])
 
   const copyReferralLink = () => {
@@ -514,23 +515,25 @@ export default function Referrals() {
                                   <Users className="h-4 w-4 text-primary" />
                                 </div>
                                 <div>
-                                  <p className="font-medium">{referral.referredEmail}</p>
+                                  <p className="font-medium">
+                                    {(referral as any).referred?.email || 'Email not available'}
+                                  </p>
                                   <p className="text-sm text-muted-foreground">
-                                    Signed up {new Date(referral.createdAt).toLocaleDateString()}
+                                    Signed up {new Date(referral.created_at).toLocaleDateString()}
                                   </p>
                                 </div>
                               </div>
                               <div className="text-right">
                                 {getStatusBadge(referral.status)}
                                 <p className="text-sm text-muted-foreground mt-1">
-                                  {getTierLabel(referral.referredTier)} plan
+                                  {getTierLabel(referral.referred_tier)} plan
                                 </p>
                               </div>
                             </div>
                             <div className="flex items-center justify-between">
                               <span className="text-sm text-muted-foreground">Credit earned:</span>
                               <span className="font-medium text-green-600">
-                                +{referral.creditAmount} days
+                                +{referral.credit_amount} days
                               </span>
                             </div>
                           </div>

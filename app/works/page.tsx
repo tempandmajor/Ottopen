@@ -20,6 +20,9 @@ export default function Works() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Post[]>([])
   const [searching, setSearching] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
+  const [currentOffset, setCurrentOffset] = useState(0)
   const [worksStats, setWorksStats] = useState({
     total: 0,
     newThisWeek: 0,
@@ -44,8 +47,10 @@ export default function Works() {
   const loadPosts = async () => {
     try {
       setLoading(true)
-      const allPosts = await dbService.getPosts({ limit: 50, published: true })
+      const allPosts = await dbService.getPosts({ limit: 20, published: true })
       setPosts(allPosts)
+      setCurrentOffset(20)
+      setHasMore(allPosts.length === 20)
       setWorksStats({
         total: allPosts.length,
         newThisWeek: allPosts.filter(
@@ -74,6 +79,42 @@ export default function Works() {
       toast.error('Search failed')
     } finally {
       setSearching(false)
+    }
+  }
+
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return
+
+    try {
+      setLoadingMore(true)
+
+      // Get more posts starting from current offset
+      const morePosts = await dbService.getPosts({
+        limit: 20,
+        published: true,
+        offset: currentOffset,
+      })
+
+      if (morePosts.length === 0) {
+        setHasMore(false)
+        return
+      }
+
+      // Append to existing posts
+      setPosts(prev => [...prev, ...morePosts])
+      setCurrentOffset(prev => prev + morePosts.length)
+
+      // Check if we have more
+      if (morePosts.length < 20) {
+        setHasMore(false)
+      }
+
+      toast.success(`Loaded ${morePosts.length} more works`)
+    } catch (error) {
+      console.error('Failed to load more works:', error)
+      toast.error('Failed to load more works')
+    } finally {
+      setLoadingMore(false)
     }
   }
 
@@ -368,11 +409,20 @@ export default function Works() {
           </Tabs>
 
           {/* Load More */}
-          <div className="text-center pt-8">
-            <Button variant="outline" size="lg">
-              Load More Works
-            </Button>
-          </div>
+          {hasMore && (
+            <div className="text-center pt-8">
+              <Button variant="outline" size="lg" onClick={loadMore} disabled={loadingMore}>
+                {loadingMore ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Loading More Works...
+                  </>
+                ) : (
+                  'Load More Works'
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>

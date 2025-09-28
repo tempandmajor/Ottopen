@@ -32,27 +32,9 @@ import {
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/src/contexts/auth-context'
+import { dbService } from '@/src/lib/database'
+import type { Manuscript, Submission } from '@/src/lib/supabase'
 import { toast } from 'react-hot-toast'
-
-interface Manuscript {
-  id: string
-  title: string
-  logline: string
-  synopsis: string
-  genre: string
-  type: string
-  pageCount: number
-  status: string
-  createdAt: string
-}
-
-interface Submission {
-  id: string
-  manuscriptTitle: string
-  status: string
-  submittedAt: string
-  reviewerNotes?: string
-}
 
 export default function Submissions() {
   const { user } = useAuth()
@@ -78,38 +60,34 @@ export default function Submissions() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false)
 
-  // Mock data for demo
+  // Load user's manuscripts and submissions
   useEffect(() => {
-    // Simulate loading
-    setTimeout(() => {
-      setManuscripts([
-        {
-          id: '1',
-          title: 'The Last Chapter',
-          logline:
-            'A struggling writer discovers their fictional characters are real and living in a parallel dimension.',
-          synopsis: 'When novelist Sarah Chen begins experiencing strange visions...',
-          genre: 'Fantasy',
-          type: 'book',
-          pageCount: 320,
-          status: 'submitted',
-          createdAt: '2024-01-15',
-        },
-      ])
+    const loadData = async () => {
+      if (!user?.profile?.id) {
+        setLoading(false)
+        return
+      }
 
-      setSubmissions([
-        {
-          id: '1',
-          manuscriptTitle: 'The Last Chapter',
-          status: 'under_review',
-          submittedAt: '2024-01-15',
-          reviewerNotes: 'Interesting premise. Awaiting full evaluation.',
-        },
-      ])
+      try {
+        setLoading(true)
 
-      setLoading(false)
-    }, 1000)
-  }, [])
+        // Load user's manuscripts
+        const userManuscripts = await dbService.getUserManuscripts(user.profile.id)
+        setManuscripts(userManuscripts)
+
+        // Load user's submissions
+        const userSubmissions = await dbService.getUserSubmissions(user.profile.id)
+        setSubmissions(userSubmissions)
+      } catch (error) {
+        console.error('Failed to load submissions data:', error)
+        toast.error('Failed to load your submissions')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadData()
+  }, [user])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -119,13 +97,60 @@ export default function Submissions() {
       return
     }
 
+    if (!user?.profile?.id) {
+      toast.error('Please log in to submit your manuscript')
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // First create the manuscript
+      const manuscript = await dbService.createManuscript({
+        user_id: user.profile.id,
+        title: newSubmission.title,
+        logline: newSubmission.logline,
+        synopsis: newSubmission.synopsis,
+        genre: newSubmission.genre,
+        type: newSubmission.type as any,
+        page_count: parseInt(newSubmission.pageCount),
+        status: 'draft',
+        is_complete: true,
+        query_letter: newSubmission.queryLetter || undefined,
+        target_audience: newSubmission.targetAudience || undefined,
+        comparable_works: newSubmission.comparableWorks || undefined,
+        author_bio: newSubmission.authorBio || undefined,
+      })
+
+      if (!manuscript) {
+        throw new Error('Failed to create manuscript')
+      }
+
+      // Then create the submission
+      const submission = await dbService.createSubmission({
+        manuscript_id: manuscript.id,
+        submitter_id: user.profile.id,
+        reviewer_id: undefined,
+        status: 'pending',
+        submission_type: 'query',
+        reader_notes: undefined,
+        agent_notes: undefined,
+        feedback: undefined,
+        score: undefined,
+        reviewed_at: undefined,
+      })
+
+      if (!submission) {
+        throw new Error('Failed to create submission')
+      }
 
       toast.success("Submission received! We'll review your material within 4-6 weeks.")
+
+      // Refresh data
+      const userManuscripts = await dbService.getUserManuscripts(user.profile.id)
+      setManuscripts(userManuscripts)
+      const userSubmissions = await dbService.getUserSubmissions(user.profile.id)
+      setSubmissions(userSubmissions)
 
       // Reset form
       setNewSubmission({
@@ -145,6 +170,7 @@ export default function Submissions() {
       // Switch to submissions tab
       setActiveTab('my-submissions')
     } catch (error) {
+      console.error('Submission failed:', error)
       toast.error('Failed to submit. Please try again.')
     } finally {
       setIsSubmitting(false)
@@ -280,16 +306,24 @@ export default function Submissions() {
                           >
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
-                                <h3 className="font-semibold mb-2">{submission.manuscriptTitle}</h3>
+                                <h3 className="font-semibold mb-2">
+                                  {(submission as any).manuscript?.title || 'Unknown Title'}
+                                </h3>
                                 <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2">
                                   <span>
                                     Submitted:{' '}
-                                    {new Date(submission.submittedAt).toLocaleDateString()}
+                                    {new Date(submission.created_at).toLocaleDateString()}
+                                  </span>
+                                  <span>
+                                    Type: {(submission as any).manuscript?.type || 'Unknown'}
+                                  </span>
+                                  <span>
+                                    Genre: {(submission as any).manuscript?.genre || 'Unknown'}
                                   </span>
                                 </div>
-                                {submission.reviewerNotes && (
+                                {submission.reader_notes && (
                                   <p className="text-sm text-muted-foreground bg-muted p-3 rounded">
-                                    <strong>Reader Notes:</strong> {submission.reviewerNotes}
+                                    <strong>Reader Notes:</strong> {submission.reader_notes}
                                   </p>
                                 )}
                               </div>

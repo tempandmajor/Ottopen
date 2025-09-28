@@ -31,11 +31,13 @@ function SearchContent() {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState('all')
   const [loading, setLoading] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [searchResults, setSearchResults] = useState({
-    authors: [] as User[],
+    authors: [] as (User & { works?: number; followers?: number })[],
     works: [] as Post[],
     posts: [] as Post[],
   })
+  const [hasMore, setHasMore] = useState(true)
 
   useEffect(() => {
     const query = searchParams.get('q')
@@ -57,6 +59,18 @@ function SearchContent() {
       // Search for authors (users)
       const authors = await dbService.searchUsers(query, 20)
 
+      // Load detailed stats for authors
+      const authorsWithStats = await Promise.all(
+        authors.map(async author => {
+          const userStats = await dbService.getUserStatistics(author.id)
+          return {
+            ...author,
+            works: userStats?.published_posts_count || 0,
+            followers: userStats?.followers_count || 0,
+          }
+        })
+      )
+
       // Search for works (published posts)
       const works = await dbService.searchPosts(query, 20)
       const publishedWorks = works.filter(post => post.published)
@@ -65,16 +79,66 @@ function SearchContent() {
       const posts = await dbService.searchPosts(query, 20)
 
       setSearchResults({
-        authors,
+        authors: authorsWithStats,
         works: publishedWorks,
         posts,
       })
+
+      // Check if we have more results (if we got the full limit, likely more exist)
+      setHasMore(
+        authorsWithStats.length === 20 || publishedWorks.length === 20 || posts.length === 20
+      )
     } catch (error) {
       console.error('Search failed:', error)
       toast.error('Search failed. Please try again.')
       setSearchResults({ authors: [], works: [], posts: [] })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadMore = async () => {
+    if (!searchQuery.trim() || loadingMore) return
+
+    try {
+      setLoadingMore(true)
+
+      const currentOffset = searchResults.authors.length
+
+      // Load more results
+      const authors = await dbService.searchUsers(searchQuery, 20, currentOffset)
+      const authorsWithStats = await Promise.all(
+        authors.map(async author => {
+          const userStats = await dbService.getUserStatistics(author.id)
+          return {
+            ...author,
+            works: userStats?.published_posts_count || 0,
+            followers: userStats?.followers_count || 0,
+          }
+        })
+      )
+
+      const works = await dbService.searchPosts(searchQuery, 20, currentOffset)
+      const publishedWorks = works.filter(post => post.published)
+
+      const posts = await dbService.searchPosts(searchQuery, 20, currentOffset)
+
+      // Append new results
+      setSearchResults(prev => ({
+        authors: [...prev.authors, ...authorsWithStats],
+        works: [...prev.works, ...publishedWorks],
+        posts: [...prev.posts, ...posts],
+      }))
+
+      // Check if we have more results
+      setHasMore(
+        authorsWithStats.length === 20 || publishedWorks.length === 20 || posts.length === 20
+      )
+    } catch (error) {
+      console.error('Load more failed:', error)
+      toast.error('Failed to load more results')
+    } finally {
+      setLoadingMore(false)
     }
   }
 
@@ -235,9 +299,9 @@ function SearchContent() {
                               key={author.id}
                               name={author.display_name || author.username}
                               specialty={author.specialty || 'Writer'}
-                              location="Unknown"
-                              works={0}
-                              followers={0}
+                              location={author.location || 'Location not specified'}
+                              works={author.works || 0}
+                              followers={author.followers || 0}
                               bio={author.bio || 'No bio available.'}
                               avatar={author.avatar_url}
                               tags={author.specialty ? [author.specialty] : ['Writer']}
@@ -324,9 +388,9 @@ function SearchContent() {
                         key={author.id}
                         name={author.display_name || author.username}
                         specialty={author.specialty || 'Writer'}
-                        location="Unknown"
-                        works={0}
-                        followers={0}
+                        location={author.location || 'Location not specified'}
+                        works={author.works || 0}
+                        followers={author.followers || 0}
                         bio={author.bio || 'No bio available.'}
                         avatar={author.avatar_url}
                         tags={author.specialty ? [author.specialty] : ['Writer']}
@@ -397,11 +461,20 @@ function SearchContent() {
             </Tabs>
 
             {/* Load More */}
-            <div className="text-center pt-8">
-              <Button variant="outline" size="lg">
-                Load More Results
-              </Button>
-            </div>
+            {hasMore && (
+              <div className="text-center pt-8">
+                <Button variant="outline" size="lg" onClick={loadMore} disabled={loadingMore}>
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Loading More...
+                    </>
+                  ) : (
+                    'Load More Results'
+                  )}
+                </Button>
+              </div>
+            )}
           </>
         )}
 
