@@ -48,8 +48,12 @@ class Logger {
     return styles[level as keyof typeof styles] || styles.info
   }
 
-  error(message: string, meta?: any) {
-    const entry = this.formatMessage('error', message, meta)
+  error(message: string, error?: Error | any, meta?: any) {
+    const errorMeta =
+      error instanceof Error
+        ? { ...meta, error: { message: error.message, stack: error.stack } }
+        : { ...meta, error }
+    const entry = this.formatMessage('error', message, errorMeta)
     this.output(entry)
   }
 

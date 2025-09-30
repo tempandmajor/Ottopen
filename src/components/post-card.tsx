@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 
 interface PostCardProps {
+  postId?: string
   author: string
   avatar?: string
   time: string
@@ -21,9 +22,13 @@ interface PostCardProps {
   reshares?: number
   isLiked?: boolean
   isReshared?: boolean
+  onLike?: (postId: string, currentlyLiked: boolean) => Promise<boolean>
+  onComment?: (postId: string) => void
+  onShare?: (postId: string) => void
 }
 
 export function PostCard({
+  postId,
   author,
   avatar,
   time,
@@ -37,6 +42,9 @@ export function PostCard({
   reshares = 0,
   isLiked = false,
   isReshared = false,
+  onLike,
+  onComment,
+  onShare,
 }: PostCardProps) {
   const [liked, setLiked] = useState(isLiked)
   const [reshared, setReshared] = useState(isReshared)
@@ -48,9 +56,21 @@ export function PostCard({
     .map(n => n[0])
     .join('')
 
-  const handleLike = () => {
-    setLiked(!liked)
-    setLikeCount(liked ? likeCount - 1 : likeCount + 1)
+  const handleLike = async () => {
+    if (!postId || !onLike) {
+      // Fallback to local state for components without database integration
+      setLiked(!liked)
+      setLikeCount(liked ? likeCount - 1 : likeCount + 1)
+      return
+    }
+
+    try {
+      const newLikedState = await onLike(postId, liked)
+      setLiked(newLikedState)
+      setLikeCount(newLikedState ? likeCount + 1 : Math.max(0, likeCount - 1))
+    } catch (error) {
+      console.error('Failed to handle like:', error)
+    }
   }
 
   const handleReshare = () => {
@@ -129,7 +149,12 @@ export function PostCard({
                 <span className="text-xs sm:text-sm">{likeCount}</span>
               </Button>
 
-              <Button variant="ghost" size="sm" className="h-7 sm:h-8 px-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 sm:h-8 px-2"
+                onClick={() => postId && onComment?.(postId)}
+              >
                 <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                 <span className="text-xs sm:text-sm">{comments}</span>
               </Button>
@@ -152,7 +177,12 @@ export function PostCard({
                 </span>
               ) : null}
 
-              <Button variant="ghost" size="sm" className="h-7 sm:h-8 px-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 sm:h-8 px-2"
+                onClick={() => postId && onShare?.(postId)}
+              >
                 <Share className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                 <span className="hidden xs:inline text-xs sm:text-sm">Share</span>
               </Button>

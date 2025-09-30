@@ -23,10 +23,13 @@
     "paths": {
       "@/*": ["./*"]
     },
-    "noImplicitAny": false,
+    // Incrementally enable strict mode
+    "noImplicitAny": true,
     "noUnusedParameters": false,
     "noUnusedLocals": false,
-    "strictNullChecks": false,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictPropertyInitialization": false,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true
   },

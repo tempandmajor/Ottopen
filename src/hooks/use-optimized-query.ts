@@ -83,7 +83,7 @@ export function useOptimizedInfiniteQuery<T>(
 ) {
   const result = useInfiniteQuery({
     queryKey,
-    queryFn: async ({ pageParam }) => {
+    queryFn: async ({ pageParam }: { pageParam: unknown }) => {
       const startTime = performance.now()
 
       try {
@@ -112,8 +112,9 @@ export function useOptimizedInfiniteQuery<T>(
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
+    getNextPageParam: () => undefined,
     ...options,
-  })
+  } as any)
 
   return result
 }

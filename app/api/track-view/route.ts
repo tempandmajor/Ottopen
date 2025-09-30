@@ -9,10 +9,7 @@ export async function POST(request: NextRequest) {
     const { postId } = body
 
     if (!postId) {
-      return NextResponse.json(
-        { error: 'Post ID is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Post ID is required' }, { status: 400 })
     }
 
     // Get user from session if authenticated
@@ -24,27 +21,19 @@ export async function POST(request: NextRequest) {
 
     // Get IP address and user agent for anonymous tracking
     const forwardedFor = request.headers.get('x-forwarded-for')
-    const ipAddress = forwardedFor ? forwardedFor.split(',')[0] : request.ip
-    const userAgent = request.headers.get('user-agent')
+    const ipAddress = forwardedFor ? forwardedFor.split(',')[0] : request.ip || undefined
+    const userAgent = request.headers.get('user-agent') || undefined
 
     // Track the view
-    await dbService.trackPostView(
-      postId,
-      user?.id,
-      ipAddress,
-      userAgent
-    )
+    await dbService.trackPostView(postId, user?.id, ipAddress, userAgent)
 
     return NextResponse.json({
       success: true,
-      message: 'View tracked successfully'
+      message: 'View tracked successfully',
     })
   } catch (error) {
     console.error('Error tracking post view:', error)
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -53,6 +42,6 @@ export async function GET() {
     endpoint: 'track-view',
     description: 'Tracks post views for analytics',
     methods: ['POST'],
-    requiredFields: ['postId']
+    requiredFields: ['postId'],
   })
 }

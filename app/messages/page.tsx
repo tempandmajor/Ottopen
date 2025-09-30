@@ -136,7 +136,7 @@ export default function Messages() {
 
   const getOtherUser = (conv: Conversation): User | null => {
     if (!user) return null
-    return conv.user1_id === user.id ? conv.user2 : conv.user1
+    return conv.user1_id === user.id ? conv.user2 || null : conv.user1 || null
   }
 
   const filteredConversations = conversations.filter(conv => {

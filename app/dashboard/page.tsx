@@ -28,6 +28,12 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/src/contexts/auth-context'
 import { dbService } from '@/src/lib/database'
 import type { Post, User, WritingGoal, UserStatistics } from '@/src/lib/supabase'
+
+// Extended User type for dashboard display with computed stats
+type UserWithStats = User & {
+  works?: number
+  followers?: number
+}
 import { toast } from 'react-hot-toast'
 import Link from 'next/link'
 
@@ -44,7 +50,7 @@ function DashboardContent() {
     currentStreak: 0,
   })
   const [recentActivity, setRecentActivity] = useState<Post[]>([])
-  const [suggestedAuthors, setSuggestedAuthors] = useState<User[]>([])
+  const [suggestedAuthors, setSuggestedAuthors] = useState<UserWithStats[]>([])
   const [writingGoals, setWritingGoals] = useState<WritingGoal[]>([])
   const [userStatistics, setUserStatistics] = useState<UserStatistics | null>(null)
 
@@ -83,7 +89,10 @@ function DashboardContent() {
         const thisMonthSessions = writingSessions.filter(
           session => new Date(session.session_date).getMonth() === thisMonth.getMonth()
         )
-        const wordsThisMonth = thisMonthSessions.reduce((sum, session) => sum + session.words_written, 0)
+        const wordsThisMonth = thisMonthSessions.reduce(
+          (sum, session) => sum + session.words_written,
+          0
+        )
 
         // Calculate statistics
         const totalLikes = userPosts.reduce((sum, post) => sum + (post.likes_count || 0), 0)
@@ -129,7 +138,7 @@ function DashboardContent() {
               unit: 'posts',
               period: 'monthly',
               is_active: true,
-            }
+            },
           ]
 
           for (const goal of defaultGoals) {
@@ -148,9 +157,23 @@ function DashboardContent() {
         })
         setRecentActivity(recentPosts)
 
-        // Get suggested authors (users with most followers)
+        // Get suggested authors with real stats
         const authors = await dbService.searchUsers('', 4)
-        setSuggestedAuthors(authors.filter(author => author.id !== user.profile?.id))
+        const authorsWithStats = await Promise.all(
+          authors
+            .filter(author => author.id !== user.profile?.id)
+            .slice(0, 3)
+            .map(async author => {
+              const authorStats = await dbService.getUserStatistics(author.id)
+              const followersList = await dbService.getFollowers(author.id)
+              return {
+                ...author,
+                works: authorStats?.published_posts_count || 0,
+                followers: authorStats?.followers_count || followersList.length,
+              }
+            })
+        )
+        setSuggestedAuthors(authorsWithStats)
       } catch (error) {
         console.error('Failed to load dashboard data:', error)
         toast.error('Failed to load dashboard data')
@@ -163,7 +186,9 @@ function DashboardContent() {
   }, [user])
 
   const weeklyGoal = writingGoals.find(g => g.goal_type === 'weekly_words')
-  const progressPercentage = weeklyGoal ? (weeklyGoal.current_value / weeklyGoal.target_value) * 100 : 0
+  const progressPercentage = weeklyGoal
+    ? (weeklyGoal.current_value / weeklyGoal.target_value) * 100
+    : 0
 
   return (
     <div className="min-h-screen bg-background">
@@ -350,15 +375,22 @@ function DashboardContent() {
                       <div key={goal.id || index} className="space-y-2">
                         <div className="flex justify-between items-center">
                           <span className="text-sm font-medium">
-                            {goal.goal_type === 'weekly_words' ? 'Weekly Writing' :
-                             goal.goal_type === 'monthly_posts' ? 'Monthly Posts' :
-                             goal.goal_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            {goal.goal_type === 'weekly_words'
+                              ? 'Weekly Writing'
+                              : goal.goal_type === 'monthly_posts'
+                                ? 'Monthly Posts'
+                                : goal.goal_type
+                                    .replace('_', ' ')
+                                    .replace(/\b\w/g, l => l.toUpperCase())}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             {goal.current_value}/{goal.target_value} {goal.unit}
                           </span>
                         </div>
-                        <Progress value={(goal.current_value / goal.target_value) * 100} className="h-1.5" />
+                        <Progress
+                          value={(goal.current_value / goal.target_value) * 100}
+                          className="h-1.5"
+                        />
                       </div>
                     ))
                   ) : (
@@ -394,8 +426,8 @@ function DashboardContent() {
                           name={author.display_name || author.username}
                           specialty={author.specialty || 'Writer'}
                           location={author.location || 'Location not specified'}
-                          works={0}
-                          followers={0}
+                          works={author.works || 0}
+                          followers={author.followers || 0}
                           bio={author.bio || 'No bio available.'}
                           avatar={author.avatar_url}
                           tags={author.specialty ? [author.specialty] : ['Writer']}

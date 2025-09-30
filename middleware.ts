@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import logger from './src/lib/logger'
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -19,7 +20,7 @@ export async function middleware(request: NextRequest) {
     supabaseUrl === 'https://your-project.supabase.co' ||
     supabaseAnonKey === 'your_anon_key_here'
   ) {
-    // Supabase not configured, skip auth checks
+    logger.warn('Supabase not configured - skipping auth checks')
     return response
   }
 
@@ -84,18 +85,22 @@ export async function middleware(request: NextRequest) {
 
     // Redirect unauthenticated users from protected routes
     if (isProtectedRoute && !user) {
+      logger.info('Redirecting unauthenticated user', { pathname })
       return NextResponse.redirect(new URL('/auth/signin', request.url))
     }
 
     // Redirect authenticated users from public-only routes
     if (isPublicOnlyRoute && user) {
+      logger.info('Redirecting authenticated user from public route', { pathname })
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 
     return response
   } catch (error) {
-    // If Supabase auth check fails, just continue without auth protection
-    console.error('Middleware error:', error)
+    logger.error('Middleware error:', error instanceof Error ? error : new Error(String(error)), {
+      pathname: request.nextUrl.pathname,
+    })
+    // Continue without auth protection on error
     return response
   }
 }

@@ -32,6 +32,84 @@ export default function Feed() {
   const [followingCount, setFollowingCount] = useState(0)
   const [hasMore, setHasMore] = useState(true)
   const [page, setPage] = useState(0)
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set())
+
+  // Load liked posts for the current user
+  const loadLikedPosts = async () => {
+    if (!user) return
+
+    try {
+      // Get all posts that the user has liked
+      const userLikes = await dbService.getUserLikedPosts(user.id)
+      const likedPostIds = new Set(userLikes.map(post => post.id))
+      setLikedPosts(likedPostIds)
+    } catch (error) {
+      console.error('Failed to load liked posts:', error)
+    }
+  }
+
+  // Handle post interactions
+  const handleLikePost = async (postId: string, currentlyLiked: boolean): Promise<boolean> => {
+    if (!user) return currentlyLiked
+
+    try {
+      const newLikedState = await dbService.toggleLike(postId, user.id)
+
+      // Update the post in the local state
+      setPosts(prevPosts =>
+        prevPosts.map(post =>
+          post.id === postId
+            ? {
+                ...post,
+                likes_count: newLikedState
+                  ? (post.likes_count || 0) + 1
+                  : Math.max(0, (post.likes_count || 0) - 1),
+              }
+            : post
+        )
+      )
+
+      // Update local liked posts state
+      if (newLikedState) {
+        setLikedPosts(prev => new Set([...prev, postId]))
+      } else {
+        setLikedPosts(prev => {
+          const updated = new Set(prev)
+          updated.delete(postId)
+          return updated
+        })
+      }
+
+      return newLikedState
+    } catch (error) {
+      console.error('Failed to toggle like:', error)
+      toast.error('Failed to update like')
+      return currentlyLiked
+    }
+  }
+
+  const handleCommentPost = (postId: string) => {
+    // TODO: Navigate to post detail page or open comment modal
+    console.log('Comment on post:', postId)
+    toast('Comment functionality coming soon!')
+  }
+
+  const handleSharePost = async (postId: string) => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Check out this post on Script Soirée',
+          url: `${window.location.origin}/posts/${postId}`,
+        })
+      } else {
+        await navigator.clipboard.writeText(`${window.location.origin}/posts/${postId}`)
+        toast.success('Post link copied to clipboard!')
+      }
+    } catch (error) {
+      console.error('Failed to share post:', error)
+      toast.error('Failed to share post')
+    }
+  }
 
   console.log('=== FEED PAGE COMPONENT LOADED ===')
   console.log('Feed page - userExists:', !!user)
@@ -41,6 +119,7 @@ export default function Feed() {
     if (user) {
       loadFeedData()
       loadFollowingCount()
+      loadLikedPosts()
     }
   }, [user])
 
@@ -49,12 +128,34 @@ export default function Feed() {
       setLoading(pageNum === 0)
       setLoadingMore(pageNum > 0)
 
-      // Load posts from followed users (for now, load all published posts)
-      const feedPosts = await dbService.getPosts({
-        limit: 10,
-        offset: pageNum * 10,
-        published: true,
-      })
+      // Load posts from followed users, fall back to all posts if user follows no one
+      let feedPosts: Post[] = []
+
+      if (user) {
+        const following = await dbService.getFollowing(user.id)
+
+        if (following.length > 0) {
+          // Get posts from followed users
+          const followingIds = following.map(f => f.id)
+          const allPosts = await dbService.getPosts({
+            limit: 50, // Get more to filter
+            offset: 0,
+            published: true,
+          })
+
+          // Filter posts by followed users
+          feedPosts = allPosts
+            .filter(post => followingIds.includes(post.user_id))
+            .slice(pageNum * 10, (pageNum + 1) * 10)
+        } else {
+          // User follows no one, show all posts to help them discover content
+          feedPosts = await dbService.getPosts({
+            limit: 10,
+            offset: pageNum * 10,
+            published: true,
+          })
+        }
+      }
 
       if (pageNum === 0) {
         setPosts(feedPosts)
@@ -333,6 +434,7 @@ export default function Feed() {
                 posts.map(post => (
                   <PostCard
                     key={post.id}
+                    postId={post.id}
                     author={post.user?.display_name || post.user?.username || 'Unknown Author'}
                     avatar={post.user?.avatar_url}
                     time={new Date(post.created_at).toLocaleDateString()}
@@ -343,6 +445,10 @@ export default function Feed() {
                     type="discussion"
                     likes={post.likes_count || 0}
                     comments={post.comments_count || 0}
+                    isLiked={likedPosts.has(post.id)}
+                    onLike={handleLikePost}
+                    onComment={handleCommentPost}
+                    onShare={handleSharePost}
                   />
                 ))
               ) : (
