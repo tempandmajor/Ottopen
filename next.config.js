@@ -6,8 +6,10 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'react-hook-form'],
     serverActions: {
       allowedOrigins: ['localhost:3000'],
+      bodySizeLimit: '2mb',
     },
   },
+  serverComponentsExternalPackages: ['@supabase/supabase-js'],
   images: {
     remotePatterns: [
       {

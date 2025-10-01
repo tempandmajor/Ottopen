@@ -74,7 +74,16 @@ export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl
 
     // Protected routes that require authentication
-    const protectedRoutes = ['/dashboard', '/feed', '/messages', '/settings', '/profile']
+    const protectedRoutes = [
+      '/dashboard',
+      '/feed',
+      '/messages',
+      '/settings',
+      '/profile',
+      '/referrals',
+      '/submissions',
+      '/opportunities',
+    ]
 
     // Public-only routes (redirect to dashboard if authenticated)
     const publicOnlyRoutes = ['/auth/signin', '/auth/signup', '/auth/forgot-password']
