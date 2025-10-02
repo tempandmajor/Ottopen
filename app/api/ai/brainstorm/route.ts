@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       'brainstorm'
     )
 
-    await AIService['logUsage'](user.id, 'brainstorm', response.tokensUsed.total, body.manuscriptId)
+    // Note: Usage logging is handled inside AIService.brainstorm()
 
     return NextResponse.json({
       success: true,

@@ -1,30 +1,84 @@
 # Ottopen
 
-A sophisticated platform for literary enthusiasts built with Next.js.
+An AI-powered writing platform for fiction authors - your complete journey from first draft to publication submission.
+
+## Features
+
+### ✨ AI Writing Assistant
+
+- **Expand** - Continue your story with AI-generated content matching your voice
+- **Rewrite** - Transform text with different styles (vivid, concise, emotional, etc.)
+- **Describe** - Generate rich, sensory descriptions for characters, settings, and objects
+- **Brainstorm** - Generate creative ideas for plot, characters, conflicts, and themes
+- **Critique** - Get detailed feedback on pacing, dialogue, plot, and prose
+- **Character Generator** - Create detailed character profiles with psychology and arcs
+- **Outline Generator** - Build structured outlines using proven story frameworks
+
+### 📚 Story Planning
+
+- **Story Bible** - Comprehensive world-building and character tracking
+- **Chapter & Scene Organization** - Hierarchical manuscript structure
+- **Plot Threads** - Track main plots, subplots, and character arcs
+- **Timeline** - Manage chronological and narrative event sequences
+- **Version Control** - Save and restore scene versions
+- **Research Notes** - Organize research linked to scenes and characters
+
+### 👥 Collaboration
+
+- **Beta Readers** - Invite feedback from trusted readers
+- **Comments** - Scene-level annotations and suggestions
+- **Multi-Collaborator Support** - Writers, editors, and co-authors
+
+### 📤 Publishing Tools
+
+- **Query Letter Generator** - AI-assisted query letter creation
+- **Synopsis Generator** - Auto-generate short, medium, and long synopses
+- **Submission Tracking** - Manage agent queries and responses
+- **ISBN Management** - Track edition ISBNs
+- **Export** - DOCX, PDF, and EPUB formatting
+
+### 📊 Analytics
+
+- **Writing Goals** - Daily, weekly, and monthly word targets
+- **Session Tracking** - Monitor writing sessions and productivity
+- **Word Count Graphs** - Visualize progress over time
+- **Streak Tracking** - Build consistent writing habits
 
 ## Development
 
-**Use your preferred IDE**
+### Prerequisites
 
-Clone this repository and start developing locally.
+- Node.js 18+ & npm - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- Supabase account - [Create free account](https://supabase.com)
+- OpenAI API key - [Get API key](https://platform.openai.com/api-keys) OR
+- Anthropic API key - [Get API key](https://console.anthropic.com/)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+### Setup
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
+# Step 1: Clone the repository
 git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Step 2: Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Step 3: Set up environment variables
+cp .env.example .env.local
+
+# Edit .env.local and add your API keys:
+# - NEXT_PUBLIC_SUPABASE_URL
+# - NEXT_PUBLIC_SUPABASE_ANON_KEY
+# - OPENAI_API_KEY (or ANTHROPIC_API_KEY)
+
+# Step 4: Set up Supabase database
+# Run the migrations in supabase/migrations/ in your Supabase project
+
+# Step 5: Start the development server
 npm run dev
 ```
+
+Open [http://localhost:3000](http://localhost:3000) to view your app.
 
 **Edit a file directly in GitHub**
 

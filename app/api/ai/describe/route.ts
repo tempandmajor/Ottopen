@@ -38,13 +38,7 @@ export async function POST(request: NextRequest) {
       'describe'
     )
 
-    await AIService['logUsage'](
-      user.id,
-      'describe',
-      response.tokensUsed.total,
-      body.manuscriptId,
-      body.sceneId
-    )
+    // Note: Usage logging is handled inside AIService.describe()
 
     return NextResponse.json({
       success: true,

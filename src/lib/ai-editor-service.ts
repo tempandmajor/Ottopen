@@ -831,14 +831,27 @@ export class CollaborationService {
 }
 
 // ============================================================================
-// AI SERVICES (Will be implemented with OpenAI/Anthropic integration)
+// AI SERVICES (Fully Implemented with OpenAI/Anthropic integration)
 // ============================================================================
+
+import { getAIClient } from './ai/ai-client'
+import {
+  buildExpandPrompt,
+  buildRewritePrompt,
+  buildDescribePrompt,
+  buildBrainstormPrompt,
+  buildCritiquePrompt,
+  buildCharacterPrompt,
+  buildOutlinePrompt,
+  SYSTEM_PROMPTS,
+} from './ai/prompts/writing-prompts'
 
 export class AIService {
   private static async logUsage(
     userId: string,
     featureType: string,
     tokensUsed: number,
+    aiModel: string,
     manuscriptId?: string,
     sceneId?: string
   ) {
@@ -848,53 +861,303 @@ export class AIService {
       scene_id: sceneId,
       feature_type: featureType,
       tokens_used: tokensUsed,
-      ai_model: 'gpt-4-turbo',
+      ai_model: aiModel,
     })
   }
 
-  static async expand(request: AIExpandRequest): Promise<AIExpandResponse> {
-    // TODO: Integrate with OpenAI API
-    // This is a placeholder implementation
-    throw new Error('AI Expand feature not yet implemented')
+  static async expand(
+    request: AIExpandRequest,
+    userId: string,
+    userTier: 'free' | 'pro' | 'premium' | 'enterprise' = 'free'
+  ): Promise<AIExpandResponse> {
+    const client = getAIClient(userTier)
+
+    const prompt = buildExpandPrompt({
+      contextBefore: request.contextBefore,
+      contextAfter: request.contextAfter,
+      length: request.length,
+      tone: request.tone,
+    })
+
+    const response = await client.complete(
+      {
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPTS.expand },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.8, // Higher for creative writing
+      },
+      'expand'
+    )
+
+    await this.logUsage(userId, 'expand', response.tokensUsed.total, response.model)
+
+    return {
+      suggestions: [response.content],
+      tokensUsed: response.tokensUsed.total,
+      model: response.model,
+    }
   }
 
-  static async rewrite(request: AIRewriteRequest): Promise<AIRewriteResponse> {
-    // TODO: Integrate with OpenAI API
-    throw new Error('AI Rewrite feature not yet implemented')
+  static async rewrite(
+    request: AIRewriteRequest,
+    userId: string,
+    userTier: 'free' | 'pro' | 'premium' | 'enterprise' = 'free'
+  ): Promise<AIRewriteResponse> {
+    const client = getAIClient(userTier)
+
+    const prompt = buildRewritePrompt({
+      text: request.text,
+      style: request.style,
+      additionalContext: request.additionalContext,
+    })
+
+    const response = await client.complete(
+      {
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPTS.rewrite },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.7,
+      },
+      'rewrite'
+    )
+
+    await this.logUsage(userId, 'rewrite', response.tokensUsed.total, response.model)
+
+    return {
+      suggestions: [response.content],
+      tokensUsed: response.tokensUsed.total,
+      model: response.model,
+    }
   }
 
-  static async describe(request: AIDescribeRequest): Promise<AIDescribeResponse> {
-    // TODO: Integrate with OpenAI API
-    throw new Error('AI Describe feature not yet implemented')
+  static async describe(
+    request: AIDescribeRequest,
+    userId: string,
+    userTier: 'free' | 'pro' | 'premium' | 'enterprise' = 'free'
+  ): Promise<AIDescribeResponse> {
+    const client = getAIClient(userTier)
+
+    const prompt = buildDescribePrompt({
+      subject: request.subject,
+      type: request.type,
+      context: request.context,
+      senses: request.senses,
+      atmosphere: request.atmosphere,
+    })
+
+    const response = await client.complete(
+      {
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPTS.describe },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.9, // Very high for vivid descriptions
+      },
+      'describe'
+    )
+
+    await this.logUsage(userId, 'describe', response.tokensUsed.total, response.model)
+
+    return {
+      descriptions: [response.content],
+      tokensUsed: response.tokensUsed.total,
+      model: response.model,
+    }
   }
 
-  static async brainstorm(request: AIBrainstormRequest): Promise<AIBrainstormResponse> {
-    // TODO: Integrate with OpenAI API
-    throw new Error('AI Brainstorm feature not yet implemented')
+  static async brainstorm(
+    request: AIBrainstormRequest,
+    userId: string,
+    userTier: 'free' | 'pro' | 'premium' | 'enterprise' = 'free'
+  ): Promise<AIBrainstormResponse> {
+    const client = getAIClient(userTier)
+
+    const prompt = buildBrainstormPrompt({
+      type: request.type,
+      genre: request.genre || 'general fiction',
+      context: request.premise || request.additionalContext,
+      count: request.count || 10,
+    })
+
+    const response = await client.complete(
+      {
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPTS.brainstorm },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.95, // Maximum creativity
+      },
+      'brainstorm'
+    )
+
+    await this.logUsage(userId, 'brainstorm', response.tokensUsed.total, response.model)
+
+    // Parse the response into structured suggestions
+    const lines = response.content.split('\n').filter(line => line.trim())
+    const suggestions: Array<{ title: string; description: string }> = []
+
+    let currentTitle = ''
+    let currentDesc = ''
+
+    for (const line of lines) {
+      if (/^\d+\./.test(line)) {
+        if (currentTitle) {
+          suggestions.push({ title: currentTitle, description: currentDesc.trim() })
+        }
+        const parts = line.split(/^\d+\.\s*/)
+        currentTitle = parts[1] || ''
+        currentDesc = ''
+      } else if (line.trim()) {
+        currentDesc += line + ' '
+      }
+    }
+
+    if (currentTitle) {
+      suggestions.push({ title: currentTitle, description: currentDesc.trim() })
+    }
+
+    return {
+      suggestions:
+        suggestions.length > 0 ? suggestions : [{ title: 'Ideas', description: response.content }],
+      tokensUsed: response.tokensUsed.total,
+      model: response.model,
+    }
   }
 
-  static async critique(request: AICritiqueRequest): Promise<AICritiqueResponse> {
-    // TODO: Integrate with OpenAI API
-    throw new Error('AI Critique feature not yet implemented')
+  static async critique(
+    request: AICritiqueRequest,
+    userId: string,
+    userTier: 'free' | 'pro' | 'premium' | 'enterprise' = 'free'
+  ): Promise<AICritiqueResponse> {
+    const client = getAIClient(userTier)
+
+    const prompt = buildCritiquePrompt({
+      text: request.content,
+      focusAreas: request.critiqueTypes as any,
+    })
+
+    const response = await client.complete(
+      {
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPTS.critique },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.5, // Lower for analytical tasks
+        maxTokens: 3000,
+      },
+      'critique'
+    )
+
+    await this.logUsage(userId, 'critique', response.tokensUsed.total, response.model)
+
+    // Parse critique response
+    const content = response.content
+    const scoreMatch = content.match(/score[:\s]+(\d+)\/10/i)
+    const overallScore = scoreMatch ? parseInt(scoreMatch[1]) : 7
+
+    return {
+      overallScore,
+      issues: [],
+      strengths: [],
+      recommendations: content,
+      tokensUsed: response.tokensUsed.total,
+      model: response.model,
+    }
   }
 
   static async generateCharacterProfile(
     name: string,
     role: string,
     genre: string,
-    additionalContext?: string
+    userId: string,
+    additionalContext?: string,
+    userTier: 'free' | 'pro' | 'premium' | 'enterprise' = 'free'
   ): Promise<Partial<Character>> {
-    // TODO: Integrate with OpenAI API
-    throw new Error('AI Character Generation not yet implemented')
+    const client = getAIClient(userTier)
+
+    const prompt = buildCharacterPrompt({
+      name,
+      role: role as any,
+      genre,
+      context: additionalContext,
+    })
+
+    const response = await client.complete(
+      {
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPTS.character },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.8,
+        maxTokens: 2000,
+      },
+      'character'
+    )
+
+    await this.logUsage(userId, 'character', response.tokensUsed.total, response.model)
+
+    // Parse the response into character fields
+    return {
+      name,
+      role: role as any,
+      personality_summary: response.content,
+      notes: `Generated with AI (${response.model})`,
+    }
   }
 
   static async generatePlotOutline(
     premise: string,
     genre: string,
-    structureType: string
+    structureType: string,
+    userId: string,
+    userTier: 'free' | 'pro' | 'premium' | 'enterprise' = 'free'
   ): Promise<{ title: string; description: string; act: number }[]> {
-    // TODO: Integrate with OpenAI API
-    throw new Error('AI Plot Outline not yet implemented')
+    const client = getAIClient(userTier)
+
+    const prompt = buildOutlinePrompt({
+      premise,
+      genre,
+      structure: structureType as any,
+    })
+
+    const response = await client.complete(
+      {
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPTS.outline },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.7,
+        maxTokens: 3000,
+      },
+      'outline'
+    )
+
+    await this.logUsage(userId, 'outline', response.tokensUsed.total, response.model)
+
+    // Parse into plot points
+    const beats: { title: string; description: string; act: number }[] = []
+    const lines = response.content.split('\n').filter(line => line.trim())
+
+    let currentAct = 1
+    for (const line of lines) {
+      if (/act\s+(\d+)/i.test(line)) {
+        const match = line.match(/act\s+(\d+)/i)
+        currentAct = match ? parseInt(match[1]) : currentAct
+      }
+
+      if (/^\d+\./.test(line) || /^-/.test(line)) {
+        const cleanLine = line.replace(/^\d+\.\s*/, '').replace(/^-\s*/, '')
+        beats.push({
+          title: cleanLine.split(':')[0] || cleanLine.substring(0, 50),
+          description: cleanLine,
+          act: currentAct,
+        })
+      }
+    }
+
+    return beats
   }
 
   static async checkUsageLimits(userId: string): Promise<{

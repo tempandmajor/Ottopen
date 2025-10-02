@@ -38,13 +38,7 @@ export async function POST(request: NextRequest) {
       'rewrite'
     )
 
-    await AIService['logUsage'](
-      user.id,
-      'rewrite',
-      response.tokensUsed.total,
-      body.manuscriptId,
-      body.sceneId
-    )
+    // Note: Usage logging is handled inside AIService.rewrite()
 
     return NextResponse.json({
       success: true,

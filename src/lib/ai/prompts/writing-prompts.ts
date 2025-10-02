@@ -102,10 +102,12 @@ Guidelines:
 
 export interface ExpandRequest {
   contextBefore: string // Text before cursor
-  contextAfter: string // Text after cursor (optional)
+  contextAfter?: string // Text after cursor (optional)
   length: 'sentence' | 'paragraph' | 'page'
   genre?: string
   tone?: string
+  pov?: 'first-person' | 'second-person' | 'third-limited' | 'third-omniscient'
+  tense?: 'present' | 'past' | 'future'
   additionalInstructions?: string
 }
 
@@ -116,6 +118,23 @@ export function buildExpandPrompt(request: ExpandRequest): string {
     page: '1 full page (400-500 words)',
   }
 
+  const povInstructions = request.pov
+    ? {
+        'first-person': 'MAINTAIN FIRST PERSON POV (I, me, my)',
+        'second-person': 'MAINTAIN SECOND PERSON POV (you, your)',
+        'third-limited': "MAINTAIN THIRD PERSON LIMITED POV (one character's perspective)",
+        'third-omniscient': 'MAINTAIN THIRD PERSON OMNISCIENT POV',
+      }[request.pov]
+    : ''
+
+  const tenseInstructions = request.tense
+    ? {
+        present: 'MAINTAIN PRESENT TENSE (walks, runs, says)',
+        past: 'MAINTAIN PAST TENSE (walked, ran, said)',
+        future: 'MAINTAIN FUTURE TENSE (will walk, will run, will say)',
+      }[request.tense]
+    : ''
+
   return `Continue this story naturally. Write approximately ${lengthGuide[request.length]}.
 
 CONTEXT BEFORE:
@@ -125,6 +144,8 @@ ${request.contextAfter ? `CONTEXT AFTER:\n${request.contextAfter.slice(0, 500)}`
 
 ${request.genre ? `GENRE: ${request.genre}` : ''}
 ${request.tone ? `TONE: ${request.tone}` : ''}
+${povInstructions ? `${povInstructions}` : ''}
+${tenseInstructions ? `${tenseInstructions}` : ''}
 ${request.additionalInstructions ? `ADDITIONAL INSTRUCTIONS: ${request.additionalInstructions}` : ''}
 
 Now continue the story naturally from where the "CONTEXT BEFORE" ends. Write ONLY the continuation, do not repeat the context.`
@@ -144,6 +165,7 @@ export interface RewriteRequest {
   targetPOV?: 'first' | 'third-limited' | 'third-omniscient'
   targetTense?: 'past' | 'present'
   additionalInstructions?: string
+  additionalContext?: string
 }
 
 export function buildRewritePrompt(request: RewriteRequest): string {
@@ -179,6 +201,7 @@ export interface DescribeRequest {
   context?: string // Story context
   senses?: ('sight' | 'sound' | 'smell' | 'taste' | 'touch')[]
   mood?: string
+  atmosphere?: string
   timeOfDay?: string
   weather?: string
 }
