@@ -122,6 +122,12 @@ export function Navigation() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
+                    <Link href="/clubs" className="flex items-center">
+                      <Users className="mr-2 h-4 w-4" />
+                      <span>Book Clubs</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link href="/messages" className="flex items-center">
                       <Mail className="mr-2 h-4 w-4" />
                       <span>Messages</span>
