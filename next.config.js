@@ -5,7 +5,10 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'react-hook-form'],
     serverActions: {
-      allowedOrigins: ['localhost:3000'],
+      allowedOrigins:
+        process.env.NODE_ENV === 'production'
+          ? [process.env.NEXT_PUBLIC_APP_URL?.replace('https://', '') || 'ottopen.com']
+          : ['localhost:3000'],
       bodySizeLimit: '2mb',
     },
   },
@@ -42,6 +45,10 @@ const nextConfig = {
           {
             key: 'X-XSS-Protection',
             value: '1; mode=block',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
           },
         ],
       },
