@@ -1,0 +1,87 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerUser } from '@/lib/server/auth'
+import { ScriptService } from '@/src/lib/script-service'
+import { supabase } from '@/src/lib/supabase'
+
+// POST /api/scripts/[scriptId]/share - Generate shareable link with permissions
+export async function POST(request: NextRequest, { params }: { params: { scriptId: string } }) {
+  try {
+    const { user } = await getServerUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const script = await ScriptService.getById(params.scriptId)
+    if (!script) {
+      return NextResponse.json({ error: 'Script not found' }, { status: 404 })
+    }
+
+    if (script.user_id !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const body = await request.json()
+    const { permission, expiresIn } = body // permission: 'read' | 'write' | 'comment'
+
+    // Generate share token
+    const token = crypto.randomUUID()
+    const expiresAt = expiresIn ? new Date(Date.now() + expiresIn * 1000).toISOString() : null
+
+    // Store share link in database
+    const { data: shareLink, error } = await supabase
+      .from('script_share_links')
+      .insert({
+        script_id: params.scriptId,
+        token,
+        permission,
+        created_by: user.id,
+        expires_at: expiresAt,
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+
+    const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL}/scripts/shared/${token}`
+
+    return NextResponse.json({
+      shareLink,
+      url: shareUrl,
+    })
+  } catch (error: any) {
+    console.error('Failed to create share link:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}
+
+// GET /api/scripts/[scriptId]/share - List all share links for script
+export async function GET(request: NextRequest, { params }: { params: { scriptId: string } }) {
+  try {
+    const { user } = await getServerUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const script = await ScriptService.getById(params.scriptId)
+    if (!script) {
+      return NextResponse.json({ error: 'Script not found' }, { status: 404 })
+    }
+
+    if (script.user_id !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const { data: shareLinks, error } = await supabase
+      .from('script_share_links')
+      .select('*')
+      .eq('script_id', params.scriptId)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    return NextResponse.json({ shareLinks })
+  } catch (error: any) {
+    console.error('Failed to get share links:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}

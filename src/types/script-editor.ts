@@ -206,6 +206,21 @@ export interface ScriptCollaborator {
   last_active_at: string
 }
 
+// Share Link
+export type SharePermission = 'read' | 'write' | 'comment'
+
+export interface ScriptShareLink {
+  id: string
+  script_id: string
+  token: string
+  permission: SharePermission
+  created_by: string
+  expires_at?: string
+  created_at: string
+  last_accessed_at?: string
+  access_count: number
+}
+
 // Formatting Styles
 export interface ElementStyles {
   fontFamily: string
