@@ -22,7 +22,15 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    await CollaborationService.removeCollaborator(params.collaboratorId)
+    // Get the collaborator to find the user_id
+    const collaborators = await CollaborationService.getByScriptId(params.scriptId)
+    const collaborator = collaborators.find(c => c.id === params.collaboratorId)
+
+    if (!collaborator) {
+      return NextResponse.json({ error: 'Collaborator not found' }, { status: 404 })
+    }
+
+    await CollaborationService.removeCollaborator(params.scriptId, collaborator.user_id)
 
     return NextResponse.json({ success: true })
   } catch (error: any) {

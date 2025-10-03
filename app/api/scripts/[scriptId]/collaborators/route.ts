@@ -52,7 +52,12 @@ export async function POST(request: NextRequest, { params }: { params: { scriptI
       return NextResponse.json({ error: 'userId and role are required' }, { status: 400 })
     }
 
-    const collaborator = await CollaborationService.addCollaborator(params.scriptId, userId, role)
+    const collaborator = await CollaborationService.addCollaborator(
+      params.scriptId,
+      userId,
+      user.id,
+      role
+    )
 
     return NextResponse.json({ collaborator }, { status: 201 })
   } catch (error: any) {
