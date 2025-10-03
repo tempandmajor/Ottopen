@@ -29,6 +29,7 @@ import {
   Upload,
   Briefcase,
   Gift,
+  Clapperboard,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -143,6 +144,22 @@ export function Navigation() {
                     <Link href="/opportunities" className="flex items-center">
                       <Briefcase className="mr-2 h-4 w-4" />
                       <span>Opportunities</span>
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
+                  {/* Writing Tools Section */}
+                  <DropdownMenuItem asChild>
+                    <Link href="/editor" className="flex items-center">
+                      <PenTool className="mr-2 h-4 w-4" />
+                      <span>AI Editor</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/scripts" className="flex items-center">
+                      <Clapperboard className="mr-2 h-4 w-4" />
+                      <span>Script Editor</span>
                     </Link>
                   </DropdownMenuItem>
 
