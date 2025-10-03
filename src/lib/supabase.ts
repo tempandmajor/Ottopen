@@ -87,6 +87,11 @@ export interface User {
   industry_credentials?: string
   company_name?: string
   license_number?: string
+  open_for_collaboration?: boolean
+  accepting_beta_readers?: boolean
+  preferred_genres?: string[]
+  posts_last_30_days?: number
+  avg_post_engagement?: number
   created_at: string
   updated_at: string
 }
@@ -100,6 +105,17 @@ export interface Post {
   image_url?: string
   mood?: string
   published: boolean
+  genre?: string
+  content_type?:
+    | 'screenplay'
+    | 'stage_play'
+    | 'book'
+    | 'short_story'
+    | 'poetry'
+    | 'article'
+    | 'essay'
+  reading_time_minutes?: number
+  completion_status?: 'complete' | 'wip' | 'hiatus'
   created_at: string
   updated_at: string
   user?: User
