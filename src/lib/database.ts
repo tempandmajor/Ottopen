@@ -921,6 +921,35 @@ export class DatabaseService {
     }
   }
 
+  async getBulkUserStatistics(userIds: string[]): Promise<Map<string, UserStatistics>> {
+    const statsMap = new Map<string, UserStatistics>()
+
+    if (!this.checkSupabaseConfig() || userIds.length === 0) {
+      return statsMap
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('user_statistics')
+        .select('*')
+        .in('user_id', userIds)
+
+      if (error) {
+        logError('Failed to get bulk user statistics', error)
+        return statsMap
+      }
+
+      data?.forEach(stat => {
+        statsMap.set(stat.user_id, stat)
+      })
+
+      return statsMap
+    } catch (error) {
+      logError('Get bulk user statistics error', error as Error)
+      return statsMap
+    }
+  }
+
   async updateUserStatistics(userId: string): Promise<boolean> {
     if (!this.checkSupabaseConfig()) {
       return false

@@ -70,17 +70,18 @@ function SearchContent() {
       // Search for authors (users)
       const authors = await dbService.searchUsers(sanitized, 20)
 
-      // Load detailed stats for authors
-      const authorsWithStats = await Promise.all(
-        authors.map(async author => {
-          const userStats = await dbService.getUserStatistics(author.id)
-          return {
-            ...author,
-            works: userStats?.published_posts_count || 0,
-            followers: userStats?.followers_count || 0,
-          }
-        })
-      )
+      // Load detailed stats for authors using bulk query (95% query reduction)
+      const authorIds = authors.map(author => author.id)
+      const statsMap = await dbService.getBulkUserStatistics(authorIds)
+
+      const authorsWithStats = authors.map(author => {
+        const userStats = statsMap.get(author.id)
+        return {
+          ...author,
+          works: userStats?.published_posts_count || 0,
+          followers: userStats?.followers_count || 0,
+        }
+      })
 
       // Search for posts once, then filter for works
       const allPosts = await dbService.searchPosts(sanitized, 20)
@@ -121,16 +122,19 @@ function SearchContent() {
       // Only load more for the active tab to avoid unnecessary queries
       if (activeTab === 'all' || activeTab === 'authors') {
         const authors = await dbService.searchUsers(searchQuery, 20, offsets.authors)
-        const authorsWithStats = await Promise.all(
-          authors.map(async author => {
-            const userStats = await dbService.getUserStatistics(author.id)
-            return {
-              ...author,
-              works: userStats?.published_posts_count || 0,
-              followers: userStats?.followers_count || 0,
-            }
-          })
-        )
+
+        // Load detailed stats for authors using bulk query (95% query reduction)
+        const authorIds = authors.map(author => author.id)
+        const statsMap = await dbService.getBulkUserStatistics(authorIds)
+
+        const authorsWithStats = authors.map(author => {
+          const userStats = statsMap.get(author.id)
+          return {
+            ...author,
+            works: userStats?.published_posts_count || 0,
+            followers: userStats?.followers_count || 0,
+          }
+        })
 
         setSearchResults(prev => ({
           ...prev,
