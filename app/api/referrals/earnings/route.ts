@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 
+// Force dynamic route
+export const dynamic = 'force-dynamic'
+
 /**
  * GET /api/referrals/earnings
  * Get earnings and balance for the authenticated user
