@@ -122,29 +122,27 @@ export interface ScriptBeat {
 export interface ScriptCharacter {
   id: string
   script_id: string
-  character_id: string
-  character_number?: number
-  scene_count: number
+  name: string
+  description?: string
+  importance?: CharacterType
   dialogue_count: number
-  first_appearance_page?: number
-  last_appearance_page?: number
-  character_type?: CharacterType
-  speaking_role: boolean
-  estimated_shoot_days?: number
+  scene_count: number
+  metadata?: Record<string, any>
+  created_at?: string
+  updated_at?: string
 }
 
 // Script-specific location data
 export interface ScriptLocation {
   id: string
   script_id: string
-  location_id: string
-  location_type: LocationType
-  time_of_day: TimeOfDay[]
+  name: string
+  location_type?: LocationType
+  description?: string
   scene_count: number
   page_count: number
-  estimated_shoot_days?: number
-  is_practical: boolean
-  notes?: string
+  created_at?: string
+  updated_at?: string
 }
 
 // Scene
@@ -233,6 +231,7 @@ export interface FormatTemplate {
   dual_dialogue?: ElementStyles
   stage_direction?: ElementStyles
   music_cue?: ElementStyles
+  sound_effect?: ElementStyles
 }
 
 // Production Reports

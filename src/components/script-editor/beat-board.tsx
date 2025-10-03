@@ -54,10 +54,6 @@ export function BeatBoard({
     }
   }
 
-  const toggleComplete = async (beat: ScriptBeat) => {
-    await onUpdateBeat(beat.id, { completed: !beat.completed })
-  }
-
   return (
     <div className="p-4 bg-gray-50 border-l w-80 h-full overflow-y-auto">
       <div className="flex items-center justify-between mb-4">
@@ -117,23 +113,10 @@ export function BeatBoard({
         {beats
           .sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
           .map(beat => (
-            <Card
-              key={beat.id}
-              className={`p-3 cursor-pointer transition-colors ${
-                beat.completed ? 'bg-green-50 border-green-200' : 'hover:bg-gray-50'
-              }`}
-              onClick={() => toggleComplete(beat)}
-            >
+            <Card key={beat.id} className="p-3 cursor-pointer transition-colors hover:bg-gray-50">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <div
-                      className={`w-4 h-4 rounded border flex items-center justify-center ${
-                        beat.completed ? 'bg-green-500 border-green-500' : 'border-gray-300'
-                      }`}
-                    >
-                      {beat.completed && <Check className="w-3 h-3 text-white" />}
-                    </div>
                     <h3 className="font-medium text-sm">{beat.title}</h3>
                   </div>
                   {beat.beat_type && (

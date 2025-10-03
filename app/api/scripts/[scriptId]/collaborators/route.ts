@@ -19,7 +19,7 @@ export async function GET(request: NextRequest, { params }: { params: { scriptId
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const collaborators = await CollaborationService.getByScriptId(params.scriptId)
+    const collaborators = await CollaborationService.getCollaborators(params.scriptId)
 
     return NextResponse.json({ collaborators })
   } catch (error: any) {

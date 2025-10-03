@@ -474,6 +474,47 @@ export class ScriptFormatter {
 
     return elements
   }
+
+  /**
+   * Get next element type based on current type (for Tab key)
+   */
+  static getNextElementType(
+    currentType: ElementType,
+    scriptType: ScriptType = 'screenplay'
+  ): ElementType {
+    const cycleOrder: Record<ScriptType, ElementType[]> = {
+      screenplay: [
+        'scene_heading',
+        'action',
+        'character',
+        'dialogue',
+        'parenthetical',
+        'transition',
+      ],
+      tv_pilot: ['scene_heading', 'action', 'character', 'dialogue', 'parenthetical', 'transition'],
+      stage_play: [
+        'scene_heading',
+        'action',
+        'character',
+        'dialogue',
+        'stage_direction',
+        'music_cue',
+      ],
+      radio_drama: [
+        'scene_heading',
+        'action',
+        'character',
+        'dialogue',
+        'sound_effect',
+        'music_cue',
+      ],
+    }
+
+    const order = cycleOrder[scriptType]
+    const currentIndex = order.indexOf(currentType)
+    const nextIndex = (currentIndex + 1) % order.length
+    return order[nextIndex]
+  }
 }
 
 // ============================================================================
@@ -606,46 +647,5 @@ export class ScriptValidator {
         message: `Script length is ideal (${pageCount} pages)`,
       }
     }
-  }
-
-  /**
-   * Get next element type based on current type (for Tab key)
-   */
-  static getNextElementType(
-    currentType: ElementType,
-    scriptType: ScriptType = 'screenplay'
-  ): ElementType {
-    const cycleOrder: Record<ScriptType, ElementType[]> = {
-      screenplay: [
-        'scene_heading',
-        'action',
-        'character',
-        'dialogue',
-        'parenthetical',
-        'transition',
-      ],
-      tv_pilot: ['scene_heading', 'action', 'character', 'dialogue', 'parenthetical', 'transition'],
-      stage_play: [
-        'scene_heading',
-        'action',
-        'character',
-        'dialogue',
-        'stage_direction',
-        'music_cue',
-      ],
-      radio_drama: [
-        'scene_heading',
-        'action',
-        'character',
-        'dialogue',
-        'sound_effect',
-        'music_cue',
-      ],
-    }
-
-    const order = cycleOrder[scriptType]
-    const currentIndex = order.indexOf(currentType)
-    const nextIndex = (currentIndex + 1) % order.length
-    return order[nextIndex]
   }
 }

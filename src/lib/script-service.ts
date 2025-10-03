@@ -119,6 +119,20 @@ export class ScriptService {
   static async unlockScript(scriptId: string): Promise<void> {
     await this.update(scriptId, { is_locked: false })
   }
+
+  /**
+   * Lock script (alias for lockScript, returns updated script)
+   */
+  static async lock(scriptId: string): Promise<Script> {
+    return await this.update(scriptId, { is_locked: true })
+  }
+
+  /**
+   * Unlock script (alias for unlockScript, returns updated script)
+   */
+  static async unlock(scriptId: string): Promise<Script> {
+    return await this.update(scriptId, { is_locked: false })
+  }
 }
 
 // ============================================================================
@@ -126,30 +140,6 @@ export class ScriptService {
 // ============================================================================
 
 export class ElementService {
-  /**
-   * Create script element
-   */
-  static async create(scriptId: string, data: Partial<ScriptElement>): Promise<ScriptElement> {
-    const { data: element, error } = await supabase
-      .from('script_elements')
-      .insert({
-        script_id: scriptId,
-        element_type: data.element_type,
-        content: data.content,
-        character_id: data.character_id,
-        location_id: data.location_id,
-        scene_number: data.scene_number,
-        page_number: data.page_number || 1,
-        order_index: data.order_index || 0,
-        metadata: data.metadata,
-      })
-      .select()
-      .single()
-
-    if (error) throw error
-    return element
-  }
-
   /**
    * Get all elements for a script
    */
@@ -543,9 +533,14 @@ export class SceneService {
       if (element.element_type === 'scene_heading') {
         // Save previous scene
         if (currentScene) {
-          currentScene.page_end = element.page_number
-          currentScene.page_count = (currentScene.page_end || 0) - (currentScene.page_start || 0)
-          scenes.push(currentScene)
+          const scene = currentScene as Partial<ScriptScene> & {
+            page_end?: number
+            page_count?: number
+            page_start?: number
+          }
+          scene.page_end = element.page_number
+          scene.page_count = (scene.page_end || 0) - (scene.page_start || 0)
+          scenes.push(scene)
         }
 
         // Start new scene
@@ -566,9 +561,14 @@ export class SceneService {
 
     // Save last scene
     if (currentScene) {
-      currentScene.page_end = elements[elements.length - 1]?.page_number || 1
-      currentScene.page_count = (currentScene.page_end || 0) - (currentScene.page_start || 0)
-      scenes.push(currentScene)
+      const scene = currentScene as Partial<ScriptScene> & {
+        page_end?: number
+        page_count?: number
+        page_start?: number
+      }
+      scene.page_end = elements[elements.length - 1]?.page_number || 1
+      scene.page_count = (scene.page_end || 0) - (scene.page_start || 0)
+      scenes.push(scene)
     }
 
     // Delete existing scenes

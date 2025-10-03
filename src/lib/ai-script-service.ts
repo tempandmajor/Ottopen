@@ -125,12 +125,13 @@ Provide 3 alternative versions that improve the dialogue. For each, explain the 
   static async generateBeats(
     logline: string,
     genre: string,
-    scriptType: 'screenplay' | 'tv_pilot' | 'stage_play' = 'screenplay'
+    scriptType: 'screenplay' | 'tv_pilot' | 'stage_play' | 'radio_drama' = 'screenplay'
   ): Promise<BeatGenerationResult> {
     const pageRanges: Record<string, string> = {
       screenplay: '90-120 pages',
       tv_pilot: '25-35 pages',
       stage_play: '80-100 pages',
+      radio_drama: '20-30 pages',
     }
 
     const prompt = `Generate story beats using Save the Cat! methodology for this ${genre} ${scriptType}:
@@ -195,7 +196,7 @@ Format as JSON:
   static async analyzeStructure(
     elements: ScriptElement[],
     totalPages: number,
-    scriptType: 'screenplay' | 'tv_pilot' | 'stage_play' = 'screenplay'
+    scriptType: 'screenplay' | 'tv_pilot' | 'stage_play' | 'radio_drama' = 'screenplay'
   ): Promise<StructureAnalysis> {
     // Extract scene headings and page numbers
     const sceneHeadings = elements

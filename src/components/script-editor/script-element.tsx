@@ -39,21 +39,20 @@ export function ScriptElementComponent({
   }, [element.content])
 
   const format = scriptType === 'stage_play' ? STAGE_PLAY_FORMAT : SCREENPLAY_FORMAT
-  const style = format[element.element_type]
+  const style = format[element.element_type] || format.action
 
   if (!isEditing) {
     return (
       <div
         className="script-element py-1 cursor-text hover:bg-gray-50"
         style={{
-          fontFamily: style.fontFamily,
-          fontSize: style.fontSize,
-          marginLeft: style.marginLeft,
-          marginRight: style.marginRight,
-          textAlign: style.textAlign as any,
-          textTransform: style.textTransform as any,
-          fontWeight: style.fontWeight,
-          textDecoration: style.textDecoration,
+          fontFamily: style?.fontFamily,
+          fontSize: style?.fontSize,
+          marginLeft: style?.marginLeft,
+          marginRight: style?.marginRight,
+          textAlign: style?.textAlign as any,
+          textTransform: style?.textTransform as any,
+          fontWeight: style?.fontWeight,
         }}
       >
         {element.content || '\u00A0'}
@@ -91,13 +90,13 @@ export function ScriptElementComponent({
         onKeyDown={onKeyDown}
         className="w-full border-none outline-none resize-none bg-blue-50 focus:bg-blue-100"
         style={{
-          fontFamily: style.fontFamily,
-          fontSize: style.fontSize,
-          marginLeft: style.marginLeft,
-          marginRight: style.marginRight,
-          textAlign: style.textAlign as any,
-          textTransform: style.textTransform as any,
-          fontWeight: style.fontWeight,
+          fontFamily: style?.fontFamily,
+          fontSize: style?.fontSize,
+          marginLeft: style?.marginLeft,
+          marginRight: style?.marginRight,
+          textAlign: style?.textAlign as any,
+          textTransform: style?.textTransform as any,
+          fontWeight: style?.fontWeight,
           minHeight: '24px',
         }}
         rows={1}

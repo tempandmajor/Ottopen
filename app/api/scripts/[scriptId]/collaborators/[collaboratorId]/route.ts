@@ -23,7 +23,7 @@ export async function DELETE(
     }
 
     // Get the collaborator to find the user_id
-    const collaborators = await CollaborationService.getByScriptId(params.scriptId)
+    const collaborators = await CollaborationService.getCollaborators(params.scriptId)
     const collaborator = collaborators.find(c => c.id === params.collaboratorId)
 
     if (!collaborator) {
