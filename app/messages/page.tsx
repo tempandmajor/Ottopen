@@ -21,7 +21,7 @@ import {
   Loader2,
   MessageSquare,
 } from 'lucide-react'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useAuth } from '@/src/contexts/auth-context'
 import { dbService } from '@/src/lib/database'
 import type { User, Message, Conversation } from '@/src/lib/supabase'
@@ -30,7 +30,7 @@ import Link from 'next/link'
 
 export default function Messages() {
   const { user } = useAuth()
-  const [selectedConversationIndex, setSelectedConversationIndex] = useState<number | null>(null)
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState('')
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [messages, setMessages] = useState<Message[]>([])
@@ -38,6 +38,7 @@ export default function Messages() {
   const [sendingMessage, setSendingMessage] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const prevMessagesLengthRef = useRef(messages.length)
 
   // Load conversations on mount
   useEffect(() => {
@@ -46,17 +47,20 @@ export default function Messages() {
     }
   }, [user])
 
-  // Load messages when conversation is selected
+  // Load messages when conversation is selected (ID-based to prevent infinite loops)
   useEffect(() => {
-    if (selectedConversationIndex !== null && conversations[selectedConversationIndex]) {
-      loadMessages(conversations[selectedConversationIndex].id)
-      markMessagesAsRead(conversations[selectedConversationIndex].id)
+    if (selectedConversationId) {
+      loadMessages(selectedConversationId)
+      markMessagesAsRead(selectedConversationId)
     }
-  }, [selectedConversationIndex, conversations])
+  }, [selectedConversationId])
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom only when new messages are added (not on every render)
   useEffect(() => {
-    scrollToBottom()
+    if (messages.length > prevMessagesLengthRef.current) {
+      scrollToBottom()
+    }
+    prevMessagesLengthRef.current = messages.length
   }, [messages])
 
   const scrollToBottom = () => {
@@ -71,7 +75,6 @@ export default function Messages() {
         setConversations(convs)
       }
     } catch (error) {
-      console.error('Failed to load conversations:', error)
       toast.error('Failed to load conversations')
     } finally {
       setLoading(false)
@@ -83,7 +86,6 @@ export default function Messages() {
       const msgs = await dbService.getMessages(conversationId)
       setMessages(msgs)
     } catch (error) {
-      console.error('Failed to load messages:', error)
       toast.error('Failed to load messages')
     }
   }
@@ -95,11 +97,12 @@ export default function Messages() {
   }
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !user || selectedConversationIndex === null) return
+    if (!newMessage.trim() || !user || !selectedConversationId) return
 
-    const selectedConv = conversations[selectedConversationIndex]
+    const selectedConv = conversations.find(c => c.id === selectedConversationId)
+    if (!selectedConv) return
+
     const otherUser = selectedConv.user1_id === user.id ? selectedConv.user2 : selectedConv.user1
-
     if (!otherUser) return
 
     try {
@@ -115,12 +118,11 @@ export default function Messages() {
       if (message) {
         setMessages(prev => [...prev, message])
         setNewMessage('')
-        toast.success('Message sent!')
+        // Removed annoying toast - message appearing in chat is enough feedback
       } else {
         toast.error('Failed to send message')
       }
     } catch (error) {
-      console.error('Failed to send message:', error)
       toast.error('Failed to send message')
     } finally {
       setSendingMessage(false)
@@ -139,19 +141,21 @@ export default function Messages() {
     return conv.user1_id === user.id ? conv.user2 || null : conv.user1 || null
   }
 
-  const filteredConversations = conversations.filter(conv => {
-    const otherUser = getOtherUser(conv)
-    if (!otherUser) return false
+  // Memoize filtered conversations to prevent unnecessary recalculations
+  const filteredConversations = useMemo(() => {
+    return conversations.filter(conv => {
+      const otherUser = getOtherUser(conv)
+      if (!otherUser) return false
 
-    const searchLower = searchQuery.toLowerCase()
-    return (
-      otherUser.display_name.toLowerCase().includes(searchLower) ||
-      otherUser.username.toLowerCase().includes(searchLower)
-    )
-  })
+      const searchLower = searchQuery.toLowerCase()
+      return (
+        otherUser.display_name.toLowerCase().includes(searchLower) ||
+        otherUser.username.toLowerCase().includes(searchLower)
+      )
+    })
+  }, [conversations, searchQuery, user])
 
-  const selectedConv =
-    selectedConversationIndex !== null ? conversations[selectedConversationIndex] : null
+  const selectedConv = conversations.find(c => c.id === selectedConversationId)
   const selectedOtherUser = selectedConv ? getOtherUser(selectedConv) : null
 
   return (
@@ -201,13 +205,9 @@ export default function Messages() {
                           return (
                             <button
                               key={conv.id}
-                              onClick={() =>
-                                setSelectedConversationIndex(conversations.indexOf(conv))
-                              }
+                              onClick={() => setSelectedConversationId(conv.id)}
                               className={`w-full p-3 rounded-lg text-left transition-colors hover:bg-literary-subtle ${
-                                selectedConversationIndex === conversations.indexOf(conv)
-                                  ? 'bg-literary-subtle'
-                                  : ''
+                                selectedConversationId === conv.id ? 'bg-literary-subtle' : ''
                               }`}
                             >
                               <div className="flex items-start space-x-3">
