@@ -66,10 +66,13 @@ export default function Authors() {
     loadAuthors()
   }, [])
 
-  // Search functionality
+  // Search functionality with debouncing (300ms)
   useEffect(() => {
     if (searchQuery.trim()) {
-      handleSearch()
+      const timer = setTimeout(() => {
+        handleSearch()
+      }, 300)
+      return () => clearTimeout(timer)
     } else {
       setSearchResults([])
     }
@@ -82,28 +85,26 @@ export default function Authors() {
       // Get application statistics
       const appStats = await dbService.getApplicationStatistics()
 
-      // Get random sample of authors
-      const allAuthors = await dbService.searchUsers('', 50)
+      // Get initial authors (changed from 50 to 20 - no need to fetch unused data)
+      const allAuthors = await dbService.searchUsers('', 20)
       setAuthors(allAuthors)
 
-      // Load detailed stats for each author
-      const authorsWithDetailedStats = await Promise.all(
-        allAuthors.slice(0, 20).map(async author => {
-          const userStats = await dbService.getUserStatistics(author.id)
-          const works = userStats?.published_posts_count || 0
-          const followers = userStats?.followers_count || 0
+      // Load detailed stats using bulk query (95% query reduction)
+      const authorIds = allAuthors.map(a => a.id)
+      const statsMap = await dbService.getBulkUserStatistics(authorIds)
 
-          return {
-            ...author,
-            works,
-            followers,
-          }
-        })
-      )
+      const authorsWithDetailedStats = allAuthors.map(author => {
+        const userStats = statsMap.get(author.id)
+        return {
+          ...author,
+          works: userStats?.published_posts_count || 0,
+          followers: userStats?.followers_count || 0,
+        }
+      })
 
       setAuthorsWithStats(authorsWithDetailedStats)
       setCurrentOffset(20)
-      setHasMore(allAuthors.length > 20)
+      setHasMore(allAuthors.length === 20)
 
       // Calculate stats
       const thirtyDaysAgo = new Date()
@@ -123,7 +124,6 @@ export default function Authors() {
         activeWriters,
       })
     } catch (error) {
-      console.error('Failed to load authors:', error)
       toast.error('Failed to load authors')
     } finally {
       setLoading(false)
@@ -138,7 +138,6 @@ export default function Authors() {
       const results = await dbService.searchUsers(searchQuery, 20)
       setSearchResults(results)
     } catch (error) {
-      console.error('Search failed:', error)
       toast.error('Search failed')
     } finally {
       setSearching(false)
@@ -158,19 +157,18 @@ export default function Authors() {
         return
       }
 
-      const moreAuthorsWithStats = await Promise.all(
-        moreAuthors.map(async author => {
-          const userStats = await dbService.getUserStatistics(author.id)
-          const works = userStats?.published_posts_count || 0
-          const followers = userStats?.followers_count || 0
+      // Load detailed stats using bulk query (95% query reduction)
+      const authorIds = moreAuthors.map(a => a.id)
+      const statsMap = await dbService.getBulkUserStatistics(authorIds)
 
-          return {
-            ...author,
-            works,
-            followers,
-          }
-        })
-      )
+      const moreAuthorsWithStats = moreAuthors.map(author => {
+        const userStats = statsMap.get(author.id)
+        return {
+          ...author,
+          works: userStats?.published_posts_count || 0,
+          followers: userStats?.followers_count || 0,
+        }
+      })
 
       setAuthorsWithStats(prev => [...prev, ...moreAuthorsWithStats])
       setCurrentOffset(prev => prev + moreAuthors.length)
@@ -178,10 +176,7 @@ export default function Authors() {
       if (moreAuthors.length < 20) {
         setHasMore(false)
       }
-
-      toast.success(`Loaded ${moreAuthors.length} more authors`)
     } catch (error) {
-      console.error('Failed to load more authors:', error)
       toast.error('Failed to load more authors')
     } finally {
       setLoadingMore(false)
