@@ -5,7 +5,7 @@ import { Button } from '@/src/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/src/components/ui/avatar'
 import { Heart, MessageCircle, Share, BookOpen, Repeat2 } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface PostCardProps {
   postId?: string
@@ -51,6 +51,15 @@ export function PostCard({
   const [likeCount, setLikeCount] = useState(likes)
   const [reshareCount, setReshareCount] = useState(reshares)
 
+  // Sync local state with props when they change
+  useEffect(() => {
+    setLiked(isLiked)
+  }, [isLiked])
+
+  useEffect(() => {
+    setLikeCount(likes)
+  }, [likes])
+
   const initials = author
     .split(' ')
     .map(n => n[0])
@@ -67,7 +76,7 @@ export function PostCard({
     try {
       const newLikedState = await onLike(postId, liked)
       setLiked(newLikedState)
-      setLikeCount(newLikedState ? likeCount + 1 : Math.max(0, likeCount - 1))
+      // The parent already updates the count, so we don't need to update it here
     } catch (error) {
       console.error('Failed to handle like:', error)
     }
