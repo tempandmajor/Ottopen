@@ -63,6 +63,61 @@ export default function Messages() {
     prevMessagesLengthRef.current = messages.length
   }, [messages])
 
+  // Real-time message subscriptions
+  useEffect(() => {
+    if (!selectedConversationId) return
+
+    const supabase = dbService.getSupabaseClient()
+
+    // Subscribe to new messages in the selected conversation
+    const messagesChannel = supabase
+      .channel(`messages:${selectedConversationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${selectedConversationId}`,
+        },
+        payload => {
+          const newMessage = payload.new as Message
+          // Only add message if it's not already in the list (avoid duplicates)
+          setMessages(prev => {
+            const exists = prev.some(m => m.id === newMessage.id)
+            return exists ? prev : [...prev, newMessage]
+          })
+        }
+      )
+      .subscribe()
+
+    // Subscribe to conversation updates (for last_message, updated_at)
+    const conversationChannel = supabase
+      .channel(`conversation:${selectedConversationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'conversations',
+          filter: `id=eq.${selectedConversationId}`,
+        },
+        payload => {
+          // Update conversation in list
+          setConversations(prev =>
+            prev.map(c => (c.id === selectedConversationId ? (payload.new as Conversation) : c))
+          )
+        }
+      )
+      .subscribe()
+
+    // Cleanup subscriptions when conversation changes or component unmounts
+    return () => {
+      messagesChannel.unsubscribe()
+      conversationChannel.unsubscribe()
+    }
+  }, [selectedConversationId, user])
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }

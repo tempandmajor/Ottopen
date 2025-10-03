@@ -46,6 +46,11 @@ export class DatabaseService {
     this.supabase = client || supabase
   }
 
+  // Public getter for Supabase client (needed for real-time subscriptions)
+  getSupabaseClient() {
+    return this.supabase
+  }
+
   // User Settings: Notifications
   async getNotificationSettings(userId: string) {
     try {
