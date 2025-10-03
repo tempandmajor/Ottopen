@@ -23,14 +23,14 @@ export default function AgencyTerms() {
           </div>
 
           {/* Critical Notice */}
-          <Card className="mb-8 border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-900/20">
+          <Card className="mb-8 border-gray-300 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/20">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-orange-700 dark:text-orange-400">
+              <CardTitle className="flex items-center space-x-2 text-gray-800 dark:text-gray-400">
                 <AlertTriangle className="h-5 w-5" />
                 <span>Important Notice</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="text-orange-700 dark:text-orange-300">
+            <CardContent className="text-gray-800 dark:text-gray-300">
               <p className="font-medium mb-2">
                 By submitting material to Ottopen, you acknowledge and agree to these terms.
               </p>
@@ -115,11 +115,11 @@ export default function AgencyTerms() {
                   </div>
                 </div>
 
-                <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
-                  <h3 className="font-semibold mb-2 text-red-700 dark:text-red-400">
+                <div className="bg-gray-50 dark:bg-gray-900/20 p-4 rounded-lg border border-gray-300 dark:border-gray-800">
+                  <h3 className="font-semibold mb-2 text-gray-800 dark:text-gray-400">
                     Do NOT Submit:
                   </h3>
-                  <ul className="list-disc list-inside text-sm text-red-600 dark:text-red-300 space-y-1">
+                  <ul className="list-disc list-inside text-sm text-gray-700 dark:text-gray-300 space-y-1">
                     <li>Complete manuscripts or full scripts initially</li>
                     <li>Material you do not own or control</li>
                     <li>Previously published or produced works without disclosure</li>

@@ -262,8 +262,8 @@ export function AnalyticsPanel({ manuscript, userId }: AnalyticsPanelProps) {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <div className="p-2 bg-yellow-100 rounded-lg">
-                    <Zap className="h-5 w-5 text-yellow-600" />
+                  <div className="p-2 bg-gray-100 rounded-lg">
+                    <Zap className="h-5 w-5 text-gray-700" />
                   </div>
                   <div className="flex-1">
                     <p className="font-medium">Most Productive Day</p>
@@ -276,8 +276,8 @@ export function AnalyticsPanel({ manuscript, userId }: AnalyticsPanelProps) {
 
                 {thisWeekWords >= 10000 && (
                   <div className="flex items-start gap-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <TrendingUp className="h-5 w-5 text-blue-600" />
+                    <div className="p-2 bg-gray-100 rounded-lg">
+                      <TrendingUp className="h-5 w-5 text-gray-700" />
                     </div>
                     <div className="flex-1">
                       <p className="font-medium">Weekly Streak</p>

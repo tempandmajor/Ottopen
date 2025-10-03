@@ -185,7 +185,7 @@ export function CreateClubDialog({ open, onOpenChange, onClubCreated }: CreateCl
                   <button
                     type="button"
                     onClick={() => removeGenre(genre)}
-                    className="ml-1 hover:text-red-600"
+                    className="ml-1 hover:text-gray-700"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -215,7 +215,7 @@ export function CreateClubDialog({ open, onOpenChange, onClubCreated }: CreateCl
                   <button
                     type="button"
                     onClick={() => removeTag(tag)}
-                    className="ml-1 hover:text-red-600"
+                    className="ml-1 hover:text-gray-700"
                   >
                     <X className="h-3 w-3" />
                   </button>

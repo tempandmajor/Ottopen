@@ -135,7 +135,7 @@ export default function Works() {
     <Card className="card-bg card-shadow border-literary-border hover:shadow-lg transition-all duration-300">
       <CardContent className="p-6">
         <div className="flex space-x-4">
-          <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-lg">
+          <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-lg bg-gradient-to-br from-gray-700 to-gray-800 flex-shrink-0 flex items-center justify-center text-white font-bold text-lg">
             <BookOpen className="h-8 w-8" />
           </div>
 

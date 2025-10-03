@@ -162,7 +162,7 @@ function SearchContent() {
     <Card className="card-bg card-shadow border-literary-border hover:shadow-lg transition-all duration-300">
       <CardContent className="p-6">
         <div className="flex space-x-4">
-          <div className="w-16 h-20 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-lg">
+          <div className="w-16 h-20 rounded-lg bg-gradient-to-br from-gray-700 to-gray-800 flex-shrink-0 flex items-center justify-center text-white font-bold text-lg">
             <BookOpen className="h-8 w-8" />
           </div>
 
@@ -189,7 +189,7 @@ function SearchContent() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                 <div className="flex items-center">
-                  <Star className="h-4 w-4 text-yellow-500 mr-1" />
+                  <Star className="h-4 w-4 text-gray-600 mr-1" />
                   <span>{work.likes_count || 0}</span>
                 </div>
                 <div className="flex items-center">

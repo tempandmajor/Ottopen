@@ -41,11 +41,11 @@ export function StoryCanvas({ manuscriptId }: { manuscriptId: string }) {
   const [isAddingNode, setIsAddingNode] = useState(false)
 
   const nodeColors = {
-    idea: 'bg-yellow-100 border-yellow-300',
-    character: 'bg-blue-100 border-blue-300',
-    location: 'bg-green-100 border-green-300',
-    plot: 'bg-purple-100 border-purple-300',
-    theme: 'bg-pink-100 border-pink-300',
+    idea: 'bg-gray-100 border-gray-400',
+    character: 'bg-gray-100 border-gray-400',
+    location: 'bg-gray-100 border-gray-400',
+    plot: 'bg-gray-100 border-gray-400',
+    theme: 'bg-gray-100 border-gray-400',
     note: 'bg-gray-100 border-gray-300',
   }
 

@@ -825,14 +825,14 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
                     ) : (
                       /* Active subscription */
                       <div className="space-y-6">
-                        <div className="flex items-center justify-between p-4 border border-literary-border rounded-lg bg-green-50 dark:bg-green-900/20">
+                        <div className="flex items-center justify-between p-4 border border-literary-border rounded-lg bg-gray-50 dark:bg-gray-900/20">
                           <div className="flex items-center space-x-3">
-                            <Crown className="h-6 w-6 text-green-600" />
+                            <Crown className="h-6 w-6 text-gray-700" />
                             <div>
-                              <p className="font-medium text-green-700 dark:text-green-400">
+                              <p className="font-medium text-gray-800 dark:text-gray-400">
                                 Premium Member
                               </p>
-                              <p className="text-sm text-green-600 dark:text-green-500">
+                              <p className="text-sm text-gray-700 dark:text-gray-600">
                                 {subscriptionData.planName} - ${subscriptionData.amount / 100}/
                                 {subscriptionData.interval}
                               </p>
@@ -840,7 +840,7 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
                           </div>
                           <Badge
                             variant="outline"
-                            className="border-green-200 text-green-700 bg-green-50 dark:border-green-800 dark:text-green-400 dark:bg-green-900/20"
+                            className="border-gray-300 text-gray-800 bg-gray-50 dark:border-gray-800 dark:text-gray-400 dark:bg-gray-900/20"
                           >
                             {subscriptionData.status === 'active'
                               ? 'Active'
@@ -864,9 +864,9 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
                             </span>
                           </div>
                           {subscriptionData.cancelAtPeriodEnd && (
-                            <div className="flex items-center space-x-2 p-3 border border-orange-200 rounded-lg bg-orange-50 dark:border-orange-800 dark:bg-orange-900/20">
-                              <AlertTriangle className="h-4 w-4 text-orange-600" />
-                              <p className="text-sm text-orange-700 dark:text-orange-400">
+                            <div className="flex items-center space-x-2 p-3 border border-gray-300 rounded-lg bg-gray-50 dark:border-gray-800 dark:bg-gray-900/20">
+                              <AlertTriangle className="h-4 w-4 text-gray-700" />
+                              <p className="text-sm text-gray-800 dark:text-gray-400">
                                 Your subscription will cancel at the end of the current billing
                                 period.
                               </p>

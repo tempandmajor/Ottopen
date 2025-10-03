@@ -134,7 +134,7 @@ export default function SupportPolicy() {
                     <div className="flex items-center justify-between p-4 border border-literary-border rounded-lg">
                       <div>
                         <h4 className="font-semibold flex items-center">
-                          <AlertCircle className="h-4 w-4 mr-2 text-red-500" />
+                          <AlertCircle className="h-4 w-4 mr-2 text-gray-600" />
                           Critical Issues
                         </h4>
                         <p className="text-sm text-muted-foreground">
@@ -147,7 +147,7 @@ export default function SupportPolicy() {
                     <div className="flex items-center justify-between p-4 border border-literary-border rounded-lg">
                       <div>
                         <h4 className="font-semibold flex items-center">
-                          <AlertCircle className="h-4 w-4 mr-2 text-orange-500" />
+                          <AlertCircle className="h-4 w-4 mr-2 text-gray-600" />
                           High Priority
                         </h4>
                         <p className="text-sm text-muted-foreground">
@@ -160,7 +160,7 @@ export default function SupportPolicy() {
                     <div className="flex items-center justify-between p-4 border border-literary-border rounded-lg">
                       <div>
                         <h4 className="font-semibold flex items-center">
-                          <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+                          <CheckCircle className="h-4 w-4 mr-2 text-gray-600" />
                           General Inquiries
                         </h4>
                         <p className="text-sm text-muted-foreground">
@@ -260,9 +260,9 @@ export default function SupportPolicy() {
                     <li>Be patient and respectful in all communications</li>
                   </ul>
 
-                  <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 p-4 rounded-lg">
-                    <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Pro Tip</h4>
-                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                  <div className="bg-gray-50 dark:bg-gray-950/20 border border-gray-300 dark:border-gray-800 p-4 rounded-lg">
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Pro Tip</h4>
+                    <p className="text-sm text-gray-800 dark:text-gray-200">
                       Check our Help Center first - many common questions are answered there, and
                       you&apos;ll get an instant solution!
                     </p>

@@ -138,7 +138,7 @@ export function EditorDashboard({ user }: EditorDashboardProps) {
                       <p className="text-sm text-muted-foreground">In Progress</p>
                       <p className="text-2xl font-bold">{stats.inProgress}</p>
                     </div>
-                    <Clock className="h-8 w-8 text-blue-500 opacity-50" />
+                    <Clock className="h-8 w-8 text-gray-600 opacity-50" />
                   </div>
                 </CardContent>
               </Card>
@@ -150,7 +150,7 @@ export function EditorDashboard({ user }: EditorDashboardProps) {
                       <p className="text-sm text-muted-foreground">Total Words</p>
                       <p className="text-2xl font-bold">{stats.totalWords.toLocaleString()}</p>
                     </div>
-                    <FileText className="h-8 w-8 text-green-500 opacity-50" />
+                    <FileText className="h-8 w-8 text-gray-600 opacity-50" />
                   </div>
                 </CardContent>
               </Card>
@@ -162,7 +162,7 @@ export function EditorDashboard({ user }: EditorDashboardProps) {
                       <p className="text-sm text-muted-foreground">Completed (Month)</p>
                       <p className="text-2xl font-bold">{stats.completedThisMonth}</p>
                     </div>
-                    <TrendingUp className="h-8 w-8 text-purple-500 opacity-50" />
+                    <TrendingUp className="h-8 w-8 text-gray-600 opacity-50" />
                   </div>
                 </CardContent>
               </Card>

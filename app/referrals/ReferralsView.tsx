@@ -122,13 +122,13 @@ export function ReferralsView({
   const getMilestoneIcon = (milestone: string) => {
     switch (milestone) {
       case 'Ambassador':
-        return <Star className="h-5 w-5 text-yellow-500" />
+        return <Star className="h-5 w-5 text-gray-600" />
       case 'Champion':
-        return <Trophy className="h-5 w-5 text-blue-500" />
+        return <Trophy className="h-5 w-5 text-gray-600" />
       case 'Legend':
-        return <Crown className="h-5 w-5 text-purple-500" />
+        return <Crown className="h-5 w-5 text-gray-600" />
       default:
-        return <Award className="h-5 w-5 text-green-500" />
+        return <Award className="h-5 w-5 text-gray-600" />
     }
   }
 
@@ -136,14 +136,14 @@ export function ReferralsView({
     switch (status) {
       case 'confirmed':
         return (
-          <Badge className="bg-green-100 text-green-800 border-green-200">
+          <Badge className="bg-gray-100 text-gray-800 border-gray-300">
             <CheckCircle className="h-3 w-3 mr-1" />
             Confirmed
           </Badge>
         )
       case 'pending':
         return (
-          <Badge variant="outline" className="border-yellow-200 text-yellow-800">
+          <Badge variant="outline" className="border-gray-300 text-gray-800">
             <Clock className="h-3 w-3 mr-1" />
             Pending
           </Badge>
@@ -187,7 +187,7 @@ export function ReferralsView({
                     <p className="text-sm text-muted-foreground">Total Referrals</p>
                     <p className="text-2xl font-bold">{initialStats.totalReferrals}</p>
                   </div>
-                  <Users className="h-8 w-8 text-blue-500" />
+                  <Users className="h-8 w-8 text-gray-600" />
                 </div>
               </CardContent>
             </Card>
@@ -200,7 +200,7 @@ export function ReferralsView({
                     <p className="text-2xl font-bold">{initialStats.availableCredits}</p>
                     <p className="text-xs text-muted-foreground">days of service</p>
                   </div>
-                  <Gift className="h-8 w-8 text-green-500" />
+                  <Gift className="h-8 w-8 text-gray-600" />
                 </div>
               </CardContent>
             </Card>
@@ -213,7 +213,7 @@ export function ReferralsView({
                     <p className="text-2xl font-bold">0</p>
                     <p className="text-xs text-muted-foreground">consecutive months</p>
                   </div>
-                  <TrendingUp className="h-8 w-8 text-orange-500" />
+                  <TrendingUp className="h-8 w-8 text-gray-600" />
                 </div>
               </CardContent>
             </Card>
@@ -489,7 +489,7 @@ export function ReferralsView({
                           </div>
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-muted-foreground">Credit earned:</span>
-                            <span className="font-medium text-green-600">
+                            <span className="font-medium text-gray-700">
                               +{referral.credit_amount} days
                             </span>
                           </div>
@@ -511,7 +511,7 @@ export function ReferralsView({
                   <div className="space-y-4">
                     <div className="flex items-center justify-between p-4 border border-literary-border rounded-lg">
                       <div className="flex items-center space-x-3">
-                        <Star className="h-6 w-6 text-yellow-500" />
+                        <Star className="h-6 w-6 text-gray-600" />
                         <div>
                           <p className="font-medium">Ambassador (5 referrals)</p>
                           <p className="text-sm text-muted-foreground">
@@ -528,7 +528,7 @@ export function ReferralsView({
 
                     <div className="flex items-center justify-between p-4 border border-literary-border rounded-lg">
                       <div className="flex items-center space-x-3">
-                        <Trophy className="h-6 w-6 text-blue-500" />
+                        <Trophy className="h-6 w-6 text-gray-600" />
                         <div>
                           <p className="font-medium">Champion (10 referrals)</p>
                           <p className="text-sm text-muted-foreground">
@@ -547,7 +547,7 @@ export function ReferralsView({
 
                     <div className="flex items-center justify-between p-4 border border-literary-border rounded-lg">
                       <div className="flex items-center space-x-3">
-                        <Crown className="h-6 w-6 text-purple-500" />
+                        <Crown className="h-6 w-6 text-gray-600" />
                         <div>
                           <p className="font-medium">Legend (25 referrals)</p>
                           <p className="text-sm text-muted-foreground">
@@ -566,7 +566,7 @@ export function ReferralsView({
 
                     <div className="flex items-center justify-between p-4 border border-literary-border rounded-lg">
                       <div className="flex items-center space-x-3">
-                        <Award className="h-6 w-6 text-green-500" />
+                        <Award className="h-6 w-6 text-gray-600" />
                         <div>
                           <p className="font-medium">Elite Partner (50+ referrals)</p>
                           <p className="text-sm text-muted-foreground">
@@ -603,7 +603,7 @@ export function ReferralsView({
                     <Separator />
                     <div className="flex items-center justify-between">
                       <span className="font-medium">Available Credits:</span>
-                      <span className="font-bold text-green-600">
+                      <span className="font-bold text-gray-700">
                         {initialStats.availableCredits} days
                       </span>
                     </div>

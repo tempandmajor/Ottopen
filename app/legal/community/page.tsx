@@ -49,7 +49,7 @@ export default function CommunityGuidelines() {
               <div className="prose prose-gray dark:prose-invert max-w-none">
                 <section className="mb-8">
                   <h2 className="font-serif text-2xl font-semibold mb-4 flex items-center">
-                    <Heart className="h-6 w-6 mr-2 text-red-500" />
+                    <Heart className="h-6 w-6 mr-2 text-gray-600" />
                     1. Our Mission & Values
                   </h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
@@ -58,11 +58,11 @@ export default function CommunityGuidelines() {
                     believe that creativity flourishes in an environment of mutual respect,
                     constructive feedback, and inclusive collaboration.
                   </p>
-                  <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 p-4 rounded-lg">
-                    <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                  <div className="bg-gray-50 dark:bg-gray-950/20 border border-gray-300 dark:border-gray-800 p-4 rounded-lg">
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
                       Our Core Values
                     </h4>
-                    <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                    <ul className="text-sm text-gray-800 dark:text-gray-200 space-y-1">
                       <li>
                         • <strong>Respect:</strong> Honor diverse voices and perspectives
                       </li>
@@ -87,7 +87,7 @@ export default function CommunityGuidelines() {
 
                 <section className="mb-8">
                   <h2 className="font-serif text-2xl font-semibold mb-4 flex items-center">
-                    <CheckCircle className="h-6 w-6 mr-2 text-green-500" />
+                    <CheckCircle className="h-6 w-6 mr-2 text-gray-600" />
                     2. What We Encourage
                   </h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
@@ -95,11 +95,11 @@ export default function CommunityGuidelines() {
                   </p>
 
                   <div className="space-y-4">
-                    <div className="border border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-800 rounded-lg p-4">
-                      <h3 className="font-semibold text-green-900 dark:text-green-100 mb-2">
+                    <div className="border border-gray-300 bg-gray-50 dark:bg-gray-950/20 dark:border-gray-800 rounded-lg p-4">
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
                         ✨ Creative Sharing
                       </h3>
-                      <ul className="text-sm text-green-800 dark:text-green-200 space-y-1">
+                      <ul className="text-sm text-gray-800 dark:text-gray-200 space-y-1">
                         <li>• Share original stories, poems, scripts, and excerpts</li>
                         <li>• Post work-in-progress updates and writing milestones</li>
                         <li>• Showcase your published works and achievements</li>
@@ -107,11 +107,11 @@ export default function CommunityGuidelines() {
                       </ul>
                     </div>
 
-                    <div className="border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 rounded-lg p-4">
-                      <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                    <div className="border border-gray-300 bg-gray-50 dark:bg-gray-950/20 dark:border-gray-800 rounded-lg p-4">
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
                         🤝 Supportive Engagement
                       </h3>
-                      <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                      <ul className="text-sm text-gray-800 dark:text-gray-200 space-y-1">
                         <li>• Give constructive, specific feedback on others&apos; work</li>
                         <li>• Ask thoughtful questions about craft and technique</li>
                         <li>• Celebrate others&apos; successes and milestones</li>
@@ -119,11 +119,11 @@ export default function CommunityGuidelines() {
                       </ul>
                     </div>
 
-                    <div className="border border-purple-200 bg-purple-50 dark:bg-purple-950/20 dark:border-purple-800 rounded-lg p-4">
-                      <h3 className="font-semibold text-purple-900 dark:text-purple-100 mb-2">
+                    <div className="border border-gray-300 bg-gray-50 dark:bg-gray-950/20 dark:border-gray-800 rounded-lg p-4">
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
                         📚 Knowledge Sharing
                       </h3>
-                      <ul className="text-sm text-purple-800 dark:text-purple-200 space-y-1">
+                      <ul className="text-sm text-gray-800 dark:text-gray-200 space-y-1">
                         <li>• Share writing tips, techniques, and resources</li>
                         <li>• Discuss literary works and their impact</li>
                         <li>• Provide industry insights and publishing guidance</li>
@@ -131,11 +131,11 @@ export default function CommunityGuidelines() {
                       </ul>
                     </div>
 
-                    <div className="border border-orange-200 bg-orange-50 dark:bg-orange-950/20 dark:border-orange-800 rounded-lg p-4">
-                      <h3 className="font-semibold text-orange-900 dark:text-orange-100 mb-2">
+                    <div className="border border-gray-300 bg-gray-50 dark:bg-gray-950/20 dark:border-gray-800 rounded-lg p-4">
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
                         🌍 Community Building
                       </h3>
-                      <ul className="text-sm text-orange-800 dark:text-orange-200 space-y-1">
+                      <ul className="text-sm text-gray-800 dark:text-gray-200 space-y-1">
                         <li>• Participate in community challenges and events</li>
                         <li>• Connect with writers in your genre or region</li>
                         <li>• Form writing groups and collaboration partnerships</li>
@@ -149,7 +149,7 @@ export default function CommunityGuidelines() {
 
                 <section className="mb-8">
                   <h2 className="font-serif text-2xl font-semibold mb-4 flex items-center">
-                    <XCircle className="h-6 w-6 mr-2 text-red-500" />
+                    <XCircle className="h-6 w-6 mr-2 text-gray-600" />
                     3. What&apos;s Not Allowed
                   </h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
@@ -158,12 +158,12 @@ export default function CommunityGuidelines() {
                   </p>
 
                   <div className="space-y-4">
-                    <div className="border border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800 rounded-lg p-4">
-                      <h3 className="font-semibold text-red-900 dark:text-red-100 mb-2 flex items-center">
+                    <div className="border border-gray-300 bg-gray-50 dark:bg-gray-950/20 dark:border-gray-800 rounded-lg p-4">
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center">
                         <AlertTriangle className="h-4 w-4 mr-2" />
                         Harassment & Hate Speech
                       </h3>
-                      <ul className="text-sm text-red-800 dark:text-red-200 space-y-1">
+                      <ul className="text-sm text-gray-800 dark:text-gray-200 space-y-1">
                         <li>• Personal attacks, bullying, or intimidation</li>
                         <li>
                           • Discriminatory language based on race, gender, religion, sexuality, or
@@ -174,12 +174,12 @@ export default function CommunityGuidelines() {
                       </ul>
                     </div>
 
-                    <div className="border border-orange-200 bg-orange-50 dark:bg-orange-950/20 dark:border-orange-800 rounded-lg p-4">
-                      <h3 className="font-semibold text-orange-900 dark:text-orange-100 mb-2 flex items-center">
+                    <div className="border border-gray-300 bg-gray-50 dark:bg-gray-950/20 dark:border-gray-800 rounded-lg p-4">
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center">
                         <Shield className="h-4 w-4 mr-2" />
                         Inappropriate Content
                       </h3>
-                      <ul className="text-sm text-orange-800 dark:text-orange-200 space-y-1">
+                      <ul className="text-sm text-gray-800 dark:text-gray-200 space-y-1">
                         <li>
                           • Explicit sexual content or graphic violence (without appropriate
                           warnings)
@@ -202,11 +202,11 @@ export default function CommunityGuidelines() {
                       </ul>
                     </div>
 
-                    <div className="border border-purple-200 bg-purple-50 dark:bg-purple-950/20 dark:border-purple-800 rounded-lg p-4">
-                      <h3 className="font-semibold text-purple-900 dark:text-purple-100 mb-2">
+                    <div className="border border-gray-300 bg-gray-50 dark:bg-gray-950/20 dark:border-gray-800 rounded-lg p-4">
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
                         ⚙️ Platform Abuse
                       </h3>
-                      <ul className="text-sm text-purple-800 dark:text-purple-200 space-y-1">
+                      <ul className="text-sm text-gray-800 dark:text-gray-200 space-y-1">
                         <li>• Creating multiple accounts to circumvent restrictions</li>
                         <li>• Attempting to hack, exploit, or disrupt the platform</li>
                         <li>• Manipulating engagement metrics or gaming the system</li>

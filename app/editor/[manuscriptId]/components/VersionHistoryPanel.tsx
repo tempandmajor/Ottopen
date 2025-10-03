@@ -198,9 +198,9 @@ export function VersionHistoryPanel({
                   <span
                     className={
                       calculateWordCountDiff(version).startsWith('+')
-                        ? 'text-green-600'
+                        ? 'text-gray-700'
                         : calculateWordCountDiff(version).startsWith('-')
-                          ? 'text-red-600'
+                          ? 'text-gray-700'
                           : ''
                     }
                   >

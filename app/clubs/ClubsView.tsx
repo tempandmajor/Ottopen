@@ -67,14 +67,14 @@ export function ClubsView() {
         <div className="container mx-auto px-4 py-16">
           <div className="max-w-4xl">
             <h1 className="text-5xl font-bold mb-4">Book Clubs</h1>
-            <p className="text-xl text-blue-100 mb-8">
+            <p className="text-xl text-gray-100 mb-8">
               Join writing communities, exchange critiques, and grow together with fellow authors
             </p>
             <div className="flex gap-4">
               <Button
                 size="lg"
                 variant="secondary"
-                className="bg-white text-blue-600 hover:bg-gray-100"
+                className="bg-white text-gray-700 hover:bg-gray-100"
                 onClick={() => setCreateDialogOpen(true)}
               >
                 <Plus className="mr-2 h-5 w-5" />
@@ -98,8 +98,8 @@ export function ClubsView() {
         <div className="container mx-auto px-4 py-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex items-center gap-3">
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <Users className="h-6 w-6 text-blue-600" />
+              <div className="bg-gray-100 p-3 rounded-lg">
+                <Users className="h-6 w-6 text-gray-700" />
               </div>
               <div>
                 <div className="text-2xl font-bold">{clubs.length}</div>
@@ -107,8 +107,8 @@ export function ClubsView() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="bg-purple-100 p-3 rounded-lg">
-                <BookOpen className="h-6 w-6 text-purple-600" />
+              <div className="bg-gray-100 p-3 rounded-lg">
+                <BookOpen className="h-6 w-6 text-gray-700" />
               </div>
               <div>
                 <div className="text-2xl font-bold">1,234</div>
@@ -116,8 +116,8 @@ export function ClubsView() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="bg-green-100 p-3 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-green-600" />
+              <div className="bg-gray-100 p-3 rounded-lg">
+                <TrendingUp className="h-6 w-6 text-gray-700" />
               </div>
               <div>
                 <div className="text-2xl font-bold">5,678</div>

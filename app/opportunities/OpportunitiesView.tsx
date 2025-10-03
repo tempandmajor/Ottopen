@@ -559,21 +559,21 @@ export function OpportunitiesView({
 
               {/* Premium Access Notice for Free Users */}
               {!canAccessPremiumJobs() && (
-                <Card className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-900/20">
+                <Card className="border-gray-300 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/20">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <Crown className="h-5 w-5 text-orange-600" />
+                        <Crown className="h-5 w-5 text-gray-700" />
                         <div>
-                          <p className="font-medium text-orange-700 dark:text-orange-400">
+                          <p className="font-medium text-gray-800 dark:text-gray-400">
                             Unlock Premium Opportunities
                           </p>
-                          <p className="text-sm text-orange-600 dark:text-orange-500">
+                          <p className="text-sm text-gray-700 dark:text-gray-600">
                             Access exclusive high-paying jobs from top industry partners
                           </p>
                         </div>
                       </div>
-                      <Button variant="outline" className="border-orange-200 hover:bg-orange-100">
+                      <Button variant="outline" className="border-gray-300 hover:bg-gray-100">
                         Upgrade Now
                       </Button>
                     </div>
@@ -595,7 +595,7 @@ export function OpportunitiesView({
                             {job.is_featured && (
                               <Badge
                                 variant="default"
-                                className="bg-yellow-100 text-yellow-800 border-yellow-200"
+                                className="bg-gray-100 text-gray-800 border-gray-300"
                               >
                                 <Star className="h-3 w-3 mr-1" />
                                 Featured
@@ -613,7 +613,7 @@ export function OpportunitiesView({
                             <div className="flex items-center space-x-1">
                               <MapPin className="h-4 w-4" />
                               <span>{job.location}</span>
-                              {job.remote_ok && <span className="text-green-600">• Remote OK</span>}
+                              {job.remote_ok && <span className="text-gray-700">• Remote OK</span>}
                             </div>
                             <div className="flex items-center space-x-1">
                               <Calendar className="h-4 w-4" />
@@ -625,8 +625,8 @@ export function OpportunitiesView({
                           </p>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-1">
-                              <DollarSign className="h-4 w-4 text-green-600" />
-                              <span className="font-medium text-green-600">
+                              <DollarSign className="h-4 w-4 text-gray-700" />
+                              <span className="font-medium text-gray-700">
                                 {formatCompensation(job)}
                               </span>
                             </div>
@@ -658,7 +658,7 @@ export function OpportunitiesView({
                         </div>
                       </div>
                       {job.deadline && (
-                        <div className="flex items-center space-x-1 text-sm text-orange-600 bg-orange-50 dark:bg-orange-900/20 p-2 rounded">
+                        <div className="flex items-center space-x-1 text-sm text-gray-700 bg-gray-50 dark:bg-gray-900/20 p-2 rounded">
                           <Clock className="h-4 w-4" />
                           <span>
                             Application deadline: {new Date(job.deadline).toLocaleDateString()}

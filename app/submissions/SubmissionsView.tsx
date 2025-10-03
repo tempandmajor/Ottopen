@@ -157,13 +157,13 @@ export function SubmissionsView({
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Clock className="h-4 w-4 text-yellow-600" />
+        return <Clock className="h-4 w-4 text-gray-700" />
       case 'under_review':
-        return <AlertCircle className="h-4 w-4 text-blue-600" />
+        return <AlertCircle className="h-4 w-4 text-gray-700" />
       case 'accepted':
-        return <CheckCircle className="h-4 w-4 text-green-600" />
+        return <CheckCircle className="h-4 w-4 text-gray-700" />
       case 'rejected':
-        return <XCircle className="h-4 w-4 text-red-600" />
+        return <XCircle className="h-4 w-4 text-gray-700" />
       default:
         return <Clock className="h-4 w-4 text-gray-600" />
     }
@@ -172,13 +172,13 @@ export function SubmissionsView({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800'
+        return 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800'
       case 'under_review':
-        return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800'
+        return 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800'
       case 'accepted':
-        return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800'
+        return 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800'
       case 'rejected':
-        return 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800'
+        return 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800'
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800'
     }
@@ -198,18 +198,18 @@ export function SubmissionsView({
           </div>
 
           {/* Important Notice */}
-          <Card className="mb-8 border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20">
+          <Card className="mb-8 border-gray-300 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/20">
             <CardContent className="p-4">
               <div className="flex items-start space-x-3">
-                <Shield className="h-5 w-5 text-blue-600 mt-0.5" />
-                <div className="text-blue-700 dark:text-blue-300">
+                <Shield className="h-5 w-5 text-gray-700 mt-0.5" />
+                <div className="text-gray-800 dark:text-gray-300">
                   <p className="font-medium mb-1">Your IP is Protected</p>
                   <p className="text-sm">
                     All submissions are confidential and only shared with verified industry
                     professionals. You retain all rights to your work. See our{' '}
                     <Button
                       variant="link"
-                      className="h-auto p-0 text-blue-700 dark:text-blue-300 underline"
+                      className="h-auto p-0 text-gray-800 dark:text-gray-300 underline"
                       onClick={() => window.open('/legal/agency-terms', '_blank')}
                     >
                       Agency Terms

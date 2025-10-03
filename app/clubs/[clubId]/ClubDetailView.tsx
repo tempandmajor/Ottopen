@@ -126,9 +126,9 @@ export function ClubDetailView({ clubId }: ClubDetailViewProps) {
                 ))}
               </div>
               <h1 className="text-4xl font-bold mb-3">{club.name}</h1>
-              <p className="text-lg text-blue-100 max-w-3xl">{club.description}</p>
+              <p className="text-lg text-gray-100 max-w-3xl">{club.description}</p>
 
-              <div className="flex items-center gap-6 mt-6 text-blue-100">
+              <div className="flex items-center gap-6 mt-6 text-gray-100">
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
                   <span>{club.member_count} members</span>
@@ -147,7 +147,7 @@ export function ClubDetailView({ clubId }: ClubDetailViewProps) {
                   variant="secondary"
                   onClick={handleJoinClub}
                   disabled={joining}
-                  className="bg-white text-blue-600"
+                  className="bg-white text-gray-700"
                 >
                   <UserPlus className="mr-2 h-4 w-4" />
                   {joining ? 'Joining...' : 'Join Club'}
@@ -160,7 +160,7 @@ export function ClubDetailView({ clubId }: ClubDetailViewProps) {
               )}
               {isMember && (
                 <>
-                  <Button size="lg" variant="secondary" className="bg-white text-blue-600">
+                  <Button size="lg" variant="secondary" className="bg-white text-gray-700">
                     <Bell className="mr-2 h-4 w-4" />
                     Notifications
                   </Button>
@@ -271,28 +271,28 @@ export function ClubDetailView({ clubId }: ClubDetailViewProps) {
               <h3 className="text-2xl font-semibold mb-4">What you&apos;ll get:</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto text-left">
                 <div className="flex gap-3">
-                  <MessageSquare className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <MessageSquare className="h-5 w-5 text-gray-700 flex-shrink-0 mt-0.5" />
                   <div>
                     <div className="font-medium">Active Discussions</div>
                     <p className="text-sm text-gray-600">Connect with writers and share ideas</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <BookOpen className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <BookOpen className="h-5 w-5 text-gray-700 flex-shrink-0 mt-0.5" />
                   <div>
                     <div className="font-medium">Critique Exchange</div>
                     <p className="text-sm text-gray-600">Get feedback on your manuscripts</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <Calendar className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <Calendar className="h-5 w-5 text-gray-700 flex-shrink-0 mt-0.5" />
                   <div>
                     <div className="font-medium">Club Events</div>
                     <p className="text-sm text-gray-600">Join writing sprints and workshops</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <Users className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <Users className="h-5 w-5 text-gray-700 flex-shrink-0 mt-0.5" />
                   <div>
                     <div className="font-medium">Community</div>
                     <p className="text-sm text-gray-600">Network with fellow authors</p>
@@ -309,7 +309,7 @@ export function ClubDetailView({ clubId }: ClubDetailViewProps) {
 
         {isMember && (
           <div className="mt-6 flex justify-end">
-            <Button variant="ghost" className="text-red-600" onClick={handleLeaveClub}>
+            <Button variant="ghost" className="text-gray-700" onClick={handleLeaveClub}>
               <LogOut className="mr-2 h-4 w-4" />
               Leave Club
             </Button>
