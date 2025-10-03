@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/src/components/ui/card'
 import { Input } from '@/src/components/ui/input'
 import { Textarea } from '@/src/components/ui/textarea'
 import { Avatar, AvatarFallback, AvatarImage } from '@/src/components/ui/avatar'
+import { Skeleton } from '@/src/components/ui/skeleton'
 import { PenTool, Image as ImageIcon, Smile, Filter, Loader2 } from 'lucide-react'
 import { useAuth } from '@/src/contexts/auth-context'
 import { useState, useEffect } from 'react'
@@ -34,6 +35,7 @@ export default function Feed() {
   const [page, setPage] = useState(0)
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set())
   const [isAdmin, setIsAdmin] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const MAX_CONTENT_LENGTH = 5000
 
   // Load liked posts for the current user
@@ -113,9 +115,6 @@ export default function Feed() {
     }
   }
 
-  console.log('=== FEED PAGE COMPONENT LOADED ===')
-  console.log('Feed page - userExists:', !!user)
-
   // Check if user is admin
   useEffect(() => {
     const checkAdmin = async () => {
@@ -131,12 +130,10 @@ export default function Feed() {
     checkAdmin()
   }, [user])
 
-  // Load initial data
+  // Load initial data in parallel for better performance
   useEffect(() => {
     if (user) {
-      loadFeedData()
-      loadFollowingCount()
-      loadLikedPosts()
+      Promise.all([loadFeedData(), loadFollowingCount(), loadLikedPosts()])
     }
   }, [user])
 
@@ -144,6 +141,7 @@ export default function Feed() {
     try {
       setLoading(pageNum === 0)
       setLoadingMore(pageNum > 0)
+      setError(null)
 
       // Load posts from followed users, fall back to all posts if user follows no one
       let feedPosts: Post[] = []
@@ -183,6 +181,7 @@ export default function Feed() {
       setHasMore(feedPosts.length === 10)
     } catch (error) {
       console.error('Failed to load feed:', error)
+      setError('Failed to load feed. Please try again.')
       toast.error('Failed to load feed')
     } finally {
       setLoading(false)
@@ -273,8 +272,6 @@ export default function Feed() {
       handleCreatePost()
     }
   }
-
-  console.log('Feed page rendering...')
 
   return (
     <ProtectedRoute>
@@ -458,13 +455,47 @@ export default function Feed() {
               </Button>
             </div>
 
+            {/* Error State */}
+            {error && (
+              <Card className="card-bg border-destructive">
+                <CardContent className="p-6 text-center">
+                  <div className="space-y-4">
+                    <p className="text-destructive font-medium">{error}</p>
+                    <Button onClick={() => loadFeedData(0)} variant="outline">
+                      <Loader2 className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                      Try Again
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Posts Feed */}
             <div className="space-y-3 sm:space-y-4">
-              {loading ? (
-                <div className="text-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-                  <p className="mt-2 text-muted-foreground">Loading your feed...</p>
-                </div>
+              {!error && loading ? (
+                <>
+                  {[1, 2, 3].map(i => (
+                    <Card key={i} className="card-bg card-shadow border-literary-border">
+                      <CardContent className="p-4 sm:p-6">
+                        <div className="flex items-start space-x-3 sm:space-x-4">
+                          <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
+                          <div className="flex-1 space-y-3">
+                            <div className="space-y-2">
+                              <Skeleton className="h-4 w-32" />
+                              <Skeleton className="h-3 w-24" />
+                            </div>
+                            <Skeleton className="h-20 w-full" />
+                            <div className="flex gap-4">
+                              <Skeleton className="h-8 w-16" />
+                              <Skeleton className="h-8 w-16" />
+                              <Skeleton className="h-8 w-16" />
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </>
               ) : posts.length > 0 ? (
                 posts.map(post => (
                   <PostCard
