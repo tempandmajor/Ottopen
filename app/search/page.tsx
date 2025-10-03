@@ -9,16 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/ca
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/components/ui/tabs'
 import { Badge } from '@/src/components/ui/badge'
 import { Separator } from '@/src/components/ui/separator'
-import {
-  Search,
-  Filter,
-  Users,
-  BookOpen,
-  MessageCircle,
-  Star,
-  Calendar,
-  Loader2,
-} from 'lucide-react'
+import { Search, Users, BookOpen, MessageCircle, Star, Calendar, Loader2 } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import { useState, useEffect, Suspense } from 'react'
 import { dbService } from '@/src/lib/database'
@@ -38,6 +29,11 @@ function SearchContent() {
     posts: [] as Post[],
   })
   const [hasMore, setHasMore] = useState(true)
+  const [offsets, setOffsets] = useState({
+    authors: 0,
+    works: 0,
+    posts: 0,
+  })
 
   useEffect(() => {
     const query = searchParams.get('q')
@@ -48,8 +44,22 @@ function SearchContent() {
   }, [searchParams])
 
   const performSearch = async (query: string) => {
-    if (!query.trim()) {
+    // Validate and sanitize search query
+    const sanitized = query.trim()
+
+    if (!sanitized) {
       setSearchResults({ authors: [], works: [], posts: [] })
+      setOffsets({ authors: 0, works: 0, posts: 0 })
+      return
+    }
+
+    if (sanitized.length < 2) {
+      toast.error('Search query must be at least 2 characters')
+      return
+    }
+
+    if (sanitized.length > 100) {
+      toast.error('Search query too long (max 100 characters)')
       return
     }
 
@@ -57,7 +67,7 @@ function SearchContent() {
       setLoading(true)
 
       // Search for authors (users)
-      const authors = await dbService.searchUsers(query, 20)
+      const authors = await dbService.searchUsers(sanitized, 20)
 
       // Load detailed stats for authors
       const authorsWithStats = await Promise.all(
@@ -71,17 +81,24 @@ function SearchContent() {
         })
       )
 
-      // Search for works (published posts)
-      const works = await dbService.searchPosts(query, 20)
+      // Search for works (published posts only)
+      const works = await dbService.searchPosts(sanitized, 20)
       const publishedWorks = works.filter(post => post.published)
 
-      // Search for posts/discussions
-      const posts = await dbService.searchPosts(query, 20)
+      // Search for all posts/discussions
+      const posts = await dbService.searchPosts(sanitized, 20)
 
       setSearchResults({
         authors: authorsWithStats,
         works: publishedWorks,
         posts,
+      })
+
+      // Reset offsets
+      setOffsets({
+        authors: authorsWithStats.length,
+        works: publishedWorks.length,
+        posts: posts.length,
       })
 
       // Check if we have more results (if we got the full limit, likely more exist)
@@ -92,6 +109,7 @@ function SearchContent() {
       console.error('Search failed:', error)
       toast.error('Search failed. Please try again.')
       setSearchResults({ authors: [], works: [], posts: [] })
+      setOffsets({ authors: 0, works: 0, posts: 0 })
     } finally {
       setLoading(false)
     }
@@ -103,10 +121,8 @@ function SearchContent() {
     try {
       setLoadingMore(true)
 
-      const currentOffset = searchResults.authors.length
-
-      // Load more results
-      const authors = await dbService.searchUsers(searchQuery, 20, currentOffset)
+      // Use separate offsets for each result type
+      const authors = await dbService.searchUsers(searchQuery, 20, offsets.authors)
       const authorsWithStats = await Promise.all(
         authors.map(async author => {
           const userStats = await dbService.getUserStatistics(author.id)
@@ -118,16 +134,23 @@ function SearchContent() {
         })
       )
 
-      const works = await dbService.searchPosts(searchQuery, 20, currentOffset)
+      const works = await dbService.searchPosts(searchQuery, 20, offsets.works)
       const publishedWorks = works.filter(post => post.published)
 
-      const posts = await dbService.searchPosts(searchQuery, 20, currentOffset)
+      const posts = await dbService.searchPosts(searchQuery, 20, offsets.posts)
 
       // Append new results
       setSearchResults(prev => ({
         authors: [...prev.authors, ...authorsWithStats],
         works: [...prev.works, ...publishedWorks],
         posts: [...prev.posts, ...posts],
+      }))
+
+      // Update offsets
+      setOffsets(prev => ({
+        authors: prev.authors + authorsWithStats.length,
+        works: prev.works + publishedWorks.length,
+        posts: prev.posts + posts.length,
       }))
 
       // Check if we have more results
@@ -171,7 +194,7 @@ function SearchContent() {
               <div className="min-w-0">
                 <h3 className="font-serif text-lg font-semibold mb-1 truncate">{work.title}</h3>
                 <p className="text-sm text-muted-foreground">
-                  by {work.user?.display_name || work.user?.username || 'Unknown Author'}
+                  by {work.display_name || work.username || 'Unknown Author'}
                 </p>
               </div>
               <div className="flex items-center space-x-2 flex-shrink-0">
@@ -231,10 +254,7 @@ function SearchContent() {
                 </div>
                 <div className="flex gap-2">
                   <Button type="submit">Search</Button>
-                  <Button variant="outline" type="button">
-                    <Filter className="h-4 w-4 mr-2" />
-                    Filters
-                  </Button>
+                  {/* Filter functionality to be implemented */}
                 </div>
               </form>
             </CardContent>
@@ -346,10 +366,8 @@ function SearchContent() {
                           {searchResults.posts.map(post => (
                             <PostCard
                               key={post.id}
-                              author={
-                                post.user?.display_name || post.user?.username || 'Unknown Author'
-                              }
-                              avatar={post.user?.avatar_url}
+                              author={post.display_name || post.username || 'Unknown Author'}
+                              avatar={post.avatar_url}
                               time={new Date(post.created_at).toLocaleDateString()}
                               content={post.content}
                               type="discussion"
@@ -440,8 +458,8 @@ function SearchContent() {
                     {searchResults.posts.map(post => (
                       <PostCard
                         key={post.id}
-                        author={post.user?.display_name || post.user?.username || 'Unknown Author'}
-                        avatar={post.user?.avatar_url}
+                        author={post.display_name || post.username || 'Unknown Author'}
+                        avatar={post.avatar_url}
                         time={new Date(post.created_at).toLocaleDateString()}
                         content={post.content}
                         type="discussion"
