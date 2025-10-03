@@ -34,6 +34,7 @@ export default function Feed() {
   const [page, setPage] = useState(0)
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set())
   const [isAdmin, setIsAdmin] = useState(false)
+  const MAX_CONTENT_LENGTH = 5000
 
   // Load liked posts for the current user
   const loadLikedPosts = async () => {
@@ -217,7 +218,12 @@ export default function Feed() {
           .upload(path, imageFile, { cacheControl: '3600', upsert: false })
         if (upErr) {
           console.error('Image upload failed:', upErr)
-          toast.error('Image upload failed')
+          toast.error('Image upload failed. Please try again.')
+          // Clear image preview on error
+          setImageFile(null)
+          setImagePreview('')
+          setUploadingImage(false)
+          return // Don't continue with post creation
         } else {
           const { data } = supabase.storage.from('post-images').getPublicUrl(path)
           imageUrl = data.publicUrl
@@ -300,14 +306,20 @@ export default function Feed() {
                   </Avatar>
 
                   <div className="flex-1 space-y-3 sm:space-y-4 min-w-0">
-                    <Textarea
-                      value={newPostContent}
-                      onChange={e => setNewPostContent(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      placeholder="Share your writing journey, an excerpt, or start a discussion... (Ctrl+Enter to post)"
-                      className="min-h-[80px] sm:min-h-[100px] resize-none border-literary-border text-sm sm:text-base"
-                      disabled={creatingPost}
-                    />
+                    <div className="relative">
+                      <Textarea
+                        value={newPostContent}
+                        onChange={e => setNewPostContent(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Share your writing journey, an excerpt, or start a discussion... (Ctrl+Enter to post)"
+                        className="min-h-[80px] sm:min-h-[100px] resize-none border-literary-border text-sm sm:text-base"
+                        disabled={creatingPost}
+                        maxLength={MAX_CONTENT_LENGTH}
+                      />
+                      <div className="absolute bottom-2 right-2 text-xs text-muted-foreground">
+                        {newPostContent.length}/{MAX_CONTENT_LENGTH}
+                      </div>
+                    </div>
 
                     {/* Optional excerpt */}
                     <Textarea
@@ -320,13 +332,28 @@ export default function Feed() {
 
                     {/* Image preview */}
                     {imagePreview && (
-                      <div className="rounded-md border border-literary-border overflow-hidden">
+                      <div className="rounded-md border border-literary-border overflow-hidden relative">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={imagePreview}
                           alt="Preview"
                           className="max-h-64 w-full object-cover"
                         />
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-2 right-2"
+                          onClick={() => {
+                            setImageFile(null)
+                            setImagePreview('')
+                            const input = document.getElementById(
+                              'post-image-input'
+                            ) as HTMLInputElement
+                            if (input) input.value = ''
+                          }}
+                        >
+                          Remove
+                        </Button>
                       </div>
                     )}
 
@@ -373,15 +400,7 @@ export default function Feed() {
                           <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           <span>{uploadingImage ? 'Uploading...' : 'Image'}</span>
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2 text-xs sm:h-8 sm:text-sm whitespace-nowrap"
-                          disabled={creatingPost}
-                        >
-                          <PenTool className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                          <span>Excerpt</span>
-                        </Button>
+                        {/* Excerpt button removed - textarea always visible */}
                         <div className="inline-flex items-center space-x-2">
                           <Smile className="h-3 w-3 sm:h-4 sm:w-4" />
                           <select
