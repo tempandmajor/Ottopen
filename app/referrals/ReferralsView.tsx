@@ -35,6 +35,7 @@ import type { Referral as DbReferral, ReferralCode, User as SupabaseUser } from 
 import type { User } from '@supabase/supabase-js'
 import { toast } from 'react-hot-toast'
 import { createReferralCodeAction } from '@/app/actions/referrals'
+import { EarningsDashboard } from '@/src/components/referrals/earnings-dashboard'
 
 interface ReferralStats {
   totalReferrals: number
@@ -238,10 +239,14 @@ export function ReferralsView({
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
+            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
               <TabsTrigger value="overview" className="flex items-center space-x-2">
                 <Gift className="h-4 w-4" />
                 <span className="hidden sm:inline">Overview</span>
+              </TabsTrigger>
+              <TabsTrigger value="earnings" className="flex items-center space-x-2">
+                <DollarSign className="h-4 w-4" />
+                <span className="hidden sm:inline">Earnings</span>
               </TabsTrigger>
               <TabsTrigger value="invite" className="flex items-center space-x-2">
                 <Share2 className="h-4 w-4" />
@@ -285,7 +290,7 @@ export function ReferralsView({
                       <div>
                         <p className="font-medium">They sign up & subscribe</p>
                         <p className="text-sm text-muted-foreground">
-                          When they create a paid account, you both get credits
+                          When they create a paid account, you earn cash
                         </p>
                       </div>
                     </div>
@@ -294,9 +299,9 @@ export function ReferralsView({
                         <span className="text-sm font-bold text-primary">3</span>
                       </div>
                       <div>
-                        <p className="font-medium">Earn free subscription time</p>
+                        <p className="font-medium">Earn $2 per referral</p>
                         <p className="text-sm text-muted-foreground">
-                          Credits automatically apply to extend your subscription
+                          Cash out when you reach $10 minimum balance
                         </p>
                       </div>
                     </div>
@@ -305,34 +310,45 @@ export function ReferralsView({
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Reward Structure</CardTitle>
+                    <CardTitle>Cash Rewards</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Premium Writer ($20/month)</span>
-                        <Badge variant="outline">1 month credit</Badge>
+                    <div className="space-y-4">
+                      <div className="text-center py-6 bg-primary/5 rounded-lg">
+                        <div className="text-4xl font-bold text-primary mb-2">$2.00</div>
+                        <p className="text-sm text-muted-foreground">
+                          Per confirmed paying referral
+                        </p>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Pro Writer ($50/month)</span>
-                        <Badge variant="outline">2 months credit</Badge>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">External Agent ($200/month)</span>
-                        <Badge variant="outline">3 months credit</Badge>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Producer ($500/month)</span>
-                        <Badge variant="outline">6 months credit</Badge>
+                      <Separator />
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-sm">
+                          <span>Minimum payout:</span>
+                          <span className="font-medium">$10.00</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                          <span>Payment method:</span>
+                          <span className="font-medium">Stripe Connect</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                          <span>Payout processing:</span>
+                          <span className="font-medium">1-3 business days</span>
+                        </div>
                       </div>
                       <Separator />
                       <div className="text-xs text-muted-foreground">
-                        Credits expire after 12 months. Higher-tier referrals earn more credits.
+                        Earnings become available once your referral&apos;s first payment is
+                        confirmed.
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               </div>
+            </TabsContent>
+
+            {/* Earnings Tab */}
+            <TabsContent value="earnings" className="space-y-6">
+              {user && <EarningsDashboard userId={user.profile?.id || user.id} />}
             </TabsContent>
 
             {/* Invite Tab */}

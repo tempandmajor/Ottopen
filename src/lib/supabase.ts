@@ -69,6 +69,10 @@ export interface User {
   twitter_handle?: string
   linkedin_url?: string
   stripe_customer_id?: string
+  stripe_connect_account_id?: string
+  stripe_connect_onboarded?: boolean
+  stripe_connect_charges_enabled?: boolean
+  stripe_connect_payouts_enabled?: boolean
   account_type:
     | 'writer'
     | 'platform_agent'
@@ -312,6 +316,41 @@ export interface ReferralMilestone {
   is_claimed: boolean
   claimed_at?: string
   user?: User
+}
+
+export interface ReferralEarning {
+  id: string
+  user_id: string
+  referral_id: string
+  amount_cents: number
+  currency: string
+  status: 'pending' | 'available' | 'paid' | 'failed'
+  paid_at?: string
+  stripe_transfer_id?: string
+  created_at: string
+  updated_at: string
+  referral?: Referral
+}
+
+export interface PayoutRequest {
+  id: string
+  user_id: string
+  amount_cents: number
+  currency: string
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
+  stripe_payout_id?: string
+  failure_reason?: string
+  requested_at: string
+  completed_at?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface ReferralBalance {
+  total_earned_cents: number
+  available_cents: number
+  pending_cents: number
+  paid_cents: number
 }
 
 // New interfaces for enhanced functionality
