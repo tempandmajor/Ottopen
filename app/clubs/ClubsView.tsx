@@ -61,31 +61,21 @@ export function ClubsView() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+      <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-16">
           <div className="max-w-4xl">
             <h1 className="text-5xl font-bold mb-4">Book Clubs</h1>
-            <p className="text-xl text-gray-100 mb-8">
+            <p className="text-xl text-muted-foreground mb-8">
               Join writing communities, exchange critiques, and grow together with fellow authors
             </p>
             <div className="flex gap-4">
-              <Button
-                size="lg"
-                variant="secondary"
-                className="bg-white text-gray-700 hover:bg-gray-100"
-                onClick={() => setCreateDialogOpen(true)}
-              >
+              <Button size="lg" onClick={() => setCreateDialogOpen(true)}>
                 <Plus className="mr-2 h-5 w-5" />
                 Create a Club
               </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-white text-white hover:bg-white/10"
-                asChild
-              >
+              <Button size="lg" variant="outline" asChild>
                 <Link href="#browse">Browse Clubs</Link>
               </Button>
             </div>
@@ -94,34 +84,34 @@ export function ClubsView() {
       </div>
 
       {/* Stats Bar */}
-      <div className="border-b bg-white">
+      <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex items-center gap-3">
-              <div className="bg-gray-100 p-3 rounded-lg">
-                <Users className="h-6 w-6 text-gray-700" />
+              <div className="bg-muted p-3 rounded-lg">
+                <Users className="h-6 w-6 text-foreground" />
               </div>
               <div>
                 <div className="text-2xl font-bold">{clubs.length}</div>
-                <div className="text-sm text-gray-600">Active Clubs</div>
+                <div className="text-sm text-muted-foreground">Active Clubs</div>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="bg-gray-100 p-3 rounded-lg">
-                <BookOpen className="h-6 w-6 text-gray-700" />
+              <div className="bg-muted p-3 rounded-lg">
+                <BookOpen className="h-6 w-6 text-foreground" />
               </div>
               <div>
                 <div className="text-2xl font-bold">1,234</div>
-                <div className="text-sm text-gray-600">Manuscripts Shared</div>
+                <div className="text-sm text-muted-foreground">Manuscripts Shared</div>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="bg-gray-100 p-3 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-gray-700" />
+              <div className="bg-muted p-3 rounded-lg">
+                <TrendingUp className="h-6 w-6 text-foreground" />
               </div>
               <div>
                 <div className="text-2xl font-bold">5,678</div>
-                <div className="text-sm text-gray-600">Critiques Exchanged</div>
+                <div className="text-sm text-muted-foreground">Critiques Exchanged</div>
               </div>
             </div>
           </div>
@@ -131,7 +121,7 @@ export function ClubsView() {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8" id="browse">
         <Tabs defaultValue="discover" className="space-y-6">
-          <TabsList className="bg-white border">
+          <TabsList className="bg-muted">
             <TabsTrigger value="discover">Discover</TabsTrigger>
             <TabsTrigger value="my-clubs">My Clubs</TabsTrigger>
             <TabsTrigger value="featured">Featured</TabsTrigger>
@@ -141,7 +131,7 @@ export function ClubsView() {
           <div className="flex gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search clubs..."
                   className="pl-10"
@@ -191,9 +181,9 @@ export function ClubsView() {
             ) : clubs.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center">
-                  <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">No clubs found</h3>
-                  <p className="text-gray-600 mb-4">
+                  <p className="text-muted-foreground mb-4">
                     Be the first to create a club for this genre!
                   </p>
                   <Button onClick={() => setCreateDialogOpen(true)}>
@@ -232,7 +222,7 @@ export function ClubsView() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-gray-600 line-clamp-3 mb-4">
+                      <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
                         {club.description || 'No description available'}
                       </p>
                       <div className="flex flex-wrap gap-2">
@@ -258,9 +248,9 @@ export function ClubsView() {
           <TabsContent value="my-clubs">
             <Card>
               <CardContent className="py-12 text-center">
-                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Your Clubs</h3>
-                <p className="text-gray-600 mb-4">
+                <p className="text-muted-foreground mb-4">
                   Join clubs to see them here and start collaborating with other writers
                 </p>
               </CardContent>
@@ -271,9 +261,9 @@ export function ClubsView() {
           <TabsContent value="featured">
             <Card>
               <CardContent className="py-12 text-center">
-                <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Featured Clubs</h3>
-                <p className="text-gray-600">Curated clubs coming soon!</p>
+                <p className="text-muted-foreground">Curated clubs coming soon!</p>
               </CardContent>
             </Card>
           </TabsContent>
