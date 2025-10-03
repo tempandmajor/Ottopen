@@ -1,6 +1,6 @@
 // Script Editor Types
 
-export type ScriptType = 'screenplay' | 'tv_pilot' | 'stage_play' | 'radio_drama'
+export type ScriptType = 'screenplay' | 'tv_pilot' | 'stage_play' | 'radio_drama' | 'documentary'
 export type FormatStandard = 'us_industry' | 'uk_bbc' | 'european' | 'stage'
 export type RevisionColor =
   | 'white'
@@ -27,6 +27,13 @@ export type ElementType =
   | 'stage_direction'
   | 'music_cue'
   | 'sound_effect'
+  | 'narration'
+  | 'interview_question'
+  | 'interview_answer'
+  | 'b_roll'
+  | 'archive_footage'
+  | 'lower_third'
+  | 'act_break'
 
 export type BeatType =
   | 'opening_image'
@@ -247,6 +254,13 @@ export interface FormatTemplate {
   stage_direction?: ElementStyles
   music_cue?: ElementStyles
   sound_effect?: ElementStyles
+  narration?: ElementStyles
+  interview_question?: ElementStyles
+  interview_answer?: ElementStyles
+  b_roll?: ElementStyles
+  archive_footage?: ElementStyles
+  lower_third?: ElementStyles
+  act_break?: ElementStyles
 }
 
 // Production Reports

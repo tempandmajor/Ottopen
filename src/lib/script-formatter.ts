@@ -137,6 +137,115 @@ export const STAGE_PLAY_FORMAT: FormatTemplate = {
   },
 }
 
+export const DOCUMENTARY_FORMAT: FormatTemplate = {
+  scene_heading: {
+    fontFamily: "'Courier Prime', 'Courier New', Courier, monospace",
+    fontSize: '12pt',
+    marginLeft: '1.5in',
+    marginRight: '7.5in',
+    textTransform: 'uppercase',
+    fontWeight: 'bold',
+    paddingTop: '12pt',
+    paddingBottom: '6pt',
+  },
+  action: {
+    fontFamily: "'Courier Prime', 'Courier New', Courier, monospace",
+    fontSize: '12pt',
+    marginLeft: '1.5in',
+    marginRight: '7.5in',
+    paddingBottom: '6pt',
+  },
+  character: {
+    fontFamily: "'Courier Prime', 'Courier New', Courier, monospace",
+    fontSize: '12pt',
+    marginLeft: '3.7in',
+    textAlign: 'left',
+    textTransform: 'uppercase',
+    paddingTop: '6pt',
+  },
+  dialogue: {
+    fontFamily: "'Courier Prime', 'Courier New', Courier, monospace",
+    fontSize: '12pt',
+    marginLeft: '2.5in',
+    marginRight: '6in',
+  },
+  parenthetical: {
+    fontFamily: "'Courier Prime', 'Courier New', Courier, monospace",
+    fontSize: '12pt',
+    marginLeft: '3in',
+    fontStyle: 'italic',
+  },
+  transition: {
+    fontFamily: "'Courier Prime', 'Courier New', Courier, monospace",
+    fontSize: '12pt',
+    marginLeft: '6in',
+    textAlign: 'right',
+    paddingTop: '6pt',
+  },
+  shot: {
+    fontFamily: "'Courier Prime', 'Courier New', Courier, monospace",
+    fontSize: '12pt',
+    marginLeft: '1.5in',
+    textTransform: 'uppercase',
+    paddingTop: '6pt',
+  },
+  // Documentary-specific elements
+  narration: {
+    fontFamily: "'Courier Prime', 'Courier New', Courier, monospace",
+    fontSize: '12pt',
+    marginLeft: '2in',
+    marginRight: '2in',
+    fontStyle: 'italic',
+    paddingBottom: '6pt',
+  },
+  interview_question: {
+    fontFamily: "'Courier Prime', 'Courier New', Courier, monospace",
+    fontSize: '12pt',
+    marginLeft: '2in',
+    fontWeight: 'bold',
+    paddingTop: '6pt',
+  },
+  interview_answer: {
+    fontFamily: "'Courier Prime', 'Courier New', Courier, monospace",
+    fontSize: '12pt',
+    marginLeft: '2.5in',
+    marginRight: '2in',
+    paddingBottom: '6pt',
+  },
+  b_roll: {
+    fontFamily: "'Courier Prime', 'Courier New', Courier, monospace",
+    fontSize: '12pt',
+    marginLeft: '1.5in',
+    textTransform: 'uppercase',
+    paddingTop: '6pt',
+  },
+  archive_footage: {
+    fontFamily: "'Courier Prime', 'Courier New', Courier, monospace",
+    fontSize: '12pt',
+    marginLeft: '1.5in',
+    textTransform: 'uppercase',
+    fontStyle: 'italic',
+    paddingTop: '6pt',
+  },
+  lower_third: {
+    fontFamily: "'Courier Prime', 'Courier New', Courier, monospace",
+    fontSize: '11pt',
+    marginLeft: '3in',
+    fontWeight: 'bold',
+    paddingTop: '4pt',
+  },
+  act_break: {
+    fontFamily: "'Courier Prime', 'Courier New', Courier, monospace",
+    fontSize: '14pt',
+    marginLeft: '0in',
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    fontWeight: 'bold',
+    paddingTop: '24pt',
+    paddingBottom: '24pt',
+  },
+}
+
 // ============================================================================
 // ELEMENT DETECTION
 // ============================================================================
@@ -371,6 +480,8 @@ export class ScriptFormatter {
     switch (scriptType) {
       case 'stage_play':
         return STAGE_PLAY_FORMAT
+      case 'documentary':
+        return DOCUMENTARY_FORMAT
       case 'screenplay':
       case 'tv_pilot':
       case 'radio_drama':
@@ -508,6 +619,15 @@ export class ScriptFormatter {
         'sound_effect',
         'music_cue',
       ],
+      documentary: [
+        'scene_heading',
+        'narration',
+        'interview_question',
+        'interview_answer',
+        'b_roll',
+        'archive_footage',
+        'act_break',
+      ],
     }
 
     const order = cycleOrder[scriptType]
@@ -627,6 +747,7 @@ export class ScriptValidator {
       tv_pilot: { min: 25, max: 35 }, // 30-min show
       stage_play: { min: 80, max: 100 },
       radio_drama: { min: 20, max: 30 },
+      documentary: { min: 30, max: 90 }, // Varies widely
     }
 
     const range = ranges[scriptType]
