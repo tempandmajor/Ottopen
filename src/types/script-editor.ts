@@ -285,6 +285,28 @@ export interface Footnote {
   created_at: string
 }
 
+// Shared Research Repository
+export interface ResearchNote {
+  id: string
+  user_id: string
+  title: string
+  content: string
+  tags: string[]
+  linked_scripts: string[] // Script IDs this note is linked to
+  source_url?: string
+  source_type?: 'book' | 'article' | 'website' | 'interview' | 'video' | 'other'
+  created_at: string
+  updated_at: string
+}
+
+export interface ResearchLink {
+  id: string
+  note_id: string
+  script_id: string
+  element_id?: string // Optional link to specific element
+  created_at: string
+}
+
 // Formatting Styles
 export interface ElementStyles {
   fontFamily: string
