@@ -1218,33 +1218,40 @@ export class AIService {
 // ============================================================================
 // EXPORT SERVICE (for manuscript formatting and export)
 // ============================================================================
+// NOTE: Legacy ExportService for manuscript editor
+// The new Writing Suite uses src/lib/export-service.ts instead
+// This class is kept for backwards compatibility with the fiction manuscript editor
+// ============================================================================
 
 export class ExportService {
   static async exportToDocx(manuscriptId: string): Promise<Blob> {
-    // TODO: Implement DOCX export
-    throw new Error('DOCX export not yet implemented')
+    // Legacy export - superseded by src/lib/export-service.ts
+    // For manuscripts, use the existing export/docx-export.ts implementation
+    const { exportToDocx } = await import('@/src/lib/export/docx-export')
+    // This requires manuscript data - implementation depends on manuscript schema
+    throw new Error('Use the manuscript export functionality in app/editor/[manuscriptId]')
   }
 
   static async exportToPDF(manuscriptId: string): Promise<Blob> {
-    // TODO: Implement PDF export
-    throw new Error('PDF export not yet implemented')
+    // Legacy export - superseded by src/lib/export-service.ts
+    throw new Error('Use the manuscript export functionality in app/editor/[manuscriptId]')
   }
 
   static async exportToEPUB(manuscriptId: string): Promise<Blob> {
-    // TODO: Implement EPUB export
-    throw new Error('EPUB export not yet implemented')
+    // Legacy export - superseded by src/lib/export-service.ts
+    throw new Error('Use the manuscript export functionality in app/editor/[manuscriptId]')
   }
 
   static async generateQueryLetter(manuscriptId: string): Promise<string> {
-    // TODO: Implement AI-assisted query letter generation
-    throw new Error('Query letter generation not yet implemented')
+    // Future feature for manuscript editor
+    throw new Error('Query letter generation is a planned feature')
   }
 
   static async generateSynopsis(
     manuscriptId: string,
     length: 'short' | 'medium' | 'long'
   ): Promise<string> {
-    // TODO: Implement AI-assisted synopsis generation
-    throw new Error('Synopsis generation not yet implemented')
+    // Future feature for manuscript editor
+    throw new Error('Synopsis generation is a planned feature')
   }
 }

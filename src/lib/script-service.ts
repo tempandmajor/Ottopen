@@ -719,8 +719,92 @@ export class ProductionReportService {
    * Export production report as PDF
    */
   static async exportToPDF(scriptId: string): Promise<Blob> {
-    // TODO: Implement PDF generation
-    throw new Error('Not implemented')
+    // Get production report data - this method is in ProductionReportService
+    const report = await ProductionReportService.generate(scriptId)
+    const script = await ScriptService.getById(scriptId)
+
+    if (!script) {
+      throw new Error('Script not found')
+    }
+
+    // Generate PDF using jsPDF
+    const { jsPDF } = await import('jspdf')
+    const pdf = new jsPDF({
+      unit: 'in',
+      format: 'letter',
+      orientation: 'portrait',
+    })
+
+    pdf.setFont('helvetica')
+    let yPos = 1.0
+
+    // Title
+    pdf.setFontSize(18)
+    pdf.setFont('helvetica', 'bold')
+    pdf.text(`Production Report: ${script.title}`, 1.0, yPos)
+    yPos += 0.5
+
+    // Script metadata
+    pdf.setFontSize(11)
+    pdf.setFont('helvetica', 'normal')
+    pdf.text(`Script Type: ${script.script_type}`, 1.0, yPos)
+    yPos += 0.2
+    pdf.text(`Page Count: ${report.total_pages} pages`, 1.0, yPos)
+    yPos += 0.2
+    pdf.text(`Est. Runtime: ${report.estimated_runtime} minutes`, 1.0, yPos)
+    yPos += 0.5
+
+    // Scene Breakdown
+    pdf.setFontSize(14)
+    pdf.setFont('helvetica', 'bold')
+    pdf.text('Scene Breakdown', 1.0, yPos)
+    yPos += 0.3
+    pdf.setFontSize(10)
+    pdf.setFont('helvetica', 'normal')
+    pdf.text(`Total Scenes: ${report.scenes.length}`, 1.0, yPos)
+    yPos += 0.4
+
+    // Character Breakdown
+    pdf.setFontSize(14)
+    pdf.setFont('helvetica', 'bold')
+    pdf.text('Character Breakdown', 1.0, yPos)
+    yPos += 0.3
+    pdf.setFontSize(10)
+    pdf.setFont('helvetica', 'normal')
+
+    report.characters.slice(0, 20).forEach(char => {
+      if (yPos > 10) {
+        pdf.addPage()
+        yPos = 1.0
+      }
+      pdf.text(`${char.name}: ${char.scene_count} scenes, ${char.dialogue_count} lines`, 1.0, yPos)
+      yPos += 0.2
+    })
+
+    yPos += 0.4
+
+    // Location Breakdown
+    if (yPos > 9) {
+      pdf.addPage()
+      yPos = 1.0
+    }
+    pdf.setFontSize(14)
+    pdf.setFont('helvetica', 'bold')
+    pdf.text('Location Breakdown', 1.0, yPos)
+    yPos += 0.3
+    pdf.setFontSize(10)
+    pdf.setFont('helvetica', 'normal')
+
+    report.locations.slice(0, 20).forEach(loc => {
+      if (yPos > 10) {
+        pdf.addPage()
+        yPos = 1.0
+      }
+      pdf.text(`${loc.name}: ${loc.scene_count} scenes`, 1.0, yPos)
+      yPos += 0.2
+    })
+
+    return pdf.output('blob')
   }
 }
 

@@ -114,8 +114,25 @@ export default function ScriptEditorPage() {
     }
   }
 
-  const handleShowCollaborators = () => {
-    alert('Collaboration features coming soon!')
+  const handleShowCollaborators = async () => {
+    try {
+      const response = await fetch(`/api/scripts/${scriptId}/collaborators`)
+      if (response.ok) {
+        const data = await response.json()
+        // Show collaborators in a modal or alert for now
+        if (data.collaborators.length === 0) {
+          alert('No collaborators yet. Share your script to invite others!')
+        } else {
+          const collaboratorList = data.collaborators
+            .map((c: any) => c.email || c.user_id)
+            .join(', ')
+          alert(`Collaborators: ${collaboratorList}`)
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch collaborators:', error)
+      alert('Failed to load collaborators. Please try again.')
+    }
   }
 
   const handleAddBeat = async (beat: Partial<ScriptBeat>) => {
