@@ -259,10 +259,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         })
         // Proactively sync session and attach profile to avoid UI stalling
         await syncSessionAndAttachProfile()
-        // Safety: end loading if auth change event is delayed
-        setTimeout(() => {
-          setLoading(false)
-        }, 2000)
+        // End loading immediately after syncing - auth state change will handle the rest
+        setLoading(false)
         return { success: true }
       }
 
@@ -330,9 +328,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: authData.user.email,
         })
         await syncSessionAndAttachProfile()
-        setTimeout(() => {
-          setLoading(false)
-        }, 2000)
+        // End loading immediately after syncing
+        setLoading(false)
         return { success: true }
       }
 

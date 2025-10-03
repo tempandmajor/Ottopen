@@ -31,12 +31,13 @@ export default function SignIn() {
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (!loading && user && !redirecting) {
-      console.log('SignIn: User already authenticated, redirecting to feed')
+    if (user && !redirecting) {
+      console.log('SignIn: User authenticated, redirecting to feed')
       setRedirecting(true)
-      navigate('/feed', { replace: true })
+      // Use window.location for immediate redirect
+      window.location.href = '/feed'
     }
-  }, [user, loading, redirecting, navigate])
+  }, [user, redirecting])
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -98,7 +99,7 @@ export default function SignIn() {
   }
 
   return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
@@ -173,9 +174,8 @@ export default function SignIn() {
                 {submitting
                   ? 'Signing in...'
                   : !rateLimiter.canAttempt
-                  ? `Wait ${rateLimiter.remainingTime}s`
-                  : 'Sign In'
-                }
+                    ? `Wait ${rateLimiter.remainingTime}s`
+                    : 'Sign In'}
               </Button>
 
               {/* Rate limit feedback */}
