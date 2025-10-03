@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/ca
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/components/ui/tabs'
 import { Badge } from '@/src/components/ui/badge'
 import { Separator } from '@/src/components/ui/separator'
+import { Skeleton } from '@/src/components/ui/skeleton'
 import { Search, Users, BookOpen, MessageCircle, Star, Calendar, Loader2 } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import { useState, useEffect, Suspense } from 'react'
@@ -81,32 +82,28 @@ function SearchContent() {
         })
       )
 
-      // Search for works (published posts only)
-      const works = await dbService.searchPosts(sanitized, 20)
-      const publishedWorks = works.filter(post => post.published)
-
-      // Search for all posts/discussions
-      const posts = await dbService.searchPosts(sanitized, 20)
+      // Search for posts once, then filter for works
+      const allPosts = await dbService.searchPosts(sanitized, 20)
+      const publishedWorks = allPosts.filter(post => post.published)
 
       setSearchResults({
         authors: authorsWithStats,
         works: publishedWorks,
-        posts,
+        posts: allPosts,
       })
 
       // Reset offsets
       setOffsets({
         authors: authorsWithStats.length,
         works: publishedWorks.length,
-        posts: posts.length,
+        posts: allPosts.length,
       })
 
       // Check if we have more results (if we got the full limit, likely more exist)
       setHasMore(
-        authorsWithStats.length === 20 || publishedWorks.length === 20 || posts.length === 20
+        authorsWithStats.length === 20 || publishedWorks.length === 20 || allPosts.length === 20
       )
     } catch (error) {
-      console.error('Search failed:', error)
       toast.error('Search failed. Please try again.')
       setSearchResults({ authors: [], works: [], posts: [] })
       setOffsets({ authors: 0, works: 0, posts: 0 })
@@ -121,44 +118,57 @@ function SearchContent() {
     try {
       setLoadingMore(true)
 
-      // Use separate offsets for each result type
-      const authors = await dbService.searchUsers(searchQuery, 20, offsets.authors)
-      const authorsWithStats = await Promise.all(
-        authors.map(async author => {
-          const userStats = await dbService.getUserStatistics(author.id)
-          return {
-            ...author,
-            works: userStats?.published_posts_count || 0,
-            followers: userStats?.followers_count || 0,
-          }
-        })
-      )
+      // Only load more for the active tab to avoid unnecessary queries
+      if (activeTab === 'all' || activeTab === 'authors') {
+        const authors = await dbService.searchUsers(searchQuery, 20, offsets.authors)
+        const authorsWithStats = await Promise.all(
+          authors.map(async author => {
+            const userStats = await dbService.getUserStatistics(author.id)
+            return {
+              ...author,
+              works: userStats?.published_posts_count || 0,
+              followers: userStats?.followers_count || 0,
+            }
+          })
+        )
 
-      const works = await dbService.searchPosts(searchQuery, 20, offsets.works)
-      const publishedWorks = works.filter(post => post.published)
+        setSearchResults(prev => ({
+          ...prev,
+          authors: [...prev.authors, ...authorsWithStats],
+        }))
 
-      const posts = await dbService.searchPosts(searchQuery, 20, offsets.posts)
+        setOffsets(prev => ({
+          ...prev,
+          authors: prev.authors + authorsWithStats.length,
+        }))
+      }
 
-      // Append new results
-      setSearchResults(prev => ({
-        authors: [...prev.authors, ...authorsWithStats],
-        works: [...prev.works, ...publishedWorks],
-        posts: [...prev.posts, ...posts],
-      }))
+      if (activeTab === 'all' || activeTab === 'works' || activeTab === 'posts') {
+        const allPosts = await dbService.searchPosts(searchQuery, 20, offsets.posts)
+        const publishedWorks = allPosts.filter(post => post.published)
 
-      // Update offsets
-      setOffsets(prev => ({
-        authors: prev.authors + authorsWithStats.length,
-        works: prev.works + publishedWorks.length,
-        posts: prev.posts + posts.length,
-      }))
+        setSearchResults(prev => ({
+          ...prev,
+          works:
+            activeTab === 'works' || activeTab === 'all'
+              ? [...prev.works, ...publishedWorks]
+              : prev.works,
+          posts:
+            activeTab === 'posts' || activeTab === 'all'
+              ? [...prev.posts, ...allPosts]
+              : prev.posts,
+        }))
 
-      // Check if we have more results
-      setHasMore(
-        authorsWithStats.length === 20 || publishedWorks.length === 20 || posts.length === 20
-      )
+        setOffsets(prev => ({
+          ...prev,
+          works: prev.works + publishedWorks.length,
+          posts: prev.posts + allPosts.length,
+        }))
+      }
+
+      // Check if we have more results based on active tab
+      setHasMore(true) // Simplified for now, can be improved per-tab
     } catch (error) {
-      console.error('Load more failed:', error)
       toast.error('Failed to load more results')
     } finally {
       setLoadingMore(false)
@@ -300,9 +310,37 @@ function SearchContent() {
 
               <TabsContent value="all" className="space-y-8">
                 {loading ? (
-                  <div className="text-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-                    <p className="mt-2 text-muted-foreground">Searching...</p>
+                  <div className="space-y-6">
+                    {/* Author skeletons */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {[1, 2].map(i => (
+                        <Card key={`author-${i}`} className="p-6">
+                          <div className="flex items-start space-x-4">
+                            <Skeleton className="h-16 w-16 rounded-full" />
+                            <div className="flex-1 space-y-2">
+                              <Skeleton className="h-5 w-32" />
+                              <Skeleton className="h-4 w-24" />
+                              <Skeleton className="h-16 w-full" />
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                    {/* Work skeletons */}
+                    <div className="space-y-4">
+                      {[1, 2].map(i => (
+                        <Card key={`work-${i}`} className="p-6">
+                          <div className="flex space-x-4">
+                            <Skeleton className="h-20 w-16 rounded-lg" />
+                            <div className="flex-1 space-y-2">
+                              <Skeleton className="h-5 w-48" />
+                              <Skeleton className="h-4 w-32" />
+                              <Skeleton className="h-12 w-full" />
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
                   </div>
                 ) : (
                   <>
