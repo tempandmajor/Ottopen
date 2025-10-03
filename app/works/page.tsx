@@ -223,16 +223,12 @@ export default function Works() {
     switch (status) {
       case 'complete':
         return (
-          <Badge variant="default" className="bg-green-600">
+          <Badge variant="default" className="bg-primary">
             Complete
           </Badge>
         )
       case 'wip':
-        return (
-          <Badge variant="default" className="bg-amber-600">
-            WIP
-          </Badge>
-        )
+        return <Badge variant="secondary">WIP</Badge>
       case 'hiatus':
         return <Badge variant="secondary">Hiatus</Badge>
       default:
@@ -264,10 +260,10 @@ export default function Works() {
 
   // Create WorkCard component for real posts
   const WorkCard = ({ post }: { post: Post }) => (
-    <Card className="card-bg card-shadow border-amber-200 dark:border-amber-900 hover:shadow-lg transition-all duration-300">
+    <Card className="card-bg card-shadow border-border hover:shadow-lg transition-all duration-300">
       <CardContent className="p-6">
         <div className="flex space-x-4">
-          <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-lg bg-gradient-to-br from-amber-600 to-orange-700 flex-shrink-0 flex items-center justify-center text-white font-bold text-lg shadow-md">
+          <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-lg bg-muted flex-shrink-0 flex items-center justify-center font-bold text-lg shadow-md">
             <BookOpen className="h-8 w-8" />
           </div>
 
@@ -279,24 +275,18 @@ export default function Works() {
                 </h3>
                 <Link
                   href={`/profile/${post.user?.username || 'unknown'}`}
-                  className="text-sm text-muted-foreground hover:text-amber-600 transition-colors"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   by {post.user?.display_name || 'Unknown Author'}
                 </Link>
               </div>
               <div className="flex items-center space-x-2 flex-shrink-0 flex-wrap gap-2">
                 {getCompletionBadge(post.completion_status)}
-                <Badge
-                  variant="outline"
-                  className="border-amber-300 text-amber-700 dark:text-amber-400"
-                >
+                <Badge variant="outline" className="border-border">
                   {formatContentType(post.content_type)}
                 </Badge>
                 {post.genre && (
-                  <Badge
-                    variant="secondary"
-                    className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200"
-                  >
+                  <Badge variant="secondary" className="bg-muted">
                     {post.genre}
                   </Badge>
                 )}
@@ -341,12 +331,7 @@ export default function Works() {
                   <span>{post.comments_count || 0} comments</span>
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-amber-600 text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950"
-                asChild
-              >
+              <Button variant="outline" size="sm" className="border-border hover:bg-muted" asChild>
                 <Link href={`/posts/${post.id}`}>Read</Link>
               </Button>
             </div>
@@ -428,18 +413,14 @@ export default function Works() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-background to-orange-50 dark:from-gray-900 dark:via-background dark:to-gray-900">
+    <div className="min-h-screen bg-background">
       <Navigation />
 
       <div className="container mx-auto px-4 py-6 sm:py-8">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="text-center space-y-4 mb-8">
-            <div className="inline-block px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 rounded-full mb-4">
-              <h1 className="font-serif text-3xl sm:text-4xl font-bold text-white">
-                Discover Works
-              </h1>
-            </div>
+            <h1 className="font-serif text-3xl sm:text-4xl font-bold">Discover Works</h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Explore novels, short stories, poetry, and plays from our community of writers.
               Discover your next great read.
@@ -448,7 +429,7 @@ export default function Works() {
 
           {/* Search and Filter */}
           <div className="mb-8">
-            <Card className="card-bg card-shadow border-amber-200 dark:border-amber-900">
+            <Card className="card-bg card-shadow border-border">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex-1 relative">
@@ -457,19 +438,19 @@ export default function Works() {
                       value={searchQuery}
                       onChange={e => setSearchQuery(e.target.value)}
                       placeholder="Search works by title, author, or genre..."
-                      className="pl-10 border-amber-300 focus:border-amber-500"
+                      className="pl-10 border-border"
                     />
                   </div>
                   <Dialog open={filterDialogOpen} onOpenChange={setFilterDialogOpen}>
                     <DialogTrigger asChild>
                       <Button
                         variant="outline"
-                        className="flex items-center space-x-2 border-amber-600 text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950 relative"
+                        className="flex items-center space-x-2 border-border hover:bg-muted relative"
                       >
                         <Filter className="h-4 w-4" />
                         <span>Filters</span>
                         {activeFilterCount > 0 && (
-                          <Badge className="ml-2 bg-amber-600 text-white">
+                          <Badge className="ml-2 bg-primary text-primary-foreground">
                             {activeFilterCount}
                           </Badge>
                         )}
@@ -495,8 +476,8 @@ export default function Works() {
                                 }
                                 className={`cursor-pointer ${
                                   filters.contentTypes.includes(type)
-                                    ? 'bg-amber-600 hover:bg-amber-700'
-                                    : 'hover:bg-amber-50 dark:hover:bg-amber-950'
+                                    ? 'bg-primary hover:bg-primary/90'
+                                    : 'hover:bg-muted'
                                 }`}
                                 onClick={() => handleContentTypeToggle(type)}
                               >
@@ -518,8 +499,8 @@ export default function Works() {
                                 }
                                 className={`cursor-pointer ${
                                   filters.readingTime === range.value
-                                    ? 'bg-amber-600 hover:bg-amber-700'
-                                    : 'hover:bg-amber-50 dark:hover:bg-amber-950'
+                                    ? 'bg-primary hover:bg-primary/90'
+                                    : 'hover:bg-muted'
                                 }`}
                                 onClick={() =>
                                   setFilters(prev => ({
@@ -547,8 +528,8 @@ export default function Works() {
                                 }
                                 className={`cursor-pointer ${
                                   filters.completionStatus.includes(status)
-                                    ? 'bg-amber-600 hover:bg-amber-700'
-                                    : 'hover:bg-amber-50 dark:hover:bg-amber-950'
+                                    ? 'bg-primary hover:bg-primary/90'
+                                    : 'hover:bg-muted'
                                 }`}
                                 onClick={() => handleCompletionStatusToggle(status)}
                               >
@@ -566,7 +547,7 @@ export default function Works() {
                             Clear All
                           </Button>
                           <Button
-                            className="bg-amber-600 hover:bg-amber-700"
+                            className="bg-primary hover:bg-primary/90"
                             onClick={() => setFilterDialogOpen(false)}
                           >
                             Apply Filters
@@ -578,7 +559,7 @@ export default function Works() {
                 </div>
 
                 {/* Genre Tags */}
-                <div className="mt-4 pt-4 border-t border-amber-200 dark:border-amber-900">
+                <div className="mt-4 pt-4 border-t border-border">
                   <p className="text-sm font-medium mb-3">Browse by Genre</p>
                   <div className="flex flex-wrap gap-2">
                     {genres.map(genre => (
@@ -587,8 +568,8 @@ export default function Works() {
                         variant={selectedGenre === genre ? 'default' : 'secondary'}
                         className={`cursor-pointer transition-colors ${
                           selectedGenre === genre
-                            ? 'bg-amber-600 hover:bg-amber-700'
-                            : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-900'
+                            ? 'bg-primary hover:bg-primary/90'
+                            : 'bg-muted hover:bg-muted'
                         }`}
                         onClick={() => handleGenreClick(genre)}
                       >
@@ -603,10 +584,10 @@ export default function Works() {
 
           {/* Statistics */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <Card className="card-bg border-amber-200 dark:border-amber-900 bg-gradient-to-br from-amber-50 to-white dark:from-amber-950 dark:to-gray-900">
+            <Card className="card-bg border-border bg-card">
               <CardContent className="p-4 text-center">
                 <div className="flex items-center justify-center space-x-2 mb-2">
-                  <BookOpen className="h-5 w-5 text-amber-600" />
+                  <BookOpen className="h-5 w-5 text-foreground" />
                   <span className="text-2xl font-bold">
                     {loading ? (
                       <Loader2 className="h-6 w-6 animate-spin" />
@@ -618,10 +599,10 @@ export default function Works() {
                 <p className="text-sm text-muted-foreground">Total Works</p>
               </CardContent>
             </Card>
-            <Card className="card-bg border-orange-200 dark:border-orange-900 bg-gradient-to-br from-orange-50 to-white dark:from-orange-950 dark:to-gray-900">
+            <Card className="card-bg border-border bg-card">
               <CardContent className="p-4 text-center">
                 <div className="flex items-center justify-center space-x-2 mb-2">
-                  <Sparkles className="h-5 w-5 text-orange-600" />
+                  <Sparkles className="h-5 w-5 text-foreground" />
                   <span className="text-2xl font-bold">
                     {loading ? (
                       <Loader2 className="h-6 w-6 animate-spin" />
@@ -633,10 +614,10 @@ export default function Works() {
                 <p className="text-sm text-muted-foreground">New This Week</p>
               </CardContent>
             </Card>
-            <Card className="card-bg border-amber-200 dark:border-amber-900 bg-gradient-to-br from-amber-50 to-white dark:from-amber-950 dark:to-gray-900">
+            <Card className="card-bg border-border bg-card">
               <CardContent className="p-4 text-center">
                 <div className="flex items-center justify-center space-x-2 mb-2">
-                  <Eye className="h-5 w-5 text-amber-600" />
+                  <Eye className="h-5 w-5 text-foreground" />
                   <span className="text-2xl font-bold">
                     {loading ? (
                       <Loader2 className="h-6 w-6 animate-spin" />
@@ -648,10 +629,10 @@ export default function Works() {
                 <p className="text-sm text-muted-foreground">Total Reads</p>
               </CardContent>
             </Card>
-            <Card className="card-bg border-orange-200 dark:border-orange-900 bg-gradient-to-br from-orange-50 to-white dark:from-orange-950 dark:to-gray-900">
+            <Card className="card-bg border-border bg-card">
               <CardContent className="p-4 text-center">
                 <div className="flex items-center justify-center space-x-2 mb-2">
-                  <Heart className="h-5 w-5 text-orange-600" />
+                  <Heart className="h-5 w-5 text-foreground" />
                   <span className="text-2xl font-bold">
                     {loading ? (
                       <Loader2 className="h-6 w-6 animate-spin" />
@@ -667,31 +648,31 @@ export default function Works() {
 
           {/* Works Tabs */}
           <Tabs defaultValue="featured" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-amber-100 dark:bg-amber-950">
+            <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-muted">
               <TabsTrigger
                 value="featured"
-                className="p-3 data-[state=active]:bg-amber-600 data-[state=active]:text-white"
+                className="p-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               >
                 <BookOpen className="h-4 w-4 mr-2" />
                 <span className="text-sm">Featured</span>
               </TabsTrigger>
               <TabsTrigger
                 value="new"
-                className="p-3 data-[state=active]:bg-amber-600 data-[state=active]:text-white"
+                className="p-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               >
                 <Sparkles className="h-4 w-4 mr-2" />
                 <span className="text-sm">New Releases</span>
               </TabsTrigger>
               <TabsTrigger
                 value="popular"
-                className="p-3 data-[state=active]:bg-amber-600 data-[state=active]:text-white"
+                className="p-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               >
                 <Star className="h-4 w-4 mr-2" />
                 <span className="text-sm">Popular</span>
               </TabsTrigger>
               <TabsTrigger
                 value="trending"
-                className="p-3 data-[state=active]:bg-amber-600 data-[state=active]:text-white"
+                className="p-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               >
                 <Flame className="h-4 w-4 mr-2" />
                 <span className="text-sm">Trending</span>

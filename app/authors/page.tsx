@@ -277,19 +277,14 @@ export default function Authors() {
     (filters.minFollowers > 0 ? 1 : 0)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-background to-blue-50 dark:from-gray-900 dark:via-background dark:to-gray-900">
+    <div className="min-h-screen bg-background">
       <Navigation />
 
       <div className="container mx-auto px-4 py-6 sm:py-8">
         <div className="max-w-7xl mx-auto">
-          {/* Header with gradient */}
+          {/* Header */}
           <div className="text-center space-y-4 mb-8">
-            <div className="inline-flex items-center justify-center space-x-2 mb-2">
-              <Users className="h-8 w-8 text-purple-600" />
-              <h1 className="font-serif text-3xl sm:text-5xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                Discover Writers
-              </h1>
-            </div>
+            <h1 className="font-serif text-3xl sm:text-4xl font-bold">Discover Writers</h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Connect with talented writers, find collaborators, and join our creative community
             </p>
@@ -297,7 +292,7 @@ export default function Authors() {
 
           {/* Search and Filter */}
           <div className="mb-8">
-            <Card className="card-bg card-shadow border-purple-200 dark:border-purple-900">
+            <Card className="card-bg card-shadow border-border">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex-1 relative">
@@ -306,14 +301,14 @@ export default function Authors() {
                       value={searchQuery}
                       onChange={e => setSearchQuery(e.target.value)}
                       placeholder="Search writers by name, specialty, or location..."
-                      className="pl-10 border-purple-200 dark:border-purple-900 focus:ring-purple-500"
+                      className="pl-10 border-border focus:ring-purple-500"
                     />
                   </div>
                   <Dialog open={filterOpen} onOpenChange={setFilterOpen}>
                     <DialogTrigger asChild>
                       <Button
                         variant="outline"
-                        className="flex items-center space-x-2 border-purple-200 dark:border-purple-900"
+                        className="flex items-center space-x-2 border-border"
                       >
                         <Filter className="h-4 w-4" />
                         <span>Filters</span>
@@ -422,9 +417,9 @@ export default function Authors() {
                 </div>
 
                 {/* Specialty Tags */}
-                <div className="mt-4 pt-4 border-t border-purple-200 dark:border-purple-900">
+                <div className="mt-4 pt-4 border-t border-border">
                   <p className="text-sm font-medium mb-3 flex items-center">
-                    <Sparkles className="h-4 w-4 mr-2 text-purple-600" />
+                    <Sparkles className="h-4 w-4 mr-2 text-foreground" />
                     Filter by Specialty
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -432,7 +427,7 @@ export default function Authors() {
                       <Badge
                         key={specialty}
                         variant={selectedSpecialty === specialty ? 'default' : 'secondary'}
-                        className="cursor-pointer hover:bg-purple-600 hover:text-white transition-colors"
+                        className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
                         onClick={() => handleSpecialtyClick(specialty)}
                       >
                         {specialty}
@@ -446,10 +441,10 @@ export default function Authors() {
 
           {/* Statistics - Community Focused */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <Card className="card-bg border-purple-200 dark:border-purple-900 bg-gradient-to-br from-purple-50 to-white dark:from-purple-950 dark:to-gray-900">
+            <Card className="card-bg border-border bg-card">
               <CardContent className="p-4 text-center">
                 <div className="flex items-center justify-center space-x-2 mb-2">
-                  <Users className="h-5 w-5 text-purple-600" />
+                  <Users className="h-5 w-5 text-foreground" />
                   <span className="text-2xl font-bold">
                     {loading ? (
                       <Loader2 className="h-6 w-6 animate-spin" />
@@ -461,10 +456,10 @@ export default function Authors() {
                 <p className="text-sm text-muted-foreground">Total Writers</p>
               </CardContent>
             </Card>
-            <Card className="card-bg border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50 to-white dark:from-blue-950 dark:to-gray-900">
+            <Card className="card-bg border-border bg-card">
               <CardContent className="p-4 text-center">
                 <div className="flex items-center justify-center space-x-2 mb-2">
-                  <Flame className="h-5 w-5 text-orange-600" />
+                  <Flame className="h-5 w-5 text-foreground" />
                   <span className="text-2xl font-bold">
                     {loading ? (
                       <Loader2 className="h-6 w-6 animate-spin" />
@@ -476,10 +471,10 @@ export default function Authors() {
                 <p className="text-sm text-muted-foreground">Active Writers</p>
               </CardContent>
             </Card>
-            <Card className="card-bg border-green-200 dark:border-green-900 bg-gradient-to-br from-green-50 to-white dark:from-green-950 dark:to-gray-900">
+            <Card className="card-bg border-border bg-card">
               <CardContent className="p-4 text-center">
                 <div className="flex items-center justify-center space-x-2 mb-2">
-                  <TrendingUp className="h-5 w-5 text-green-600" />
+                  <TrendingUp className="h-5 w-5 text-foreground" />
                   <span className="text-2xl font-bold">
                     {loading ? (
                       <Loader2 className="h-6 w-6 animate-spin" />
@@ -491,10 +486,10 @@ export default function Authors() {
                 <p className="text-sm text-muted-foreground">New This Month</p>
               </CardContent>
             </Card>
-            <Card className="card-bg border-yellow-200 dark:border-yellow-900 bg-gradient-to-br from-yellow-50 to-white dark:from-yellow-950 dark:to-gray-900">
+            <Card className="card-bg border-border bg-card">
               <CardContent className="p-4 text-center">
                 <div className="flex items-center justify-center space-x-2 mb-2">
-                  <BookOpen className="h-5 w-5 text-yellow-600" />
+                  <BookOpen className="h-5 w-5 text-foreground" />
                   <span className="text-2xl font-bold">
                     {loading ? (
                       <Loader2 className="h-6 w-6 animate-spin" />
@@ -510,31 +505,31 @@ export default function Authors() {
 
           {/* Author Tabs with Icons */}
           <Tabs defaultValue="rising" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-purple-100 dark:bg-purple-950">
+            <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-muted">
               <TabsTrigger
                 value="rising"
-                className="p-3 data-[state=active]:bg-purple-600 data-[state=active]:text-white"
+                className="p-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               >
                 <Sparkles className="h-4 w-4 mr-2" />
                 <span className="text-sm">Rising Stars</span>
               </TabsTrigger>
               <TabsTrigger
                 value="active"
-                className="p-3 data-[state=active]:bg-purple-600 data-[state=active]:text-white"
+                className="p-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               >
                 <Flame className="h-4 w-4 mr-2" />
                 <span className="text-sm">Most Active</span>
               </TabsTrigger>
               <TabsTrigger
                 value="popular"
-                className="p-3 data-[state=active]:bg-purple-600 data-[state=active]:text-white"
+                className="p-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               >
                 <Star className="h-4 w-4 mr-2" />
                 <span className="text-sm">Most Followed</span>
               </TabsTrigger>
               <TabsTrigger
                 value="new"
-                className="p-3 data-[state=active]:bg-purple-600 data-[state=active]:text-white"
+                className="p-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               >
                 <Award className="h-4 w-4 mr-2" />
                 <span className="text-sm">New Writers</span>
@@ -657,7 +652,7 @@ export default function Authors() {
                 size="lg"
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="border-purple-200 dark:border-purple-900"
+                className="border-border"
               >
                 {loadingMore ? (
                   <>
