@@ -1,7 +1,7 @@
 'use client'
 
 import { Save, Lock, Unlock, Download, Users, ListTree } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/src/components/ui/button'
 import type { Script } from '@/src/types/script-editor'
 
 interface ScriptToolbarProps {

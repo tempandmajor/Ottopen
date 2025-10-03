@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Plus, FileText, Clock, Lock } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import { Button } from '@/src/components/ui/button'
+import { Card } from '@/src/components/ui/card'
 import type { Script, ScriptType } from '@/src/types/script-editor'
 
 interface ScriptListProps {
