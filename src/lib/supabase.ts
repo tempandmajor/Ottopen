@@ -73,6 +73,7 @@ export interface User {
   stripe_connect_onboarded?: boolean
   stripe_connect_charges_enabled?: boolean
   stripe_connect_payouts_enabled?: boolean
+  is_admin?: boolean
   account_type:
     | 'writer'
     | 'platform_agent'

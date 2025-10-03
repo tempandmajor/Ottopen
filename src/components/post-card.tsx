@@ -3,13 +3,42 @@
 import { Card, CardContent } from '@/src/components/ui/card'
 import { Button } from '@/src/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/src/components/ui/avatar'
-import { Heart, MessageCircle, Share, BookOpen, Repeat2 } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/src/components/ui/dropdown-menu'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/src/components/ui/dialog'
+import { Textarea } from '@/src/components/ui/textarea'
+import { Label } from '@/src/components/ui/label'
+import {
+  Heart,
+  MessageCircle,
+  Share,
+  BookOpen,
+  Repeat2,
+  MoreHorizontal,
+  Trash2,
+  Flag,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import { toast } from 'react-hot-toast'
 
 interface PostCardProps {
   postId?: string
   author: string
+  authorId?: string
+  currentUserId?: string
+  isAdmin?: boolean
   avatar?: string
   time: string
   content: string
@@ -25,11 +54,15 @@ interface PostCardProps {
   onLike?: (postId: string, currentlyLiked: boolean) => Promise<boolean>
   onComment?: (postId: string) => void
   onShare?: (postId: string) => void
+  onDelete?: (postId: string) => void
 }
 
 export function PostCard({
   postId,
   author,
+  authorId,
+  currentUserId,
+  isAdmin = false,
   avatar,
   time,
   content,
@@ -45,11 +78,17 @@ export function PostCard({
   onLike,
   onComment,
   onShare,
+  onDelete,
 }: PostCardProps) {
   const [liked, setLiked] = useState(isLiked)
   const [reshared, setReshared] = useState(isReshared)
   const [likeCount, setLikeCount] = useState(likes)
   const [reshareCount, setReshareCount] = useState(reshares)
+  const [reportDialogOpen, setReportDialogOpen] = useState(false)
+  const [reportReason, setReportReason] = useState('')
+  const [reportDescription, setReportDescription] = useState('')
+  const [submittingReport, setSubmittingReport] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   // Sync local state with props when they change
   useEffect(() => {
@@ -87,6 +126,71 @@ export function PostCard({
     setReshareCount(reshared ? reshareCount - 1 : reshareCount + 1)
   }
 
+  const handleDeletePost = async () => {
+    if (!postId) return
+
+    if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+      return
+    }
+
+    setDeleting(true)
+    try {
+      const response = await fetch(`/api/posts/${postId}/delete`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        toast.success('Post deleted successfully')
+        onDelete?.(postId)
+      } else {
+        const error = await response.json()
+        toast.error(error.error || 'Failed to delete post')
+      }
+    } catch (error) {
+      console.error('Failed to delete post:', error)
+      toast.error('Failed to delete post')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const handleReportSubmit = async () => {
+    if (!postId || !reportReason) {
+      toast.error('Please select a reason for reporting')
+      return
+    }
+
+    setSubmittingReport(true)
+    try {
+      const response = await fetch(`/api/posts/${postId}/report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reason: reportReason,
+          description: reportDescription,
+        }),
+      })
+
+      if (response.ok) {
+        toast.success('Report submitted successfully. We will review it shortly.')
+        setReportDialogOpen(false)
+        setReportReason('')
+        setReportDescription('')
+      } else {
+        const error = await response.json()
+        toast.error(error.error || 'Failed to submit report')
+      }
+    } catch (error) {
+      console.error('Failed to report post:', error)
+      toast.error('Failed to submit report')
+    } finally {
+      setSubmittingReport(false)
+    }
+  }
+
+  const isOwnPost = currentUserId && authorId && currentUserId === authorId
+  const canDelete = isOwnPost || isAdmin
+
   const typeIcons = {
     story: BookOpen,
     excerpt: BookOpen,
@@ -108,21 +212,50 @@ export function PostCard({
           </Avatar>
 
           <div className="flex-1 min-w-0">
-            <div className="flex flex-col xs:flex-row xs:items-center gap-1 xs:gap-2 mb-2">
-              <div className="flex items-center space-x-2">
-                <Link
-                  href={`/profile/${author.toLowerCase().replace(' ', '_')}`}
-                  className="font-medium text-sm hover:underline truncate"
-                >
-                  {author}
-                </Link>
-                <span className="text-muted-foreground text-xs">•</span>
-                <span className="text-muted-foreground text-xs">{time}</span>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex flex-col xs:flex-row xs:items-center gap-1 xs:gap-2">
+                <div className="flex items-center space-x-2">
+                  <Link
+                    href={`/profile/${author.toLowerCase().replace(' ', '_')}`}
+                    className="font-medium text-sm hover:underline truncate"
+                  >
+                    {author}
+                  </Link>
+                  <span className="text-muted-foreground text-xs">•</span>
+                  <span className="text-muted-foreground text-xs">{time}</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <TypeIcon className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground capitalize">{type}</span>
+                </div>
               </div>
-              <div className="flex items-center space-x-1 xs:ml-auto">
-                <TypeIcon className="h-3 w-3 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground capitalize">{type}</span>
-              </div>
+
+              {/* More Options Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {canDelete && (
+                    <DropdownMenuItem
+                      className="text-red-600 focus:text-red-600"
+                      onClick={handleDeletePost}
+                      disabled={deleting}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {deleting ? 'Deleting...' : 'Delete Post'}
+                    </DropdownMenuItem>
+                  )}
+                  {!isOwnPost && (
+                    <DropdownMenuItem onClick={() => setReportDialogOpen(true)}>
+                      <Flag className="h-4 w-4 mr-2" />
+                      Report Post
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             <div className="prose prose-sm max-w-none mb-3 sm:mb-4">
@@ -199,6 +332,63 @@ export function PostCard({
           </div>
         </div>
       </CardContent>
+
+      {/* Report Dialog */}
+      <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Report Post</DialogTitle>
+            <DialogDescription>
+              Help us understand what&apos;s wrong with this post. We&apos;ll review your report and
+              take appropriate action.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="reason">Reason for reporting *</Label>
+              <select
+                id="reason"
+                value={reportReason}
+                onChange={e => setReportReason(e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-background"
+              >
+                <option value="">Select a reason</option>
+                <option value="spam">Spam or misleading</option>
+                <option value="harassment">Harassment or hate speech</option>
+                <option value="inappropriate">Inappropriate content</option>
+                <option value="misinformation">Misinformation</option>
+                <option value="copyright">Copyright violation</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Additional details (optional)</Label>
+              <Textarea
+                id="description"
+                value={reportDescription}
+                onChange={e => setReportDescription(e.target.value)}
+                placeholder="Provide any additional information that might help us review this report..."
+                rows={4}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setReportDialogOpen(false)}
+              disabled={submittingReport}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleReportSubmit} disabled={!reportReason || submittingReport}>
+              {submittingReport ? 'Submitting...' : 'Submit Report'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }

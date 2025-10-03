@@ -33,6 +33,7 @@ export default function Feed() {
   const [hasMore, setHasMore] = useState(true)
   const [page, setPage] = useState(0)
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set())
+  const [isAdmin, setIsAdmin] = useState(false)
 
   // Load liked posts for the current user
   const loadLikedPosts = async () => {
@@ -113,6 +114,21 @@ export default function Feed() {
 
   console.log('=== FEED PAGE COMPONENT LOADED ===')
   console.log('Feed page - userExists:', !!user)
+
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (user) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('is_admin')
+          .eq('id', user.id)
+          .single()
+        setIsAdmin(userData?.is_admin === true)
+      }
+    }
+    checkAdmin()
+  }, [user])
 
   // Load initial data
   useEffect(() => {
@@ -436,6 +452,9 @@ export default function Feed() {
                     key={post.id}
                     postId={post.id}
                     author={post.user?.display_name || post.user?.username || 'Unknown Author'}
+                    authorId={post.user_id}
+                    currentUserId={user?.id}
+                    isAdmin={isAdmin}
                     avatar={post.user?.avatar_url}
                     time={new Date(post.created_at).toLocaleDateString()}
                     content={post.content}
@@ -449,6 +468,7 @@ export default function Feed() {
                     onLike={handleLikePost}
                     onComment={handleCommentPost}
                     onShare={handleSharePost}
+                    onDelete={postId => setPosts(prev => prev.filter(p => p.id !== postId))}
                   />
                 ))
               ) : (
