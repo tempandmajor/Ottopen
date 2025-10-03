@@ -27,7 +27,7 @@ export default function TermsOfService() {
                 <h1 className="font-serif text-3xl sm:text-4xl font-bold">Terms of Service</h1>
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground mt-2">
                   <Calendar className="h-4 w-4" />
-                  <span>Last updated: January 15, 2024</span>
+                  <span>Last updated: October 2, 2025</span>
                 </div>
               </div>
             </div>
@@ -57,16 +57,30 @@ export default function TermsOfService() {
                     2. Description of Service
                   </h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
-                    Ottopen is a social networking platform designed specifically for writers,
-                    authors, screenwriters, playwrights, and literary enthusiasts. The service
-                    allows users to:
+                    Ottopen is a comprehensive writing platform and social network designed for
+                    writers, authors, screenwriters, playwrights, documentary filmmakers, and
+                    literary enthusiasts. The service allows users to:
                   </p>
                   <ul className="list-disc list-inside text-muted-foreground space-y-2 mb-4">
+                    <li>
+                      Create and edit professional scripts, documentaries, stage plays, and
+                      non-fiction books
+                    </li>
+                    <li>
+                      Use AI-powered writing assistance features (dialogue enhancement, structure
+                      analysis, fact-checking, etc.)
+                    </li>
+                    <li>Collaborate in real-time with other writers</li>
+                    <li>
+                      Export work to professional formats (PDF, Word, EPUB, Final Draft, Fountain)
+                    </li>
+                    <li>Convert content between different writing formats using AI</li>
                     <li>Create and maintain personal profiles</li>
                     <li>Share literary works, excerpts, and writing-related content</li>
                     <li>Connect with other writers and literary professionals</li>
                     <li>Participate in discussions about literature and writing</li>
                     <li>Discover new authors and works</li>
+                    <li>Access shared research repository for cross-project notes</li>
                   </ul>
                 </section>
 
@@ -134,7 +148,32 @@ export default function TermsOfService() {
                 <Separator className="my-6" />
 
                 <section className="mb-8">
-                  <h2 className="font-serif text-2xl font-semibold mb-4">6. Privacy Policy</h2>
+                  <h2 className="font-serif text-2xl font-semibold mb-4">6. AI-Powered Features</h2>
+                  <p className="text-muted-foreground leading-relaxed mb-4">
+                    Ottopen provides AI-powered writing assistance features powered by advanced
+                    language models. By using these features, you acknowledge and agree that:
+                  </p>
+                  <ul className="list-disc list-inside text-muted-foreground space-y-2 mb-4">
+                    <li>AI-generated content is provided as suggestions and assistance only</li>
+                    <li>You are responsible for reviewing and editing all AI-generated content</li>
+                    <li>AI suggestions may not always be accurate, appropriate, or original</li>
+                    <li>You retain full ownership and responsibility for your final work</li>
+                    <li>
+                      Your content may be processed by third-party AI providers subject to their
+                      terms
+                    </li>
+                    <li>
+                      We do not guarantee the accuracy, completeness, or suitability of AI-generated
+                      content
+                    </li>
+                    <li>Usage limits may apply based on your subscription tier</li>
+                  </ul>
+                </section>
+
+                <Separator className="my-6" />
+
+                <section className="mb-8">
+                  <h2 className="font-serif text-2xl font-semibold mb-4">7. Privacy Policy</h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
                     Your privacy is important to us. Please review our Privacy Policy, which also
                     governs your use of the Service, to understand our practices regarding the
@@ -148,7 +187,7 @@ export default function TermsOfService() {
                 <Separator className="my-6" />
 
                 <section className="mb-8">
-                  <h2 className="font-serif text-2xl font-semibold mb-4">7. Termination</h2>
+                  <h2 className="font-serif text-2xl font-semibold mb-4">8. Termination</h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
                     We may terminate or suspend your account and access to the Service immediately,
                     without prior notice, for any reason, including breach of these Terms. You may
@@ -159,7 +198,7 @@ export default function TermsOfService() {
                 <Separator className="my-6" />
 
                 <section className="mb-8">
-                  <h2 className="font-serif text-2xl font-semibold mb-4">8. Disclaimer</h2>
+                  <h2 className="font-serif text-2xl font-semibold mb-4">9. Disclaimer</h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
                     The Service is provided &quot;as is&quot; without any representations or
                     warranties. We do not warrant that the Service will be uninterrupted, secure, or
@@ -171,7 +210,7 @@ export default function TermsOfService() {
 
                 <section className="mb-8">
                   <h2 className="font-serif text-2xl font-semibold mb-4">
-                    9. Limitation of Liability
+                    10. Limitation of Liability
                   </h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
                     To the maximum extent permitted by law, Ottopen shall not be liable for any
@@ -183,7 +222,7 @@ export default function TermsOfService() {
                 <Separator className="my-6" />
 
                 <section className="mb-8">
-                  <h2 className="font-serif text-2xl font-semibold mb-4">10. Changes to Terms</h2>
+                  <h2 className="font-serif text-2xl font-semibold mb-4">11. Changes to Terms</h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
                     We reserve the right to modify these Terms at any time. We will notify users of
                     any material changes via email or through the Service. Your continued use of the
@@ -195,7 +234,7 @@ export default function TermsOfService() {
 
                 <section>
                   <h2 className="font-serif text-2xl font-semibold mb-4">
-                    11. Contact Information
+                    12. Contact Information
                   </h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
                     If you have any questions about these Terms of Service, please contact us at:
