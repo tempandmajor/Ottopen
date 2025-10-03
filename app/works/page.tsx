@@ -7,7 +7,30 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/ca
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/components/ui/tabs'
 import { Badge } from '@/src/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/src/components/ui/avatar'
-import { Search, Filter, BookOpen, Star, Eye, Heart, Calendar, User, Loader2 } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/src/components/ui/dialog'
+import { Label } from '@/src/components/ui/label'
+import {
+  Search,
+  Filter,
+  BookOpen,
+  Star,
+  Eye,
+  Heart,
+  Calendar,
+  User,
+  Loader2,
+  Flame,
+  Sparkles,
+  Clock,
+  X,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { dbService } from '@/src/lib/database'
@@ -28,6 +51,13 @@ export default function Works() {
     newThisWeek: 0,
     totalReads: 0,
     totalLikes: 0,
+  })
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null)
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false)
+  const [filters, setFilters] = useState({
+    contentTypes: [] as string[],
+    readingTime: null as string | null,
+    completionStatus: [] as string[],
   })
 
   // Load posts on mount
@@ -118,24 +148,126 @@ export default function Works() {
     }
   }
 
-  const filteredPosts = searchQuery.trim() ? searchResults : posts
-  const featuredWorks = filteredPosts.slice(0, 6)
+  // Apply all filters
+  const applyFilters = (postList: Post[]) => {
+    let filtered = [...postList]
+
+    // Genre filter
+    if (selectedGenre) {
+      filtered = filtered.filter(p => p.genre === selectedGenre)
+    }
+
+    // Content type filter
+    if (filters.contentTypes.length > 0) {
+      filtered = filtered.filter(
+        p => p.content_type && filters.contentTypes.includes(p.content_type)
+      )
+    }
+
+    // Reading time filter
+    if (filters.readingTime) {
+      filtered = filtered.filter(p => {
+        const time = p.reading_time_minutes || 0
+        switch (filters.readingTime) {
+          case '0-5':
+            return time <= 5
+          case '5-10':
+            return time > 5 && time <= 10
+          case '10-30':
+            return time > 10 && time <= 30
+          case '30+':
+            return time > 30
+          default:
+            return true
+        }
+      })
+    }
+
+    // Completion status filter
+    if (filters.completionStatus.length > 0) {
+      filtered = filtered.filter(
+        p => p.completion_status && filters.completionStatus.includes(p.completion_status)
+      )
+    }
+
+    return filtered
+  }
+
+  const filteredPosts = applyFilters(searchQuery.trim() ? searchResults : posts)
+  const featuredWorks = filteredPosts.slice(0, 20)
   const newReleases = filteredPosts.filter(
     post => new Date(post.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
   )
   const popular = [...filteredPosts]
     .sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0))
-    .slice(0, 4)
+    .slice(0, 20)
+  // Trending uses different algorithm - engagement velocity with recency boost
   const trending = [...filteredPosts]
-    .sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0))
-    .slice(0, 4)
+    .map(post => {
+      const ageHours = Math.max(
+        1,
+        (Date.now() - new Date(post.created_at).getTime()) / (1000 * 60 * 60)
+      )
+      const engagement =
+        (post.likes_count || 0) + (post.comments_count || 0) * 2 + (post.views_count || 0) * 0.1
+      const velocity = engagement / ageHours
+      const recencyBoost = ageHours < 24 ? 2.0 : ageHours < 72 ? 1.5 : 1.0
+      return { post, trendingScore: velocity * recencyBoost }
+    })
+    .sort((a, b) => b.trendingScore - a.trendingScore)
+    .slice(0, 20)
+    .map(item => item.post)
+
+  // Helper function to get completion status badge
+  const getCompletionBadge = (status?: string) => {
+    switch (status) {
+      case 'complete':
+        return (
+          <Badge variant="default" className="bg-green-600">
+            Complete
+          </Badge>
+        )
+      case 'wip':
+        return (
+          <Badge variant="default" className="bg-amber-600">
+            WIP
+          </Badge>
+        )
+      case 'hiatus':
+        return <Badge variant="secondary">Hiatus</Badge>
+      default:
+        return <Badge variant="outline">Complete</Badge>
+    }
+  }
+
+  // Helper function to format content type
+  const formatContentType = (type?: string) => {
+    switch (type) {
+      case 'screenplay':
+        return 'Screenplay'
+      case 'stage_play':
+        return 'Stage Play'
+      case 'book':
+        return 'Book'
+      case 'short_story':
+        return 'Short Story'
+      case 'poetry':
+        return 'Poetry'
+      case 'article':
+        return 'Article'
+      case 'essay':
+        return 'Essay'
+      default:
+        return 'Article'
+    }
+  }
 
   // Create WorkCard component for real posts
   const WorkCard = ({ post }: { post: Post }) => (
-    <Card className="card-bg card-shadow border-literary-border hover:shadow-lg transition-all duration-300">
+    <Card className="card-bg card-shadow border-amber-200 dark:border-amber-900 hover:shadow-lg transition-all duration-300">
       <CardContent className="p-6">
         <div className="flex space-x-4">
-          <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-lg bg-gradient-to-br from-gray-700 to-gray-800 flex-shrink-0 flex items-center justify-center text-white font-bold text-lg">
+          <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-lg bg-gradient-to-br from-amber-600 to-orange-700 flex-shrink-0 flex items-center justify-center text-white font-bold text-lg shadow-md">
             <BookOpen className="h-8 w-8" />
           </div>
 
@@ -147,16 +279,27 @@ export default function Works() {
                 </h3>
                 <Link
                   href={`/profile/${post.user?.username || 'unknown'}`}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  className="text-sm text-muted-foreground hover:text-amber-600 transition-colors"
                 >
                   by {post.user?.display_name || 'Unknown Author'}
                 </Link>
               </div>
-              <div className="flex items-center space-x-2 flex-shrink-0">
-                <Badge variant={post.published ? 'default' : 'secondary'}>
-                  {post.published ? 'Published' : 'Draft'}
+              <div className="flex items-center space-x-2 flex-shrink-0 flex-wrap gap-2">
+                {getCompletionBadge(post.completion_status)}
+                <Badge
+                  variant="outline"
+                  className="border-amber-300 text-amber-700 dark:text-amber-400"
+                >
+                  {formatContentType(post.content_type)}
                 </Badge>
-                <Badge variant="outline">Article</Badge>
+                {post.genre && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200"
+                  >
+                    {post.genre}
+                  </Badge>
+                )}
               </div>
             </div>
 
@@ -172,6 +315,12 @@ export default function Works() {
                   month: 'short',
                 })}
               </div>
+              {post.reading_time_minutes && (
+                <div className="flex items-center">
+                  <Clock className="h-3 w-3 mr-1" />
+                  {post.reading_time_minutes} min read
+                </div>
+              )}
               <div className="flex items-center">
                 <User className="h-3 w-3 mr-1" />
                 {post.user?.display_name || 'Unknown'}
@@ -182,7 +331,7 @@ export default function Works() {
               <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                 <div className="flex items-center">
                   <Eye className="h-4 w-4 mr-1" />
-                  <span>{(post.likes_count || 0).toLocaleString()}</span>
+                  <span>{(post.views_count || 0).toLocaleString()}</span>
                 </div>
                 <div className="flex items-center">
                   <Heart className="h-4 w-4 mr-1" />
@@ -192,7 +341,12 @@ export default function Works() {
                   <span>{post.comments_count || 0} comments</span>
                 </div>
               </div>
-              <Button variant="outline" size="sm" asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-amber-600 text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950"
+                asChild
+              >
                 <Link href={`/posts/${post.id}`}>Read</Link>
               </Button>
             </div>
@@ -217,15 +371,75 @@ export default function Works() {
     'Comedy',
   ]
 
+  const contentTypes = [
+    'screenplay',
+    'stage_play',
+    'book',
+    'short_story',
+    'poetry',
+    'article',
+    'essay',
+  ]
+  const completionStatuses = ['complete', 'wip', 'hiatus']
+  const readingTimeRanges = [
+    { label: '0-5 min', value: '0-5' },
+    { label: '5-10 min', value: '5-10' },
+    { label: '10-30 min', value: '10-30' },
+    { label: '30+ min', value: '30+' },
+  ]
+
+  // Calculate active filter count
+  const activeFilterCount =
+    (selectedGenre ? 1 : 0) +
+    filters.contentTypes.length +
+    (filters.readingTime ? 1 : 0) +
+    filters.completionStatus.length
+
+  const handleGenreClick = (genre: string) => {
+    setSelectedGenre(selectedGenre === genre ? null : genre)
+  }
+
+  const handleClearFilters = () => {
+    setSelectedGenre(null)
+    setFilters({
+      contentTypes: [],
+      readingTime: null,
+      completionStatus: [],
+    })
+    setFilterDialogOpen(false)
+  }
+
+  const handleContentTypeToggle = (type: string) => {
+    setFilters(prev => ({
+      ...prev,
+      contentTypes: prev.contentTypes.includes(type)
+        ? prev.contentTypes.filter(t => t !== type)
+        : [...prev.contentTypes, type],
+    }))
+  }
+
+  const handleCompletionStatusToggle = (status: string) => {
+    setFilters(prev => ({
+      ...prev,
+      completionStatus: prev.completionStatus.includes(status)
+        ? prev.completionStatus.filter(s => s !== status)
+        : [...prev.completionStatus, status],
+    }))
+  }
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-background to-orange-50 dark:from-gray-900 dark:via-background dark:to-gray-900">
       <Navigation />
 
       <div className="container mx-auto px-4 py-6 sm:py-8">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="text-center space-y-4 mb-8">
-            <h1 className="font-serif text-3xl sm:text-4xl font-bold">Literary Works</h1>
+            <div className="inline-block px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 rounded-full mb-4">
+              <h1 className="font-serif text-3xl sm:text-4xl font-bold text-white">
+                Discover Works
+              </h1>
+            </div>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Explore novels, short stories, poetry, and plays from our community of writers.
               Discover your next great read.
@@ -234,7 +448,7 @@ export default function Works() {
 
           {/* Search and Filter */}
           <div className="mb-8">
-            <Card className="card-bg card-shadow border-literary-border">
+            <Card className="card-bg card-shadow border-amber-200 dark:border-amber-900">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex-1 relative">
@@ -243,24 +457,140 @@ export default function Works() {
                       value={searchQuery}
                       onChange={e => setSearchQuery(e.target.value)}
                       placeholder="Search works by title, author, or genre..."
-                      className="pl-10 border-literary-border"
+                      className="pl-10 border-amber-300 focus:border-amber-500"
                     />
                   </div>
-                  <Button variant="outline" className="flex items-center space-x-2">
-                    <Filter className="h-4 w-4" />
-                    <span>Filters</span>
-                  </Button>
+                  <Dialog open={filterDialogOpen} onOpenChange={setFilterDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="flex items-center space-x-2 border-amber-600 text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950 relative"
+                      >
+                        <Filter className="h-4 w-4" />
+                        <span>Filters</span>
+                        {activeFilterCount > 0 && (
+                          <Badge className="ml-2 bg-amber-600 text-white">
+                            {activeFilterCount}
+                          </Badge>
+                        )}
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Filter Works</DialogTitle>
+                        <DialogDescription>
+                          Refine your search with advanced filters
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-6 py-4">
+                        {/* Content Type Filter */}
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">Content Type</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {contentTypes.map(type => (
+                              <Badge
+                                key={type}
+                                variant={
+                                  filters.contentTypes.includes(type) ? 'default' : 'outline'
+                                }
+                                className={`cursor-pointer ${
+                                  filters.contentTypes.includes(type)
+                                    ? 'bg-amber-600 hover:bg-amber-700'
+                                    : 'hover:bg-amber-50 dark:hover:bg-amber-950'
+                                }`}
+                                onClick={() => handleContentTypeToggle(type)}
+                              >
+                                {formatContentType(type)}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Reading Time Filter */}
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">Reading Time</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {readingTimeRanges.map(range => (
+                              <Badge
+                                key={range.value}
+                                variant={
+                                  filters.readingTime === range.value ? 'default' : 'outline'
+                                }
+                                className={`cursor-pointer ${
+                                  filters.readingTime === range.value
+                                    ? 'bg-amber-600 hover:bg-amber-700'
+                                    : 'hover:bg-amber-50 dark:hover:bg-amber-950'
+                                }`}
+                                onClick={() =>
+                                  setFilters(prev => ({
+                                    ...prev,
+                                    readingTime:
+                                      prev.readingTime === range.value ? null : range.value,
+                                  }))
+                                }
+                              >
+                                {range.label}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Completion Status Filter */}
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">Status</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {completionStatuses.map(status => (
+                              <Badge
+                                key={status}
+                                variant={
+                                  filters.completionStatus.includes(status) ? 'default' : 'outline'
+                                }
+                                className={`cursor-pointer ${
+                                  filters.completionStatus.includes(status)
+                                    ? 'bg-amber-600 hover:bg-amber-700'
+                                    : 'hover:bg-amber-50 dark:hover:bg-amber-950'
+                                }`}
+                                onClick={() => handleCompletionStatusToggle(status)}
+                              >
+                                {status === 'wip'
+                                  ? 'WIP'
+                                  : status.charAt(0).toUpperCase() + status.slice(1)}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex justify-between pt-4">
+                          <Button variant="ghost" onClick={handleClearFilters}>
+                            Clear All
+                          </Button>
+                          <Button
+                            className="bg-amber-600 hover:bg-amber-700"
+                            onClick={() => setFilterDialogOpen(false)}
+                          >
+                            Apply Filters
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
 
                 {/* Genre Tags */}
-                <div className="mt-4 pt-4 border-t border-literary-border">
+                <div className="mt-4 pt-4 border-t border-amber-200 dark:border-amber-900">
                   <p className="text-sm font-medium mb-3">Browse by Genre</p>
                   <div className="flex flex-wrap gap-2">
                     {genres.map(genre => (
                       <Badge
                         key={genre}
-                        variant="secondary"
-                        className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                        variant={selectedGenre === genre ? 'default' : 'secondary'}
+                        className={`cursor-pointer transition-colors ${
+                          selectedGenre === genre
+                            ? 'bg-amber-600 hover:bg-amber-700'
+                            : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-900'
+                        }`}
+                        onClick={() => handleGenreClick(genre)}
                       >
                         {genre}
                       </Badge>
@@ -273,10 +603,10 @@ export default function Works() {
 
           {/* Statistics */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <Card className="card-bg border-literary-border">
+            <Card className="card-bg border-amber-200 dark:border-amber-900 bg-gradient-to-br from-amber-50 to-white dark:from-amber-950 dark:to-gray-900">
               <CardContent className="p-4 text-center">
                 <div className="flex items-center justify-center space-x-2 mb-2">
-                  <BookOpen className="h-5 w-5 text-primary" />
+                  <BookOpen className="h-5 w-5 text-amber-600" />
                   <span className="text-2xl font-bold">
                     {loading ? (
                       <Loader2 className="h-6 w-6 animate-spin" />
@@ -288,10 +618,10 @@ export default function Works() {
                 <p className="text-sm text-muted-foreground">Total Works</p>
               </CardContent>
             </Card>
-            <Card className="card-bg border-literary-border">
+            <Card className="card-bg border-orange-200 dark:border-orange-900 bg-gradient-to-br from-orange-50 to-white dark:from-orange-950 dark:to-gray-900">
               <CardContent className="p-4 text-center">
                 <div className="flex items-center justify-center space-x-2 mb-2">
-                  <Star className="h-5 w-5 text-primary" />
+                  <Sparkles className="h-5 w-5 text-orange-600" />
                   <span className="text-2xl font-bold">
                     {loading ? (
                       <Loader2 className="h-6 w-6 animate-spin" />
@@ -303,10 +633,10 @@ export default function Works() {
                 <p className="text-sm text-muted-foreground">New This Week</p>
               </CardContent>
             </Card>
-            <Card className="card-bg border-literary-border">
+            <Card className="card-bg border-amber-200 dark:border-amber-900 bg-gradient-to-br from-amber-50 to-white dark:from-amber-950 dark:to-gray-900">
               <CardContent className="p-4 text-center">
                 <div className="flex items-center justify-center space-x-2 mb-2">
-                  <Eye className="h-5 w-5 text-primary" />
+                  <Eye className="h-5 w-5 text-amber-600" />
                   <span className="text-2xl font-bold">
                     {loading ? (
                       <Loader2 className="h-6 w-6 animate-spin" />
@@ -318,10 +648,10 @@ export default function Works() {
                 <p className="text-sm text-muted-foreground">Total Reads</p>
               </CardContent>
             </Card>
-            <Card className="card-bg border-literary-border">
+            <Card className="card-bg border-orange-200 dark:border-orange-900 bg-gradient-to-br from-orange-50 to-white dark:from-orange-950 dark:to-gray-900">
               <CardContent className="p-4 text-center">
                 <div className="flex items-center justify-center space-x-2 mb-2">
-                  <Heart className="h-5 w-5 text-primary" />
+                  <Heart className="h-5 w-5 text-orange-600" />
                   <span className="text-2xl font-bold">
                     {loading ? (
                       <Loader2 className="h-6 w-6 animate-spin" />
@@ -337,17 +667,33 @@ export default function Works() {
 
           {/* Works Tabs */}
           <Tabs defaultValue="featured" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 h-auto p-1">
-              <TabsTrigger value="featured" className="p-3">
+            <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-amber-100 dark:bg-amber-950">
+              <TabsTrigger
+                value="featured"
+                className="p-3 data-[state=active]:bg-amber-600 data-[state=active]:text-white"
+              >
+                <BookOpen className="h-4 w-4 mr-2" />
                 <span className="text-sm">Featured</span>
               </TabsTrigger>
-              <TabsTrigger value="new" className="p-3">
+              <TabsTrigger
+                value="new"
+                className="p-3 data-[state=active]:bg-amber-600 data-[state=active]:text-white"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
                 <span className="text-sm">New Releases</span>
               </TabsTrigger>
-              <TabsTrigger value="popular" className="p-3">
+              <TabsTrigger
+                value="popular"
+                className="p-3 data-[state=active]:bg-amber-600 data-[state=active]:text-white"
+              >
+                <Star className="h-4 w-4 mr-2" />
                 <span className="text-sm">Popular</span>
               </TabsTrigger>
-              <TabsTrigger value="trending" className="p-3">
+              <TabsTrigger
+                value="trending"
+                className="p-3 data-[state=active]:bg-amber-600 data-[state=active]:text-white"
+              >
+                <Flame className="h-4 w-4 mr-2" />
                 <span className="text-sm">Trending</span>
               </TabsTrigger>
             </TabsList>
