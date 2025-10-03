@@ -106,6 +106,12 @@ export interface Post {
   likes_count?: number
   comments_count?: number
   views_count?: number
+  // User profile fields from posts_with_stats view
+  display_name?: string
+  username?: string
+  avatar_url?: string
+  bio?: string
+  specialty?: string
 }
 
 export interface Comment {

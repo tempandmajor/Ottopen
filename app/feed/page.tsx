@@ -451,11 +451,11 @@ export default function Feed() {
                   <PostCard
                     key={post.id}
                     postId={post.id}
-                    author={post.user?.display_name || post.user?.username || 'Unknown Author'}
+                    author={post.display_name || post.username || 'Unknown Author'}
                     authorId={post.user_id}
                     currentUserId={user?.id}
                     isAdmin={isAdmin}
-                    avatar={post.user?.avatar_url}
+                    avatar={post.avatar_url}
                     time={new Date(post.created_at).toLocaleDateString()}
                     content={post.content}
                     excerpt={post.excerpt}
