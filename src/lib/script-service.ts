@@ -224,7 +224,43 @@ export class ElementService {
       .select()
 
     if (error) throw error
+
+    // Auto-populate characters and locations
+    if (data && data.length > 0) {
+      await CharacterService.populateFromElements(scriptId)
+      await LocationService.populateFromElements(scriptId)
+    }
+
     return data || []
+  }
+
+  /**
+   * Create single element
+   */
+  static async create(scriptId: string, data: Partial<ScriptElement>): Promise<ScriptElement> {
+    const { data: element, error } = await supabase
+      .from('script_elements')
+      .insert({
+        script_id: scriptId,
+        element_type: data.element_type,
+        content: data.content,
+        scene_number: data.scene_number,
+        order_index: data.order_index || 0,
+        metadata: data.metadata,
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+
+    // Auto-populate if character or scene heading
+    if (element.element_type === 'character') {
+      await CharacterService.populateFromElements(scriptId)
+    } else if (element.element_type === 'scene_heading') {
+      await LocationService.populateFromElements(scriptId)
+    }
+
+    return element
   }
 }
 
@@ -291,6 +327,186 @@ export class BeatService {
     const { error } = await supabase.from('script_beats').delete().eq('id', beatId)
 
     if (error) throw error
+  }
+}
+
+// ============================================================================
+// CHARACTER OPERATIONS
+// ============================================================================
+
+export class CharacterService {
+  /**
+   * Get characters for script
+   */
+  static async getByScriptId(scriptId: string): Promise<ScriptCharacter[]> {
+    const { data, error } = await supabase
+      .from('script_characters')
+      .select('*')
+      .eq('script_id', scriptId)
+      .order('dialogue_count', { ascending: false })
+
+    if (error) throw error
+    return data || []
+  }
+
+  /**
+   * Auto-populate characters from script elements
+   */
+  static async populateFromElements(scriptId: string): Promise<void> {
+    // Get all character elements
+    const { data: elements, error: elementsError } = await supabase
+      .from('script_elements')
+      .select('*')
+      .eq('script_id', scriptId)
+      .eq('element_type', 'character')
+
+    if (elementsError || !elements) return
+
+    // Extract unique character names
+    const characterNames = [...new Set(elements.map(el => el.content.trim()))]
+
+    // Get existing characters
+    const { data: existingChars } = await supabase
+      .from('script_characters')
+      .select('name')
+      .eq('script_id', scriptId)
+
+    const existingNames = new Set(existingChars?.map(c => c.name) || [])
+
+    // Insert new characters
+    const newCharacters = characterNames
+      .filter(name => !existingNames.has(name))
+      .map(name => ({
+        script_id: scriptId,
+        name,
+        dialogue_count: elements.filter(el => el.content.trim() === name).length,
+      }))
+
+    if (newCharacters.length > 0) {
+      await supabase.from('script_characters').insert(newCharacters)
+    }
+  }
+
+  /**
+   * Create character
+   */
+  static async create(scriptId: string, data: Partial<ScriptCharacter>): Promise<ScriptCharacter> {
+    const { data: character, error } = await supabase
+      .from('script_characters')
+      .insert({
+        script_id: scriptId,
+        name: data.name,
+        description: data.description,
+        importance: data.importance || 'minor',
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    return character
+  }
+}
+
+// ============================================================================
+// LOCATION OPERATIONS
+// ============================================================================
+
+export class LocationService {
+  /**
+   * Get locations for script
+   */
+  static async getByScriptId(scriptId: string): Promise<ScriptLocation[]> {
+    const { data, error } = await supabase
+      .from('script_locations')
+      .select('*')
+      .eq('script_id', scriptId)
+      .order('scene_count', { ascending: false })
+
+    if (error) throw error
+    return data || []
+  }
+
+  /**
+   * Auto-populate locations from scene headings
+   */
+  static async populateFromElements(scriptId: string): Promise<void> {
+    // Get all scene heading elements
+    const { data: elements, error: elementsError } = await supabase
+      .from('script_elements')
+      .select('*')
+      .eq('script_id', scriptId)
+      .eq('element_type', 'scene_heading')
+
+    if (elementsError || !elements) return
+
+    // Extract locations from scene headings
+    const locations = elements
+      .map(el => {
+        // Parse "INT. COFFEE SHOP - DAY" -> "COFFEE SHOP"
+        const match = el.content.match(/^(INT|EXT|INT\/EXT|I\/E)\.\s+(.+?)\s+-\s+/i)
+        if (match) {
+          return {
+            name: match[2].trim(),
+            location_type: match[1].replace('I/E', 'INT/EXT') as 'INT' | 'EXT' | 'INT/EXT',
+          }
+        }
+        return null
+      })
+      .filter(
+        (loc): loc is { name: string; location_type: 'INT' | 'EXT' | 'INT/EXT' } => loc !== null
+      )
+
+    // Get unique locations
+    const uniqueLocations = new Map<
+      string,
+      { name: string; location_type: 'INT' | 'EXT' | 'INT/EXT' }
+    >()
+    locations.forEach(loc => {
+      if (!uniqueLocations.has(loc.name)) {
+        uniqueLocations.set(loc.name, loc)
+      }
+    })
+
+    // Get existing locations
+    const { data: existingLocs } = await supabase
+      .from('script_locations')
+      .select('name')
+      .eq('script_id', scriptId)
+
+    const existingNames = new Set(existingLocs?.map(l => l.name) || [])
+
+    // Insert new locations
+    const newLocations = Array.from(uniqueLocations.values())
+      .filter(loc => !existingNames.has(loc.name))
+      .map(loc => ({
+        script_id: scriptId,
+        name: loc.name,
+        location_type: loc.location_type,
+        scene_count: locations.filter(l => l.name === loc.name).length,
+      }))
+
+    if (newLocations.length > 0) {
+      await supabase.from('script_locations').insert(newLocations)
+    }
+  }
+
+  /**
+   * Create location
+   */
+  static async create(scriptId: string, data: Partial<ScriptLocation>): Promise<ScriptLocation> {
+    const { data: location, error } = await supabase
+      .from('script_locations')
+      .insert({
+        script_id: scriptId,
+        name: data.name,
+        location_type: data.location_type || 'INT',
+        description: data.description,
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    return location
   }
 }
 

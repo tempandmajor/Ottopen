@@ -6,6 +6,7 @@ import { ScriptToolbar } from '@/src/components/script-editor/script-toolbar'
 import { ScriptElementComponent } from '@/src/components/script-editor/script-element'
 import { BeatBoard } from '@/src/components/script-editor/beat-board'
 import { ScriptFormatter } from '@/src/lib/script-formatter'
+import { ScriptPDFExporter } from '@/src/lib/script-pdf-export'
 import type { Script, ScriptElement, ScriptBeat, ElementType } from '@/src/types/script-editor'
 
 export default function ScriptEditorPage() {
@@ -103,7 +104,14 @@ export default function ScriptEditorPage() {
   }
 
   const handleExportPDF = async () => {
-    alert('PDF export coming soon!')
+    if (!script) return
+
+    try {
+      await ScriptPDFExporter.downloadPDF(script, elements)
+    } catch (error) {
+      console.error('Failed to export PDF:', error)
+      alert('Failed to export PDF. Please try again.')
+    }
   }
 
   const handleShowCollaborators = () => {
