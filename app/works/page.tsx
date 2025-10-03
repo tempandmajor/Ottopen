@@ -32,7 +32,7 @@ import {
   X,
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { dbService } from '@/src/lib/database'
 import type { Post } from '@/src/lib/supabase'
 import { toast } from 'react-hot-toast'
@@ -65,10 +65,13 @@ export default function Works() {
     loadPosts()
   }, [])
 
-  // Search functionality
+  // Search functionality with debouncing (300ms)
   useEffect(() => {
     if (searchQuery.trim()) {
-      handleSearch()
+      const timer = setTimeout(() => {
+        handleSearch()
+      }, 300)
+      return () => clearTimeout(timer)
     } else {
       setSearchResults([])
     }
@@ -86,11 +89,10 @@ export default function Works() {
         newThisWeek: allPosts.filter(
           p => new Date(p.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
         ).length,
-        totalReads: allPosts.reduce((sum, p) => sum + (p.likes_count || 0), 0), // Using likes as reads proxy
+        totalReads: allPosts.reduce((sum, p) => sum + (p.views_count || 0), 0),
         totalLikes: allPosts.reduce((sum, p) => sum + (p.likes_count || 0), 0),
       })
     } catch (error) {
-      console.error('Failed to load posts:', error)
       toast.error('Failed to load works')
     } finally {
       setLoading(false)
@@ -105,7 +107,6 @@ export default function Works() {
       const results = await dbService.searchPosts(searchQuery, 20)
       setSearchResults(results)
     } catch (error) {
-      console.error('Search failed:', error)
       toast.error('Search failed')
     } finally {
       setSearching(false)
@@ -138,10 +139,7 @@ export default function Works() {
       if (morePosts.length < 20) {
         setHasMore(false)
       }
-
-      toast.success(`Loaded ${morePosts.length} more works`)
     } catch (error) {
-      console.error('Failed to load more works:', error)
       toast.error('Failed to load more works')
     } finally {
       setLoadingMore(false)
@@ -193,30 +191,46 @@ export default function Works() {
     return filtered
   }
 
-  const filteredPosts = applyFilters(searchQuery.trim() ? searchResults : posts)
-  const featuredWorks = filteredPosts.slice(0, 20)
-  const newReleases = filteredPosts.filter(
-    post => new Date(post.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-  )
-  const popular = [...filteredPosts]
-    .sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0))
-    .slice(0, 20)
+  // Memoize filtered posts to prevent unnecessary recalculations
+  const filteredPosts = useMemo(() => {
+    return applyFilters(searchQuery.trim() ? searchResults : posts)
+  }, [posts, searchResults, searchQuery, selectedGenre, filters])
+
+  // Memoize tab calculations to only compute when filteredPosts changes
+  const featuredWorks = useMemo(() => {
+    return filteredPosts.slice(0, 20)
+  }, [filteredPosts])
+
+  const newReleases = useMemo(() => {
+    return filteredPosts.filter(
+      post => new Date(post.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    )
+  }, [filteredPosts])
+
+  const popular = useMemo(() => {
+    return [...filteredPosts]
+      .sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0))
+      .slice(0, 20)
+  }, [filteredPosts])
+
   // Trending uses different algorithm - engagement velocity with recency boost
-  const trending = [...filteredPosts]
-    .map(post => {
-      const ageHours = Math.max(
-        1,
-        (Date.now() - new Date(post.created_at).getTime()) / (1000 * 60 * 60)
-      )
-      const engagement =
-        (post.likes_count || 0) + (post.comments_count || 0) * 2 + (post.views_count || 0) * 0.1
-      const velocity = engagement / ageHours
-      const recencyBoost = ageHours < 24 ? 2.0 : ageHours < 72 ? 1.5 : 1.0
-      return { post, trendingScore: velocity * recencyBoost }
-    })
-    .sort((a, b) => b.trendingScore - a.trendingScore)
-    .slice(0, 20)
-    .map(item => item.post)
+  const trending = useMemo(() => {
+    return [...filteredPosts]
+      .map(post => {
+        const ageHours = Math.max(
+          1,
+          (Date.now() - new Date(post.created_at).getTime()) / (1000 * 60 * 60)
+        )
+        const engagement =
+          (post.likes_count || 0) + (post.comments_count || 0) * 2 + (post.views_count || 0) * 0.1
+        const velocity = engagement / ageHours
+        const recencyBoost = ageHours < 24 ? 2.0 : ageHours < 72 ? 1.5 : 1.0
+        return { post, trendingScore: velocity * recencyBoost }
+      })
+      .sort((a, b) => b.trendingScore - a.trendingScore)
+      .slice(0, 20)
+      .map(item => item.post)
+  }, [filteredPosts])
 
   // Helper function to get completion status badge
   const getCompletionBadge = (status?: string) => {
