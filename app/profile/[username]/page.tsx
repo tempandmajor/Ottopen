@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/components/ui/ta
 import { Avatar, AvatarFallback, AvatarImage } from '@/src/components/ui/avatar'
 import { Badge } from '@/src/components/ui/badge'
 import { Textarea } from '@/src/components/ui/textarea'
+import { Skeleton } from '@/src/components/ui/skeleton'
 import {
   MapPin,
   Calendar,
@@ -77,7 +78,7 @@ export default function Profile() {
       setLoading(true)
       setError(null)
 
-      // Load user by username
+      // Phase 1: Load user by username
       const userData = await dbService.getUserByUsernameLegacy(username)
       if (!userData) {
         setError('User not found')
@@ -86,16 +87,17 @@ export default function Profile() {
 
       setProfile(userData)
 
-      // Load user statistics
-      const stats = await dbService.getUserStats(userData.id)
-      setUserStats(stats)
+      // Phase 2: Load remaining data in parallel for better performance
+      const [stats, posts] = await Promise.all([
+        dbService.getUserStats(userData.id),
+        dbService.getPosts({
+          userId: userData.id,
+          published: true,
+          limit: 20,
+        }),
+      ])
 
-      // Load user posts
-      const posts = await dbService.getPosts({
-        userId: userData.id,
-        published: true,
-        limit: 20,
-      })
+      setUserStats(stats)
       setUserPosts(posts)
       setCurrentOffset(20)
       setHasMore(posts.length === 20)
@@ -176,16 +178,49 @@ export default function Profile() {
 
   const isOwnProfile = currentUser?.profile?.id === profile?.id
 
-  // Loading state
+  // Loading state with skeleton
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
-            <div className="text-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-              <p className="mt-4 text-muted-foreground">Loading profile...</p>
+            {/* Profile Header Skeleton */}
+            <Card className="card-bg card-shadow border-literary-border mb-8">
+              <CardContent className="p-4 sm:p-6 lg:p-8">
+                <div className="flex flex-col sm:flex-row gap-6">
+                  <div className="flex flex-col items-center sm:items-start">
+                    <Skeleton className="h-24 w-24 sm:h-32 sm:w-32 rounded-full mb-4" />
+                    <div className="flex gap-2">
+                      <Skeleton className="h-9 w-24" />
+                      <Skeleton className="h-9 w-24" />
+                    </div>
+                  </div>
+                  <div className="flex-1 space-y-4">
+                    <div className="space-y-2">
+                      <Skeleton className="h-8 w-48" />
+                      <Skeleton className="h-5 w-32" />
+                      <Skeleton className="h-4 w-24" />
+                    </div>
+                    <Skeleton className="h-16 w-full" />
+                    <div className="flex gap-4">
+                      <Skeleton className="h-6 w-24" />
+                      <Skeleton className="h-6 w-24" />
+                      <Skeleton className="h-6 w-24" />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Tabs Skeleton */}
+            <div className="space-y-6">
+              <Skeleton className="h-12 w-full" />
+              <div className="space-y-4">
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-32 w-full" />
+              </div>
             </div>
           </div>
         </div>
@@ -210,9 +245,17 @@ export default function Profile() {
                   ? "The user you're looking for doesn't exist or may have been deactivated."
                   : "We couldn't load this profile. Please try again later."}
               </p>
-              <Button variant="outline" onClick={() => window.history.back()}>
-                Go Back
-              </Button>
+              <div className="flex gap-3 justify-center">
+                <Button variant="outline" onClick={() => window.history.back()}>
+                  Go Back
+                </Button>
+                {error !== 'User not found' && (
+                  <Button onClick={() => loadProfile()}>
+                    <Loader2 className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                    Try Again
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -553,7 +596,7 @@ export default function Profile() {
               >
                 <span className="text-xs sm:text-sm">Liked</span>
                 <Badge variant="secondary" className="text-xs mt-1 xs:mt-0">
-                  0
+                  {likedPosts.length}
                 </Badge>
               </TabsTrigger>
               <TabsTrigger
@@ -562,7 +605,7 @@ export default function Profile() {
               >
                 <span className="text-xs sm:text-sm">Reshared</span>
                 <Badge variant="secondary" className="text-xs mt-1 xs:mt-0">
-                  0
+                  {resharedPosts.length}
                 </Badge>
               </TabsTrigger>
             </TabsList>
