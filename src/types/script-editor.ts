@@ -1,6 +1,12 @@
 // Script Editor Types
 
-export type ScriptType = 'screenplay' | 'tv_pilot' | 'stage_play' | 'radio_drama' | 'documentary'
+export type ScriptType =
+  | 'screenplay'
+  | 'tv_pilot'
+  | 'stage_play'
+  | 'radio_drama'
+  | 'documentary'
+  | 'nonfiction_book'
 export type FormatStandard = 'us_industry' | 'uk_bbc' | 'european' | 'stage'
 export type RevisionColor =
   | 'white'
@@ -34,6 +40,17 @@ export type ElementType =
   | 'archive_footage'
   | 'lower_third'
   | 'act_break'
+  | 'chapter_title'
+  | 'chapter_subtitle'
+  | 'paragraph'
+  | 'heading_1'
+  | 'heading_2'
+  | 'heading_3'
+  | 'block_quote'
+  | 'bullet_list'
+  | 'numbered_list'
+  | 'footnote'
+  | 'citation'
 
 export type BeatType =
   | 'opening_image'
@@ -228,6 +245,46 @@ export interface ScriptShareLink {
   access_count: number
 }
 
+// Book-specific types
+export interface BookChapter {
+  id: string
+  book_id: string
+  title: string
+  subtitle?: string
+  chapter_number: number
+  word_count: number
+  order_index: number
+  is_front_matter: boolean
+  is_back_matter: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface Citation {
+  id: string
+  book_id: string
+  citation_key: string
+  citation_type: 'book' | 'article' | 'website' | 'interview' | 'other'
+  authors: string[]
+  title: string
+  year?: number
+  publisher?: string
+  url?: string
+  page_numbers?: string
+  notes?: string
+  created_at: string
+}
+
+export interface Footnote {
+  id: string
+  book_id: string
+  element_id: string
+  footnote_number: number
+  content: string
+  citation_id?: string
+  created_at: string
+}
+
 // Formatting Styles
 export interface ElementStyles {
   fontFamily: string
@@ -240,6 +297,8 @@ export interface ElementStyles {
   fontStyle?: 'normal' | 'italic'
   paddingTop?: string
   paddingBottom?: string
+  textIndent?: string
+  lineHeight?: string
 }
 
 export interface FormatTemplate {
@@ -261,6 +320,17 @@ export interface FormatTemplate {
   archive_footage?: ElementStyles
   lower_third?: ElementStyles
   act_break?: ElementStyles
+  chapter_title?: ElementStyles
+  chapter_subtitle?: ElementStyles
+  paragraph?: ElementStyles
+  heading_1?: ElementStyles
+  heading_2?: ElementStyles
+  heading_3?: ElementStyles
+  block_quote?: ElementStyles
+  bullet_list?: ElementStyles
+  numbered_list?: ElementStyles
+  footnote?: ElementStyles
+  citation?: ElementStyles
 }
 
 // Production Reports

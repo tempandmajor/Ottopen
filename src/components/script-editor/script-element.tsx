@@ -10,7 +10,13 @@ interface ScriptElementProps {
   onContentChange: (content: string) => void
   onElementTypeChange: (type: ElementType) => void
   onKeyDown: (e: React.KeyboardEvent) => void
-  scriptType: 'screenplay' | 'tv_pilot' | 'stage_play' | 'radio_drama' | 'documentary'
+  scriptType:
+    | 'screenplay'
+    | 'tv_pilot'
+    | 'stage_play'
+    | 'radio_drama'
+    | 'documentary'
+    | 'nonfiction_book'
 }
 
 export function ScriptElementComponent({

@@ -246,6 +246,135 @@ export const DOCUMENTARY_FORMAT: FormatTemplate = {
   },
 }
 
+export const NONFICTION_BOOK_FORMAT: FormatTemplate = {
+  // Required base properties (not used in books but required by interface)
+  scene_heading: {
+    fontFamily: "'Georgia', 'Times New Roman', serif",
+    fontSize: '14pt',
+    marginLeft: '0in',
+    fontWeight: 'bold',
+  },
+  action: {
+    fontFamily: "'Georgia', 'Times New Roman', serif",
+    fontSize: '12pt',
+    marginLeft: '0in',
+  },
+  character: {
+    fontFamily: "'Georgia', 'Times New Roman', serif",
+    fontSize: '12pt',
+    marginLeft: '0in',
+  },
+  dialogue: {
+    fontFamily: "'Georgia', 'Times New Roman', serif",
+    fontSize: '12pt',
+    marginLeft: '0in',
+  },
+  parenthetical: {
+    fontFamily: "'Georgia', 'Times New Roman', serif",
+    fontSize: '12pt',
+    marginLeft: '0in',
+  },
+  transition: {
+    fontFamily: "'Georgia', 'Times New Roman', serif",
+    fontSize: '12pt',
+    marginLeft: '0in',
+  },
+  shot: {
+    fontFamily: "'Georgia', 'Times New Roman', serif",
+    fontSize: '12pt',
+    marginLeft: '0in',
+  },
+  // Book-specific properties
+  chapter_title: {
+    fontFamily: "'Georgia', 'Times New Roman', serif",
+    fontSize: '24pt',
+    marginLeft: '0in',
+    marginRight: '0in',
+    textAlign: 'center',
+    fontWeight: 'bold',
+    paddingTop: '48pt',
+    paddingBottom: '24pt',
+  },
+  chapter_subtitle: {
+    fontFamily: "'Georgia', 'Times New Roman', serif",
+    fontSize: '14pt',
+    marginLeft: '0in',
+    marginRight: '0in',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    paddingBottom: '24pt',
+  },
+  paragraph: {
+    fontFamily: "'Georgia', 'Times New Roman', serif",
+    fontSize: '12pt',
+    marginLeft: '0in',
+    marginRight: '0in',
+    textIndent: '0.5in',
+    lineHeight: '2',
+    paddingBottom: '0pt',
+  },
+  heading_1: {
+    fontFamily: "'Georgia', 'Times New Roman', serif",
+    fontSize: '18pt',
+    marginLeft: '0in',
+    fontWeight: 'bold',
+    paddingTop: '18pt',
+    paddingBottom: '12pt',
+  },
+  heading_2: {
+    fontFamily: "'Georgia', 'Times New Roman', serif",
+    fontSize: '16pt',
+    marginLeft: '0in',
+    fontWeight: 'bold',
+    paddingTop: '12pt',
+    paddingBottom: '6pt',
+  },
+  heading_3: {
+    fontFamily: "'Georgia', 'Times New Roman', serif",
+    fontSize: '14pt',
+    marginLeft: '0in',
+    fontWeight: 'bold',
+    fontStyle: 'italic',
+    paddingTop: '6pt',
+    paddingBottom: '6pt',
+  },
+  block_quote: {
+    fontFamily: "'Georgia', 'Times New Roman', serif",
+    fontSize: '11pt',
+    marginLeft: '0.5in',
+    marginRight: '0.5in',
+    fontStyle: 'italic',
+    paddingTop: '12pt',
+    paddingBottom: '12pt',
+  },
+  bullet_list: {
+    fontFamily: "'Georgia', 'Times New Roman', serif",
+    fontSize: '12pt',
+    marginLeft: '0.25in',
+    paddingBottom: '6pt',
+  },
+  numbered_list: {
+    fontFamily: "'Georgia', 'Times New Roman', serif",
+    fontSize: '12pt',
+    marginLeft: '0.25in',
+    paddingBottom: '6pt',
+  },
+  footnote: {
+    fontFamily: "'Georgia', 'Times New Roman', serif",
+    fontSize: '10pt',
+    marginLeft: '0in',
+    fontStyle: 'italic',
+    paddingTop: '6pt',
+  },
+  citation: {
+    fontFamily: "'Georgia', 'Times New Roman', serif",
+    fontSize: '10pt',
+    marginLeft: '0in',
+    fontStyle: 'italic',
+    paddingTop: '3pt',
+  },
+}
+
 // ============================================================================
 // ELEMENT DETECTION
 // ============================================================================
@@ -482,6 +611,8 @@ export class ScriptFormatter {
         return STAGE_PLAY_FORMAT
       case 'documentary':
         return DOCUMENTARY_FORMAT
+      case 'nonfiction_book':
+        return NONFICTION_BOOK_FORMAT
       case 'screenplay':
       case 'tv_pilot':
       case 'radio_drama':
@@ -628,6 +759,16 @@ export class ScriptFormatter {
         'archive_footage',
         'act_break',
       ],
+      nonfiction_book: [
+        'chapter_title',
+        'paragraph',
+        'heading_1',
+        'heading_2',
+        'heading_3',
+        'block_quote',
+        'bullet_list',
+        'numbered_list',
+      ],
     }
 
     const order = cycleOrder[scriptType]
@@ -748,6 +889,7 @@ export class ScriptValidator {
       stage_play: { min: 80, max: 100 },
       radio_drama: { min: 20, max: 30 },
       documentary: { min: 30, max: 90 }, // Varies widely
+      nonfiction_book: { min: 150, max: 400 }, // Books measured in pages
     }
 
     const range = ranges[scriptType]

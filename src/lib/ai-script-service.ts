@@ -130,7 +130,8 @@ Provide 3 alternative versions that improve the dialogue. For each, explain the 
       | 'tv_pilot'
       | 'stage_play'
       | 'radio_drama'
-      | 'documentary' = 'screenplay'
+      | 'documentary'
+      | 'nonfiction_book' = 'screenplay'
   ): Promise<BeatGenerationResult> {
     const pageRanges: Record<string, string> = {
       screenplay: '90-120 pages',
@@ -138,6 +139,7 @@ Provide 3 alternative versions that improve the dialogue. For each, explain the 
       stage_play: '80-100 pages',
       radio_drama: '20-30 pages',
       documentary: '30-90 pages',
+      nonfiction_book: '150-400 pages',
     }
 
     const prompt = `Generate story beats using Save the Cat! methodology for this ${genre} ${scriptType}:
@@ -207,7 +209,8 @@ Format as JSON:
       | 'tv_pilot'
       | 'stage_play'
       | 'radio_drama'
-      | 'documentary' = 'screenplay'
+      | 'documentary'
+      | 'nonfiction_book' = 'screenplay'
   ): Promise<StructureAnalysis> {
     // Extract scene headings and page numbers
     const sceneHeadings = elements
