@@ -11,8 +11,8 @@ const nextConfig = {
           : ['localhost:3000'],
       bodySizeLimit: '2mb',
     },
+    serverComponentsExternalPackages: ['@supabase/supabase-js'],
   },
-  serverComponentsExternalPackages: ['@supabase/supabase-js'],
   images: {
     remotePatterns: [
       {
