@@ -49,7 +49,35 @@ export type Env = z.infer<typeof envSchema>
 // Validate and parse environment variables
 function validateEnv(): Env {
   try {
-    return envSchema.parse(process.env)
+    const parsed = envSchema.parse(process.env)
+
+    // SEC-013: Security check - ensure secrets don't have NEXT_PUBLIC_ prefix
+    const secretKeys = [
+      'SUPABASE_SERVICE_ROLE_KEY',
+      'STRIPE_SECRET_KEY',
+      'NEXTAUTH_SECRET',
+      'SMTP_PASS',
+      'KV_REST_API_TOKEN',
+    ]
+
+    for (const key of secretKeys) {
+      const publicKey = `NEXT_PUBLIC_${key}`
+      if (process.env[publicKey]) {
+        throw new Error(
+          `Security Error: Found ${publicKey} in environment. ` +
+            `Secret keys must NOT use NEXT_PUBLIC_ prefix as this exposes them to the client!`
+        )
+      }
+    }
+
+    // Warn if critical services are missing in production
+    if (parsed.NODE_ENV === 'production') {
+      if (!parsed.KV_REST_API_TOKEN) {
+        console.warn('⚠️  Rate limiting disabled - KV_REST_API_TOKEN not configured')
+      }
+    }
+
+    return parsed
   } catch (error) {
     if (error instanceof z.ZodError) {
       const missingVars = error.errors.map(err => `${err.path.join('.')}: ${err.message}`)

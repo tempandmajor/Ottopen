@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 import Stripe from 'stripe'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/src/lib/supabase-admin'
+import { logError } from '@/src/lib/errors'
 
 function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -12,30 +13,24 @@ function getStripe() {
   })
 }
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || ''
-
-// Create Supabase admin client (bypasses RLS)
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  }
-)
-
 /**
  * POST /api/webhooks/stripe
  * Handle Stripe webhook events
+ * SEC-002: Enhanced webhook signature validation
  */
 export async function POST(request: NextRequest) {
   const body = await request.text()
   const signature = headers().get('stripe-signature')
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
+
+  // Validate webhook secret configuration
+  if (!webhookSecret || webhookSecret.length < 32) {
+    logError(new Error('Invalid webhook secret configuration'))
+    return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 })
+  }
 
   if (!signature) {
-    return NextResponse.json({ error: 'No signature' }, { status: 400 })
+    return NextResponse.json({ error: 'Missing signature' }, { status: 401 })
   }
 
   let event: Stripe.Event
@@ -43,34 +38,49 @@ export async function POST(request: NextRequest) {
   try {
     const stripe = getStripe()
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
-  } catch (err: any) {
-    console.error('Webhook signature verification failed:', err.message)
-    return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 })
+
+    // SEC-002: Prevent replay attacks - check event age
+    const eventAge = Date.now() - event.created * 1000
+    if (eventAge > 5 * 60 * 1000) {
+      // 5 minutes
+      logError(new Error('Webhook event too old'), {
+        eventId: event.id,
+        eventAge: eventAge / 1000,
+      })
+      return NextResponse.json({ error: 'Event expired' }, { status: 401 })
+    }
+  } catch (error: unknown) {
+    // SEC-002: Don't leak error details to potential attackers
+    logError(error, { context: 'webhook_signature_validation' })
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
   try {
+    const supabaseAdmin = getSupabaseAdmin()
+
     switch (event.type) {
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
-        await handleSubscriptionCreated(event.data.object as Stripe.Subscription)
+        await handleSubscriptionCreated(event.data.object as Stripe.Subscription, supabaseAdmin)
         break
 
       case 'customer.subscription.deleted':
-        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription)
+        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription, supabaseAdmin)
         break
 
       case 'account.updated':
-        await handleAccountUpdated(event.data.object as Stripe.Account)
+        await handleAccountUpdated(event.data.object as Stripe.Account, supabaseAdmin)
         break
 
       default:
-        console.log(`Unhandled event type: ${event.type}`)
+        // Log unhandled event types for monitoring
+        logError(new Error('Unhandled webhook event type'), { eventType: event.type })
     }
 
     return NextResponse.json({ received: true })
-  } catch (error) {
-    console.error('Error processing webhook:', error)
-    return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 })
+  } catch (error: unknown) {
+    logError(error, { context: 'webhook_processing', eventType: event.type })
+    return NextResponse.json({ error: 'Processing failed' }, { status: 500 })
   }
 }
 
@@ -78,7 +88,7 @@ export async function POST(request: NextRequest) {
  * Handle subscription creation/update
  * Confirm referral when user subscribes
  */
-async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
+async function handleSubscriptionCreated(subscription: Stripe.Subscription, supabaseAdmin: any) {
   try {
     const customerId = subscription.customer as string
     const referralCode = subscription.metadata?.referral_code
@@ -91,7 +101,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
       .single()
 
     if (userError || !user) {
-      console.log('User not found for customer:', customerId)
+      logError(new Error('User not found for Stripe customer'), { customerId })
       return
     }
 
@@ -180,7 +190,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
 /**
  * Handle subscription deletion
  */
-async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription, supabaseAdmin: any) {
   try {
     const customerId = subscription.customer as string
 
@@ -192,28 +202,28 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
       .single()
 
     if (!user) {
-      console.log('User not found for customer:', customerId)
+      logError(new Error('User not found for Stripe customer'), { customerId })
       return
     }
 
     // Downgrade to free tier
     await supabaseAdmin.from('users').update({ account_tier: 'free' }).eq('id', user.id)
 
-    console.log('Subscription cancelled for user:', user.id)
-  } catch (error) {
-    console.error('Error handling subscription deleted:', error)
+    logError(new Error('Subscription cancelled'), { userId: user.id })
+  } catch (error: unknown) {
+    logError(error, { context: 'handleSubscriptionDeleted' })
   }
 }
 
 /**
  * Handle Stripe Connect account updates
  */
-async function handleAccountUpdated(account: Stripe.Account) {
+async function handleAccountUpdated(account: Stripe.Account, supabaseAdmin: any) {
   try {
     const userId = account.metadata?.user_id
 
     if (!userId) {
-      console.log('No user_id in account metadata')
+      logError(new Error('No user_id in account metadata'))
       return
     }
 
@@ -231,8 +241,8 @@ async function handleAccountUpdated(account: Stripe.Account) {
       })
       .eq('id', userId)
 
-    console.log('Updated Connect status for user:', userId)
-  } catch (error) {
-    console.error('Error handling account updated:', error)
+    logError(new Error('Updated Connect status'), { userId })
+  } catch (error: unknown) {
+    logError(error, { context: 'handleAccountUpdated' })
   }
 }

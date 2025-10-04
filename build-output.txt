@@ -1,0 +1,77 @@
+
+> ottopen@0.0.0 build
+> next build
+
+  ▲ Next.js 14.2.32
+  - Environments: .env.local, .env.production
+
+   Creating an optimized production build ...
+ ⚠ Compiled with warnings
+
+./node_modules/@prisma/instrumentation/node_modules/@opentelemetry/instrumentation/build/esm/platform/node/instrumentation.js
+Critical dependency: the request of a dependency is an expression
+
+Import trace for requested module:
+./node_modules/@prisma/instrumentation/node_modules/@opentelemetry/instrumentation/build/esm/platform/node/instrumentation.js
+./node_modules/@prisma/instrumentation/node_modules/@opentelemetry/instrumentation/build/esm/platform/node/index.js
+./node_modules/@prisma/instrumentation/node_modules/@opentelemetry/instrumentation/build/esm/platform/index.js
+./node_modules/@prisma/instrumentation/node_modules/@opentelemetry/instrumentation/build/esm/index.js
+./node_modules/@prisma/instrumentation/dist/index.js
+./node_modules/@sentry/node/build/cjs/integrations/tracing/prisma.js
+./node_modules/@sentry/node/build/cjs/index.js
+./node_modules/@sentry/nextjs/build/cjs/index.server.js
+./src/lib/monitoring.ts
+./src/components/error-boundary.tsx
+./app/providers.tsx
+
+./node_modules/require-in-the-middle/index.js
+Critical dependency: require function is used in a way in which dependencies cannot be statically extracted
+
+Import trace for requested module:
+./node_modules/require-in-the-middle/index.js
+./node_modules/@opentelemetry/instrumentation/build/esm/platform/node/instrumentation.js
+./node_modules/@opentelemetry/instrumentation/build/esm/platform/node/index.js
+./node_modules/@opentelemetry/instrumentation/build/esm/platform/index.js
+./node_modules/@opentelemetry/instrumentation/build/esm/index.js
+./node_modules/@sentry/node/build/cjs/integrations/tracing/postgresjs.js
+./node_modules/@sentry/node/build/cjs/index.js
+./node_modules/@sentry/nextjs/build/cjs/index.server.js
+./src/lib/monitoring.ts
+./src/components/error-boundary.tsx
+./app/providers.tsx
+
+./node_modules/ejs/lib/ejs.js
+require.extensions is not supported by webpack. Use a loader instead.
+
+Import trace for requested module:
+./node_modules/ejs/lib/ejs.js
+./node_modules/epub-gen/lib/index.js
+./node_modules/epub-gen/index.js
+./src/lib/export-service.ts
+./app/api/scripts/[scriptId]/export/route.ts
+
+./node_modules/ejs/lib/ejs.js
+require.extensions is not supported by webpack. Use a loader instead.
+
+Import trace for requested module:
+./node_modules/ejs/lib/ejs.js
+./node_modules/epub-gen/lib/index.js
+./node_modules/epub-gen/index.js
+./src/lib/export-service.ts
+./app/api/scripts/[scriptId]/export/route.ts
+
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+Failed to compile.
+
+./app/api/webhooks/stripe/route.ts:68:83
+Type error: Expected 1 arguments, but got 2.
+
+[0m [90m 66 |[39m[0m
+[0m [90m 67 |[39m       [36mcase[39m [32m'customer.subscription.deleted'[39m[33m:[39m[0m
+[0m[31m[1m>[22m[39m[90m 68 |[39m         [36mawait[39m handleSubscriptionDeleted(event[33m.[39mdata[33m.[39mobject [36mas[39m [33mStripe[39m[33m.[39m[33mSubscription[39m[33m,[39m supabaseAdmin)[0m
+[0m [90m    |[39m                                                                                   [31m[1m^[22m[39m[0m
+[0m [90m 69 |[39m         [36mbreak[39m[0m
+[0m [90m 70 |[39m[0m
+[0m [90m 71 |[39m       [36mcase[39m [32m'account.updated'[39m[33m:[39m[0m
+Next.js build worker exited with code: 1 and signal: null

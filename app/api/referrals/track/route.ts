@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
+import { validateRequest, trackReferralSchema } from '@/src/lib/validation'
+import { logError, formatErrorResponse, ValidationError } from '@/src/lib/errors'
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic'
@@ -7,16 +10,23 @@ export const dynamic = 'force-dynamic'
 /**
  * POST /api/referrals/track
  * Track a referral when a new user signs up with a referral code
+ * SEC-001: Rate limiting applied
+ * SEC-006: Fixed race condition with unique constraint
  */
-export async function POST(request: NextRequest) {
+async function handleTrackReferral(request: NextRequest) {
   try {
     const supabase = createServerSupabaseClient()
-    const body = await request.json()
-    const { referral_code, referred_user_id } = body
 
-    if (!referral_code || !referred_user_id) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    // Validate request body
+    const validation = await validateRequest(request, trackReferralSchema)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error, details: validation.details },
+        { status: 400 }
+      )
     }
+
+    const { referral_code, referred_user_id } = validation.data
 
     // Find the referral code
     const { data: codeData, error: codeError } = await supabase
@@ -24,7 +34,7 @@ export async function POST(request: NextRequest) {
       .select('*')
       .eq('code', referral_code)
       .eq('is_active', true)
-      .single()
+      .maybeSingle()
 
     if (codeError || !codeData) {
       return NextResponse.json({ error: 'Invalid referral code' }, { status: 400 })
@@ -35,18 +45,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Cannot refer yourself' }, { status: 400 })
     }
 
-    // Check if referral already exists
-    const { data: existingReferral } = await supabase
-      .from('referrals')
-      .select('*')
-      .eq('referred_id', referred_user_id)
-      .single()
-
-    if (existingReferral) {
-      return NextResponse.json({ error: 'User already referred' }, { status: 400 })
-    }
-
-    // Create referral record
+    // SEC-006: Use database unique constraint to prevent race condition
+    // Try to create referral - will fail if already exists due to unique constraint
     const { data: referral, error: referralError } = await supabase
       .from('referrals')
       .insert({
@@ -61,8 +61,13 @@ export async function POST(request: NextRequest) {
       .select()
       .single()
 
+    // Check for unique constraint violation
     if (referralError) {
-      console.error('Error creating referral:', referralError)
+      if (referralError.code === '23505') {
+        // Unique violation - user already referred
+        return NextResponse.json({ error: 'User already referred' }, { status: 400 })
+      }
+      logError(referralError, { context: 'create_referral' })
       return NextResponse.json({ error: 'Failed to create referral' }, { status: 500 })
     }
 
@@ -76,7 +81,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (earningsError) {
-      console.error('Error creating earnings:', earningsError)
+      logError(earningsError, { context: 'create_earnings', referralId: referral.id })
     }
 
     // Increment uses count
@@ -89,8 +94,11 @@ export async function POST(request: NextRequest) {
       success: true,
       referral,
     })
-  } catch (error) {
-    console.error('Error in track referral:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  } catch (error: unknown) {
+    logError(error, { context: 'track_referral' })
+    return NextResponse.json(formatErrorResponse(error), { status: 500 })
   }
 }
+
+// SEC-001: Apply rate limiting
+export const POST = createRateLimitedHandler('referral', handleTrackReferral)

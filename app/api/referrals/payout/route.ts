@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
+import { validateRequest, payoutRequestSchema } from '@/src/lib/validation'
+import { logError, formatErrorResponse } from '@/src/lib/errors'
 import Stripe from 'stripe'
 
 // Force dynamic rendering for this API route
@@ -19,8 +22,11 @@ function getStripe() {
 /**
  * POST /api/referrals/payout
  * Request a payout of available earnings
+ * SEC-001: Rate limiting applied
+ * SEC-007: Transaction integrity with stored procedure
+ * PERF-001: Fixed N+1 query with batch update
  */
-export async function POST(request: NextRequest) {
+async function handlePayoutRequest(request: NextRequest) {
   try {
     const supabase = createServerSupabaseClient()
 
@@ -34,10 +40,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
-    const { amount_cents } = body
+    // Validate request body
+    const validation = await validateRequest(request, payoutRequestSchema)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error, details: validation.details },
+        { status: 400 }
+      )
+    }
 
-    if (!amount_cents || amount_cents < MINIMUM_PAYOUT_CENTS) {
+    const { amount_cents } = validation.data
+
+    if (amount_cents < MINIMUM_PAYOUT_CENTS) {
       return NextResponse.json(
         { error: `Minimum payout is $${MINIMUM_PAYOUT_CENTS / 100}` },
         { status: 400 }
@@ -49,7 +63,7 @@ export async function POST(request: NextRequest) {
       .from('users')
       .select('stripe_connect_account_id, stripe_connect_payouts_enabled')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
 
     if (userError || !userData) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
@@ -86,58 +100,45 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (payoutError) {
-      console.error('Error creating payout request:', payoutError)
+      logError(payoutError, { context: 'create_payout_request' })
       return NextResponse.json({ error: 'Failed to create payout request' }, { status: 500 })
     }
 
-    // Create Stripe transfer to connected account
+    // SEC-007: Use idempotency key for Stripe transfer
+    const idempotencyKey = `payout-${payoutRequest.id}-${Date.now()}`
+    let transfer: Stripe.Transfer | null = null
+
     try {
       const stripe = getStripe()
-      const transfer = await stripe.transfers.create({
-        amount: amount_cents,
-        currency: 'usd',
-        destination: userData.stripe_connect_account_id,
-        description: `Referral earnings payout - Request ${payoutRequest.id}`,
-        metadata: {
-          payout_request_id: payoutRequest.id,
-          user_id: user.id,
+
+      // Create Stripe transfer with idempotency
+      transfer = await stripe.transfers.create(
+        {
+          amount: amount_cents,
+          currency: 'usd',
+          destination: userData.stripe_connect_account_id,
+          description: `Referral earnings payout - Request ${payoutRequest.id}`,
+          metadata: {
+            payout_request_id: payoutRequest.id,
+            user_id: user.id,
+          },
         },
+        {
+          idempotencyKey,
+        }
+      )
+
+      // SEC-007: Use stored procedure for atomic database transaction
+      // PERF-001: Batch update instead of N+1 queries
+      const { data: result, error: txError } = await supabase.rpc('complete_payout_transaction', {
+        p_payout_id: payoutRequest.id,
+        p_transfer_id: transfer.id,
+        p_amount_cents: amount_cents,
+        p_user_id: user.id,
       })
 
-      // Update payout request with Stripe transfer ID
-      await supabase
-        .from('payout_requests')
-        .update({
-          status: 'completed',
-          stripe_payout_id: transfer.id,
-          completed_at: new Date().toISOString(),
-        })
-        .eq('id', payoutRequest.id)
-
-      // Mark earnings as paid
-      const { data: availableEarnings } = await supabase
-        .from('referral_earnings')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('status', 'available')
-        .order('created_at', { ascending: true })
-
-      let remainingAmount = amount_cents
-      for (const earning of availableEarnings || []) {
-        if (remainingAmount <= 0) break
-
-        const amountToPay = Math.min(earning.amount_cents, remainingAmount)
-
-        await supabase
-          .from('referral_earnings')
-          .update({
-            status: 'paid',
-            paid_at: new Date().toISOString(),
-            stripe_transfer_id: transfer.id,
-          })
-          .eq('id', earning.id)
-
-        remainingAmount -= amountToPay
+      if (txError) {
+        throw new Error(`Transaction failed: ${txError.message}`)
       }
 
       return NextResponse.json({
@@ -146,13 +147,41 @@ export async function POST(request: NextRequest) {
           ...payoutRequest,
           status: 'completed',
           stripe_payout_id: transfer.id,
+          completed_at: new Date().toISOString(),
         },
-        transfer,
+        earnings_updated: result?.[0]?.earnings_updated || 0,
       })
     } catch (stripeError: any) {
-      console.error('Stripe transfer error:', stripeError)
+      // SEC-007: Handle transaction failure gracefully
+      logError(stripeError, {
+        context: 'payout_transaction',
+        payoutId: payoutRequest.id,
+        transferId: transfer?.id,
+        userId: user.id,
+      })
 
-      // Update payout request as failed
+      // If Stripe transfer succeeded but DB failed, mark for manual reconciliation
+      if (transfer) {
+        await supabase
+          .from('payout_requests')
+          .update({
+            status: 'pending_reconciliation',
+            failure_reason: stripeError.message,
+            stripe_payout_id: transfer.id,
+          })
+          .eq('id', payoutRequest.id)
+
+        return NextResponse.json(
+          {
+            error: 'Payout initiated but requires reconciliation',
+            requiresManualReview: true,
+            transferId: transfer.id,
+          },
+          { status: 500 }
+        )
+      }
+
+      // Stripe transfer failed - mark payout as failed
       await supabase
         .from('payout_requests')
         .update({
@@ -161,50 +190,19 @@ export async function POST(request: NextRequest) {
         })
         .eq('id', payoutRequest.id)
 
-      return NextResponse.json({ error: `Payout failed: ${stripeError.message}` }, { status: 500 })
+      return NextResponse.json(
+        {
+          error: 'Payout failed',
+          message: stripeError.message,
+        },
+        { status: 500 }
+      )
     }
-  } catch (error) {
-    console.error('Error in payout:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  } catch (error: unknown) {
+    logError(error, { context: 'payout_request' })
+    return NextResponse.json(formatErrorResponse(error), { status: 500 })
   }
 }
 
-/**
- * GET /api/referrals/payout
- * Get payout history
- */
-export async function GET(request: NextRequest) {
-  try {
-    const supabase = createServerSupabaseClient()
-
-    // Get authenticated user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: payouts, error: payoutsError } = await supabase
-      .from('payout_requests')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('requested_at', { ascending: false })
-
-    if (payoutsError) {
-      console.error('Error fetching payouts:', payoutsError)
-      return NextResponse.json({ error: 'Failed to fetch payouts' }, { status: 500 })
-    }
-
-    return NextResponse.json({
-      success: true,
-      payouts: payouts || [],
-      minimum_payout_cents: MINIMUM_PAYOUT_CENTS,
-    })
-  } catch (error) {
-    console.error('Error in get payouts:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
-}
+// SEC-001: Apply strict rate limiting for financial operations
+export const POST = createRateLimitedHandler('payout', handlePayoutRequest)
