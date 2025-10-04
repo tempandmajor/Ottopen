@@ -2,6 +2,7 @@ import { requireAuth } from '@/lib/server/auth'
 import { EditorWorkspace } from './EditorWorkspace'
 import { notFound } from 'next/navigation'
 import { ManuscriptService } from '@/src/lib/ai-editor-service'
+import { EditorErrorBoundary } from '@/src/components/EditorErrorBoundary'
 
 interface EditorPageProps {
   params: {
@@ -24,5 +25,9 @@ export default async function EditorManuscriptPage({ params }: EditorPageProps) 
     notFound()
   }
 
-  return <EditorWorkspace user={user} manuscriptId={params.manuscriptId} />
+  return (
+    <EditorErrorBoundary>
+      <EditorWorkspace user={user} manuscriptId={params.manuscriptId} />
+    </EditorErrorBoundary>
+  )
 }

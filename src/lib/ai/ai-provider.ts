@@ -1,13 +1,17 @@
 // Multi-Provider AI System - Support for OpenAI, Anthropic Claude, and more
 // Similar to Perplexity's approach
 
-export type AIProvider = 'openai' | 'anthropic' | 'gemini' | 'auto'
+export type AIProvider = 'openai' | 'anthropic' | 'gemini' | 'perplexity' | 'auto'
 export type AIModel =
   // OpenAI
+  | 'gpt-5-turbo'
+  | 'gpt-5'
   | 'gpt-4-turbo'
   | 'gpt-4'
   | 'gpt-3.5-turbo'
   // Anthropic
+  | 'claude-4.5-sonnet-20250101'
+  | 'claude-4.5-opus-20250101'
   | 'claude-3-5-sonnet-20241022'
   | 'claude-3-opus-20240229'
   | 'claude-3-sonnet-20240229'
@@ -15,6 +19,10 @@ export type AIModel =
   // Google
   | 'gemini-pro'
   | 'gemini-ultra'
+  // Perplexity (Research-focused)
+  | 'llama-3.1-sonar-large-128k-online'
+  | 'llama-3.1-sonar-small-128k-online'
+  | 'llama-3.1-sonar-huge-128k-online'
 
 export interface AIProviderConfig {
   provider: AIProvider
@@ -57,9 +65,11 @@ export interface AIStreamChunk {
 export const AI_PROVIDER_CONFIGS = {
   openai: {
     baseURL: 'https://api.openai.com/v1',
-    defaultModel: 'gpt-4-turbo',
-    models: ['gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo'],
+    defaultModel: 'gpt-5-turbo',
+    models: ['gpt-5-turbo', 'gpt-5', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo'],
     costPer1kTokens: {
+      'gpt-5-turbo': { input: 0.005, output: 0.015 },
+      'gpt-5': { input: 0.01, output: 0.03 },
       'gpt-4-turbo': { input: 0.01, output: 0.03 },
       'gpt-4': { input: 0.03, output: 0.06 },
       'gpt-3.5-turbo': { input: 0.0005, output: 0.0015 },
@@ -67,14 +77,18 @@ export const AI_PROVIDER_CONFIGS = {
   },
   anthropic: {
     baseURL: 'https://api.anthropic.com/v1',
-    defaultModel: 'claude-3-5-sonnet-20241022',
+    defaultModel: 'claude-4.5-sonnet-20250101',
     models: [
+      'claude-4.5-sonnet-20250101',
+      'claude-4.5-opus-20250101',
       'claude-3-5-sonnet-20241022',
       'claude-3-opus-20240229',
       'claude-3-sonnet-20240229',
       'claude-3-haiku-20240307',
     ],
     costPer1kTokens: {
+      'claude-4.5-sonnet-20250101': { input: 0.002, output: 0.01 },
+      'claude-4.5-opus-20250101': { input: 0.01, output: 0.05 },
       'claude-3-5-sonnet-20241022': { input: 0.003, output: 0.015 },
       'claude-3-opus-20240229': { input: 0.015, output: 0.075 },
       'claude-3-sonnet-20240229': { input: 0.003, output: 0.015 },
@@ -90,44 +104,63 @@ export const AI_PROVIDER_CONFIGS = {
       'gemini-ultra': { input: 0.01, output: 0.03 },
     },
   },
+  perplexity: {
+    baseURL: 'https://api.perplexity.ai',
+    defaultModel: 'llama-3.1-sonar-large-128k-online',
+    models: [
+      'llama-3.1-sonar-large-128k-online',
+      'llama-3.1-sonar-small-128k-online',
+      'llama-3.1-sonar-huge-128k-online',
+    ],
+    costPer1kTokens: {
+      'llama-3.1-sonar-large-128k-online': { input: 0.001, output: 0.001 },
+      'llama-3.1-sonar-small-128k-online': { input: 0.0002, output: 0.0002 },
+      'llama-3.1-sonar-huge-128k-online': { input: 0.005, output: 0.005 },
+    },
+  },
 }
 
 // Recommended models for each feature
 export const FEATURE_MODEL_RECOMMENDATIONS = {
   expand: {
-    best: 'claude-3-5-sonnet-20241022', // Best for creative writing
-    good: ['gpt-4-turbo', 'claude-3-opus-20240229'],
+    best: 'claude-4.5-sonnet-20250101', // Best for creative writing
+    good: ['gpt-5-turbo', 'claude-4.5-opus-20250101'],
     budget: 'claude-3-haiku-20240307',
   },
   rewrite: {
-    best: 'claude-3-5-sonnet-20241022',
-    good: ['gpt-4-turbo', 'claude-3-sonnet-20240229'],
+    best: 'claude-4.5-sonnet-20250101',
+    good: ['gpt-5-turbo', 'claude-3-5-sonnet-20241022'],
     budget: 'gpt-3.5-turbo',
   },
   describe: {
-    best: 'claude-3-opus-20240229', // Best for vivid descriptions
-    good: ['claude-3-5-sonnet-20241022', 'gpt-4'],
+    best: 'claude-4.5-opus-20250101', // Best for vivid descriptions
+    good: ['claude-4.5-sonnet-20250101', 'gpt-5'],
     budget: 'claude-3-haiku-20240307',
   },
   brainstorm: {
-    best: 'gpt-4-turbo', // Good for idea generation
-    good: ['claude-3-5-sonnet-20241022', 'claude-3-opus-20240229'],
+    best: 'gpt-5-turbo', // Good for idea generation
+    good: ['claude-4.5-sonnet-20250101', 'claude-4.5-opus-20250101'],
     budget: 'gpt-3.5-turbo',
   },
   critique: {
-    best: 'claude-3-opus-20240229', // Best for detailed analysis
-    good: ['claude-3-5-sonnet-20241022', 'gpt-4'],
+    best: 'claude-4.5-opus-20250101', // Best for detailed analysis
+    good: ['claude-4.5-sonnet-20250101', 'gpt-5'],
     budget: 'claude-3-sonnet-20240229',
   },
   character: {
-    best: 'claude-3-5-sonnet-20241022',
-    good: ['gpt-4-turbo', 'claude-3-opus-20240229'],
+    best: 'claude-4.5-sonnet-20250101',
+    good: ['gpt-5-turbo', 'claude-4.5-opus-20250101'],
     budget: 'claude-3-haiku-20240307',
   },
   outline: {
-    best: 'gpt-4-turbo',
-    good: ['claude-3-5-sonnet-20241022', 'claude-3-opus-20240229'],
+    best: 'gpt-5-turbo',
+    good: ['claude-4.5-sonnet-20250101', 'claude-4.5-opus-20250101'],
     budget: 'gpt-3.5-turbo',
+  },
+  research: {
+    best: 'llama-3.1-sonar-large-128k-online', // Perplexity for real-time research
+    good: ['llama-3.1-sonar-huge-128k-online'],
+    budget: 'llama-3.1-sonar-small-128k-online',
   },
 }
 
@@ -174,6 +207,7 @@ function getProviderForModel(model: AIModel): AIProvider {
   if (model.startsWith('gpt-')) return 'openai'
   if (model.startsWith('claude-')) return 'anthropic'
   if (model.startsWith('gemini-')) return 'gemini'
+  if (model.startsWith('llama-') && model.includes('sonar')) return 'perplexity'
   return 'openai' // default
 }
 
@@ -212,5 +246,6 @@ export const PROVIDER_FALLBACK_CHAIN: Record<AIProvider, AIProvider[]> = {
   openai: ['anthropic', 'gemini'],
   anthropic: ['openai', 'gemini'],
   gemini: ['anthropic', 'openai'],
-  auto: ['anthropic', 'openai', 'gemini'],
+  perplexity: ['openai', 'anthropic'], // Perplexity is research-only, fallback to general AI
+  auto: ['anthropic', 'openai', 'gemini', 'perplexity'],
 }

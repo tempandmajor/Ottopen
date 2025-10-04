@@ -86,7 +86,8 @@ export default function Authors() {
       const appStats = await dbService.getApplicationStatistics()
 
       // Get initial authors (changed from 50 to 20 - no need to fetch unused data)
-      const allAuthors = await dbService.searchUsers('', 20)
+      // PRIVACY: Only show authors who opted into the directory
+      const allAuthors = await dbService.getOptedInAuthors(20)
       setAuthors(allAuthors)
 
       // Load detailed stats using bulk query (95% query reduction)
@@ -150,7 +151,8 @@ export default function Authors() {
     try {
       setLoadingMore(true)
 
-      const moreAuthors = await dbService.searchUsers('', 20, currentOffset)
+      // PRIVACY: Only show authors who opted into the directory
+      const moreAuthors = await dbService.getOptedInAuthors(20, currentOffset)
 
       if (moreAuthors.length === 0) {
         setHasMore(false)

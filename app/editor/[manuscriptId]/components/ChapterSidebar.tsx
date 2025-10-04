@@ -23,6 +23,7 @@ import {
 import { Input } from '@/src/components/ui/input'
 import { ScrollArea } from '@/src/components/ui/scroll-area'
 import { cn } from '@/src/lib/utils'
+import { logger } from '@/src/lib/editor-logger'
 
 interface ChapterSidebarProps {
   manuscriptId: string
@@ -66,7 +67,7 @@ export function ChapterSidebar({
       )
       setChapters(chaptersWithScenes)
     } catch (error) {
-      console.error('Failed to load chapters:', error)
+      logger.error('Failed to load chapters', error as Error, { manuscriptId })
     } finally {
       setLoading(false)
     }
@@ -87,7 +88,7 @@ export function ChapterSidebar({
         },
       ])
     } catch (error) {
-      console.error('Failed to create chapter:', error)
+      logger.error('Failed to create chapter', error as Error, { manuscriptId })
     }
   }
 
@@ -115,7 +116,7 @@ export function ChapterSidebar({
 
       onSceneSelect(newScene)
     } catch (error) {
-      console.error('Failed to create scene:', error)
+      logger.error('Failed to create scene', error as Error, { chapterId })
     }
   }
 
@@ -135,7 +136,7 @@ export function ChapterSidebar({
       setEditingChapterId(null)
       setEditTitle('')
     } catch (error) {
-      console.error('Failed to rename chapter:', error)
+      logger.error('Failed to rename chapter', error as Error, { chapterId, newTitle: editTitle })
     }
   }
 
@@ -158,7 +159,7 @@ export function ChapterSidebar({
       setEditingSceneId(null)
       setEditTitle('')
     } catch (error) {
-      console.error('Failed to rename scene:', error)
+      logger.error('Failed to rename scene', error as Error, { sceneId, newTitle: editTitle })
     }
   }
 
@@ -169,7 +170,7 @@ export function ChapterSidebar({
       await ChapterService.delete(chapterId)
       setChapters(chapters.filter(c => c.id !== chapterId))
     } catch (error) {
-      console.error('Failed to delete chapter:', error)
+      logger.error('Failed to delete chapter', error as Error, { chapterId })
     }
   }
 
@@ -185,7 +186,7 @@ export function ChapterSidebar({
         }))
       )
     } catch (error) {
-      console.error('Failed to delete scene:', error)
+      logger.error('Failed to delete scene', error as Error, { sceneId })
     }
   }
 

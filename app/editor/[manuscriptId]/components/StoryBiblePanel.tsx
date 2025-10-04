@@ -28,6 +28,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
 import { User, MapPin, Network, Plus, Edit2, Trash2, Search } from 'lucide-react'
 import { toast } from 'react-hot-toast'
+import { logger } from '@/src/lib/editor-logger'
 
 interface StoryBiblePanelProps {
   manuscriptId: string
@@ -93,8 +94,8 @@ export function StoryBiblePanel({ manuscriptId }: StoryBiblePanelProps) {
       setLocations(locationsData)
       setPlotThreads(plotThreadsData)
     } catch (error) {
-      console.error('Failed to load story bible data:', error)
-      toast.error('Failed to load story bible')
+      logger.error('Failed to load story bible data', error as Error, { manuscriptId })
+      logger.userError('Failed to load story bible')
     } finally {
       setLoading(false)
     }
@@ -149,8 +150,11 @@ export function StoryBiblePanel({ manuscriptId }: StoryBiblePanelProps) {
       }
       setIsCharacterDialogOpen(false)
     } catch (error) {
-      console.error('Failed to save character:', error)
-      toast.error('Failed to save character')
+      logger.error('Failed to save character', error as Error, {
+        manuscriptId,
+        characterId: editingCharacter?.id,
+      })
+      logger.userError('Failed to save character')
     }
   }
 
@@ -162,8 +166,8 @@ export function StoryBiblePanel({ manuscriptId }: StoryBiblePanelProps) {
       setCharacters(characters.filter(c => c.id !== id))
       toast.success('Character deleted')
     } catch (error) {
-      console.error('Failed to delete character:', error)
-      toast.error('Failed to delete character')
+      logger.error('Failed to delete character', error as Error, { characterId: id })
+      logger.userError('Failed to delete character')
     }
   }
 
@@ -206,8 +210,11 @@ export function StoryBiblePanel({ manuscriptId }: StoryBiblePanelProps) {
       }
       setIsLocationDialogOpen(false)
     } catch (error) {
-      console.error('Failed to save location:', error)
-      toast.error('Failed to save location')
+      logger.error('Failed to save location', error as Error, {
+        manuscriptId,
+        locationId: editingLocation?.id,
+      })
+      logger.userError('Failed to save location')
     }
   }
 
@@ -219,8 +226,8 @@ export function StoryBiblePanel({ manuscriptId }: StoryBiblePanelProps) {
       setLocations(locations.filter(l => l.id !== id))
       toast.success('Location deleted')
     } catch (error) {
-      console.error('Failed to delete location:', error)
-      toast.error('Failed to delete location')
+      logger.error('Failed to delete location', error as Error, { locationId: id })
+      logger.userError('Failed to delete location')
     }
   }
 
@@ -261,8 +268,11 @@ export function StoryBiblePanel({ manuscriptId }: StoryBiblePanelProps) {
       }
       setIsPlotDialogOpen(false)
     } catch (error) {
-      console.error('Failed to save plot thread:', error)
-      toast.error('Failed to save plot thread')
+      logger.error('Failed to save plot thread', error as Error, {
+        manuscriptId,
+        plotThreadId: editingPlotThread?.id,
+      })
+      logger.userError('Failed to save plot thread')
     }
   }
 
@@ -274,8 +284,8 @@ export function StoryBiblePanel({ manuscriptId }: StoryBiblePanelProps) {
       setPlotThreads(plotThreads.filter(p => p.id !== id))
       toast.success('Plot thread deleted')
     } catch (error) {
-      console.error('Failed to delete plot thread:', error)
-      toast.error('Failed to delete plot thread')
+      logger.error('Failed to delete plot thread', error as Error, { plotThreadId: id })
+      logger.userError('Failed to delete plot thread')
     }
   }
 

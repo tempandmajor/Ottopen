@@ -87,9 +87,11 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
 
   const [privacySettings, setPrivacySettings] = useState({
     profileVisibility: 'public',
+    showInDirectory: false,
+    allowMessagesFrom: 'everyone',
+    hideLocation: false,
     showEmail: false,
     showFollowers: true,
-    allowMessages: 'followers',
     searchable: true,
   })
 
@@ -162,9 +164,11 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
       if (settings) {
         setPrivacySettings({
           profileVisibility: settings.profile_visibility,
+          showInDirectory: settings.show_in_directory,
+          allowMessagesFrom: settings.allow_messages_from,
+          hideLocation: settings.hide_location,
           showEmail: settings.show_email,
           showFollowers: settings.show_followers,
-          allowMessages: settings.allow_messages,
           searchable: settings.searchable,
         })
       }
@@ -383,9 +387,11 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
       if (!currentUser?.profile) throw new Error('No user')
       const result = await dbService.upsertPrivacySettings(currentUser.profile.id, {
         profile_visibility: privacySettings.profileVisibility,
+        show_in_directory: privacySettings.showInDirectory,
+        allow_messages_from: privacySettings.allowMessagesFrom,
+        hide_location: privacySettings.hideLocation,
         show_email: privacySettings.showEmail,
         show_followers: privacySettings.showFollowers,
-        allow_messages: privacySettings.allowMessages,
         searchable: privacySettings.searchable,
       })
       if (!result) throw new Error('Failed to save')
@@ -1069,6 +1075,22 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
+                    {/* Privacy Notice */}
+                    <div className="p-4 border border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50 dark:bg-blue-950/20">
+                      <div className="flex items-start space-x-3">
+                        <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                            Your Privacy is Important
+                          </p>
+                          <p className="text-xs text-blue-700 dark:text-blue-300">
+                            We&apos;ve enhanced privacy controls. All profiles are private by
+                            default. You control who sees your information.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label>Profile Visibility</Label>
@@ -1086,7 +1108,7 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
                             <SelectItem value="public">
                               Public - Anyone can see your profile
                             </SelectItem>
-                            <SelectItem value="followers">
+                            <SelectItem value="followers_only">
                               Followers Only - Only followers can see your full profile
                             </SelectItem>
                             <SelectItem value="private">
@@ -1094,15 +1116,80 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
                             </SelectItem>
                           </SelectContent>
                         </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Controls who can view your profile page and writing works
+                        </p>
                       </div>
 
                       <Separator />
 
                       <div className="flex items-center justify-between">
                         <div className="space-y-1">
+                          <Label className="flex items-center space-x-2">
+                            <span>Show in Author Directory</span>
+                            <Badge variant="secondary" className="text-xs">
+                              Opt-in
+                            </Badge>
+                          </Label>
+                          <p className="text-sm text-muted-foreground">
+                            Appear in public author listings and search results
+                          </p>
+                        </div>
+                        <Switch
+                          checked={privacySettings.showInDirectory}
+                          onCheckedChange={checked =>
+                            setPrivacySettings(prev => ({ ...prev, showInDirectory: checked }))
+                          }
+                        />
+                      </div>
+
+                      <Separator />
+
+                      <div className="space-y-2">
+                        <Label>Who Can Message You</Label>
+                        <Select
+                          value={privacySettings.allowMessagesFrom}
+                          onValueChange={value =>
+                            setPrivacySettings(prev => ({ ...prev, allowMessagesFrom: value }))
+                          }
+                          disabled={saving}
+                        >
+                          <SelectTrigger className="border-literary-border">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="everyone">Everyone</SelectItem>
+                            <SelectItem value="followers">Followers Only</SelectItem>
+                            <SelectItem value="no_one">No One</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Control who can send you direct messages
+                        </p>
+                      </div>
+
+                      <Separator />
+
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <Label>Hide Location</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Don&apos;t display your location on your profile
+                          </p>
+                        </div>
+                        <Switch
+                          checked={privacySettings.hideLocation}
+                          onCheckedChange={checked =>
+                            setPrivacySettings(prev => ({ ...prev, hideLocation: checked }))
+                          }
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
                           <Label>Show Email Address</Label>
                           <p className="text-sm text-muted-foreground">
-                            Display your email on your profile
+                            Display your email on your public profile
                           </p>
                         </div>
                         <Switch
@@ -1128,26 +1215,6 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
                         />
                       </div>
 
-                      <div className="space-y-2">
-                        <Label>Who Can Message You</Label>
-                        <Select
-                          value={privacySettings.allowMessages}
-                          onValueChange={value =>
-                            setPrivacySettings(prev => ({ ...prev, allowMessages: value }))
-                          }
-                          disabled={saving}
-                        >
-                          <SelectTrigger className="border-literary-border">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="everyone">Everyone</SelectItem>
-                            <SelectItem value="followers">Followers Only</SelectItem>
-                            <SelectItem value="none">No One</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
                       <div className="flex items-center justify-between">
                         <div className="space-y-1">
                           <Label>Searchable Profile</Label>
@@ -1162,6 +1229,40 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
                           }
                         />
                       </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="p-4 border border-literary-border rounded-lg bg-muted/30">
+                      <h4 className="font-medium mb-2 text-sm">Privacy Summary</h4>
+                      <ul className="text-xs text-muted-foreground space-y-1">
+                        <li>
+                          • Profile:{' '}
+                          <span className="font-medium text-foreground">
+                            {privacySettings.profileVisibility === 'public'
+                              ? 'Public'
+                              : privacySettings.profileVisibility === 'followers_only'
+                                ? 'Followers Only'
+                                : 'Private'}
+                          </span>
+                        </li>
+                        <li>
+                          • Directory:{' '}
+                          <span className="font-medium text-foreground">
+                            {privacySettings.showInDirectory ? 'Visible' : 'Hidden'}
+                          </span>
+                        </li>
+                        <li>
+                          • Messages:{' '}
+                          <span className="font-medium text-foreground">
+                            {privacySettings.allowMessagesFrom === 'everyone'
+                              ? 'Everyone'
+                              : privacySettings.allowMessagesFrom === 'followers'
+                                ? 'Followers Only'
+                                : 'Disabled'}
+                          </span>
+                        </li>
+                      </ul>
                     </div>
 
                     <div className="flex justify-end">

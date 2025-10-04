@@ -2,11 +2,14 @@ import { getServerPosts, getServerUsers, getServerApplicationStatistics } from '
 import { HomeView } from './HomeView'
 
 export default async function HomePage() {
-  const [stats, posts, authors] = await Promise.all([
+  const [stats, posts] = await Promise.all([
     getServerApplicationStatistics(),
     getServerPosts({ limit: 6, published: true }),
-    getServerUsers('', 6),
   ])
+
+  // Remove public user listing for privacy
+  // Users must opt-in via show_in_directory setting
+  const authors: any[] = []
 
   return <HomeView initialStats={stats} initialPosts={posts} initialAuthors={authors} />
 }

@@ -44,6 +44,7 @@ export default function SignUp() {
     industryCredentials: '',
     licenseNumber: '',
     agreedToTerms: false,
+    agreedToPrivacy: false,
   })
 
   const { signUp } = useAuth()
@@ -54,6 +55,11 @@ export default function SignUp() {
 
     if (!formData.agreedToTerms) {
       toast.error('Please agree to the terms and conditions')
+      return
+    }
+
+    if (!formData.agreedToPrivacy) {
+      toast.error('Please agree to the privacy policy and data handling practices')
       return
     }
 
@@ -320,30 +326,56 @@ export default function SignUp() {
                 />
               </div>
 
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="terms"
-                  checked={formData.agreedToTerms}
-                  onCheckedChange={checked =>
-                    handleInputChange('agreedToTerms', checked as boolean)
-                  }
-                />
-                <Label htmlFor="terms" className="text-sm">
-                  I agree to the{' '}
-                  <Link href="/legal/terms" className="text-primary hover:underline">
-                    Terms of Service
-                  </Link>{' '}
-                  and{' '}
-                  <Link href="/legal/privacy" className="text-primary hover:underline">
-                    Privacy Policy
-                  </Link>
-                </Label>
+              <div className="space-y-3">
+                <div className="flex items-start space-x-2">
+                  <Checkbox
+                    id="terms"
+                    checked={formData.agreedToTerms}
+                    onCheckedChange={checked =>
+                      handleInputChange('agreedToTerms', checked as boolean)
+                    }
+                    className="mt-1"
+                  />
+                  <Label htmlFor="terms" className="text-sm cursor-pointer">
+                    I agree to the{' '}
+                    <Link
+                      href="/legal/terms"
+                      className="text-primary hover:underline font-medium"
+                      target="_blank"
+                    >
+                      Terms of Service
+                    </Link>
+                  </Label>
+                </div>
+
+                <div className="flex items-start space-x-2">
+                  <Checkbox
+                    id="privacy"
+                    checked={formData.agreedToPrivacy}
+                    onCheckedChange={checked =>
+                      handleInputChange('agreedToPrivacy', checked as boolean)
+                    }
+                    className="mt-1"
+                  />
+                  <Label htmlFor="privacy" className="text-sm cursor-pointer">
+                    I understand and agree to the{' '}
+                    <Link
+                      href="/legal/privacy"
+                      className="text-primary hover:underline font-medium"
+                      target="_blank"
+                    >
+                      Privacy Policy
+                    </Link>
+                    , including how my data will be collected, stored, and used. I acknowledge that
+                    my profile will be private by default and I control its visibility.
+                  </Label>
+                </div>
               </div>
 
               <Button
                 type="submit"
                 className="w-full"
-                disabled={!formData.agreedToTerms || loading}
+                disabled={!formData.agreedToTerms || !formData.agreedToPrivacy || loading}
               >
                 {loading ? 'Creating Account...' : 'Create Account'}
               </Button>

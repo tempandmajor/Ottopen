@@ -660,6 +660,28 @@ export class DatabaseService {
     }
   }
 
+  // PRIVACY: Get only users who opted into the directory
+  async getOptedInAuthors(limit = 20, offset = 0): Promise<User[]> {
+    try {
+      const { data, error } = await this.supabase
+        .from('user_public_profiles')
+        .select('*')
+        .eq('show_in_directory', true)
+        .range(offset, offset + limit - 1)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        logError('Failed to get opted-in authors', error)
+        return []
+      }
+
+      return data || []
+    } catch (error) {
+      logError('Get opted-in authors error', error as Error)
+      return []
+    }
+  }
+
   // Message operations
   async getConversations(userId: string): Promise<Conversation[]> {
     if (!this.checkSupabaseConfig()) {

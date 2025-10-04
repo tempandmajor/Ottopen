@@ -1,6 +1,6 @@
 'use client'
 
-import { Save, Lock, Unlock, Download, Users, ListTree } from 'lucide-react'
+import { Save, Lock, Unlock, Download, Users, ListTree, Sparkles, BookOpen } from 'lucide-react'
 import { Button } from '@/src/components/ui/button'
 import type { Script } from '@/src/types/script-editor'
 
@@ -11,6 +11,8 @@ interface ScriptToolbarProps {
   onExportPDF: () => void
   onShowCollaborators: () => void
   onShowBeatBoard: () => void
+  onShowAIAssistant?: () => void
+  onShowResearch?: () => void
   isSaving?: boolean
 }
 
@@ -21,6 +23,8 @@ export function ScriptToolbar({
   onExportPDF,
   onShowCollaborators,
   onShowBeatBoard,
+  onShowAIAssistant,
+  onShowResearch,
   isSaving = false,
 }: ScriptToolbarProps) {
   return (
@@ -44,6 +48,20 @@ export function ScriptToolbar({
       </div>
 
       <div className="flex items-center gap-2">
+        {onShowAIAssistant && (
+          <Button variant="ghost" size="sm" onClick={onShowAIAssistant} title="AI Assistant (⌘⇧A)">
+            <Sparkles className="w-4 h-4 mr-2" />
+            AI Assistant
+          </Button>
+        )}
+
+        {onShowResearch && (
+          <Button variant="ghost" size="sm" onClick={onShowResearch} title="Research (⌘⇧R)">
+            <BookOpen className="w-4 h-4 mr-2" />
+            Research
+          </Button>
+        )}
+
         <Button variant="ghost" size="sm" onClick={onShowBeatBoard} title="Beat Board">
           <ListTree className="w-4 h-4 mr-2" />
           Beat Board

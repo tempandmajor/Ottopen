@@ -7,7 +7,16 @@ import { ScriptElementComponent } from '@/src/components/script-editor/script-el
 import { BeatBoard } from '@/src/components/script-editor/beat-board'
 import { ScriptFormatter } from '@/src/lib/script-formatter'
 import { ScriptPDFExporter } from '@/src/lib/script-pdf-export'
-import type { Script, ScriptElement, ScriptBeat, ElementType } from '@/src/types/script-editor'
+import { ScriptAIAssistantPanel } from './components/ScriptAIAssistantPanel'
+import { ScriptResearchPanel } from './components/ScriptResearchPanel'
+import { DialogueEnhancementModal } from './components/DialogueEnhancementModal'
+import type {
+  Script,
+  ScriptElement,
+  ScriptBeat,
+  ElementType,
+  ScriptCharacter,
+} from '@/src/types/script-editor'
 
 export default function ScriptEditorPage() {
   const params = useParams()
@@ -16,8 +25,12 @@ export default function ScriptEditorPage() {
   const [script, setScript] = useState<Script | null>(null)
   const [elements, setElements] = useState<ScriptElement[]>([])
   const [beats, setBeats] = useState<ScriptBeat[]>([])
+  const [characters, setCharacters] = useState<ScriptCharacter[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
   const [showBeatBoard, setShowBeatBoard] = useState(false)
+  const [sidePanel, setSidePanel] = useState<'none' | 'ai' | 'research'>('none')
+  const [showDialogueModal, setShowDialogueModal] = useState(false)
+  const [selectedElement, setSelectedElement] = useState<ScriptElement | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -26,8 +39,32 @@ export default function ScriptEditorPage() {
       fetchScript()
       fetchElements()
       fetchBeats()
+      fetchCharacters()
     }
   }, [scriptId])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey) {
+        if (e.key === 'A' || e.key === 'a') {
+          e.preventDefault()
+          setSidePanel(prev => (prev === 'ai' ? 'none' : 'ai'))
+        } else if (e.key === 'R' || e.key === 'r') {
+          e.preventDefault()
+          setSidePanel(prev => (prev === 'research' ? 'none' : 'research'))
+        } else if (e.key === 'D' || e.key === 'd') {
+          e.preventDefault()
+          if (selectedElement?.element_type === 'dialogue') {
+            setShowDialogueModal(true)
+          }
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedElement])
 
   const fetchScript = async () => {
     try {
@@ -64,6 +101,19 @@ export default function ScriptEditorPage() {
       }
     } catch (error) {
       console.error('Failed to fetch beats:', error)
+    }
+  }
+
+  const fetchCharacters = async () => {
+    try {
+      const response = await fetch(`/api/scripts/${scriptId}/characters`)
+      if (response.ok) {
+        const data = await response.json()
+        setCharacters(data.characters || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch characters:', error)
+      setCharacters([])
     }
   }
 
@@ -184,7 +234,49 @@ export default function ScriptEditorPage() {
   const handleElementClick = (elementId: string) => {
     if (!script?.is_locked) {
       setEditingId(elementId)
+      // Set selected element for AI features
+      const element = elements.find(el => el.id === elementId)
+      if (element) {
+        setSelectedElement(element)
+      }
     }
+  }
+
+  const handleEnhanceDialogue = (element: ScriptElement) => {
+    setSelectedElement(element)
+    setShowDialogueModal(true)
+  }
+
+  const handleAnalyzeStructure = async () => {
+    // This will be handled by the AI Assistant panel
+    setSidePanel('ai')
+  }
+
+  const handleGenerateBeats = async () => {
+    // This will be handled by the AI Assistant panel
+    setSidePanel('ai')
+  }
+
+  const handleApplyDialogue = async (newDialogue: string) => {
+    if (!selectedElement) return
+
+    // Update the element with new dialogue
+    setElements(prev =>
+      prev.map(el => (el.id === selectedElement.id ? { ...el, content: newDialogue } : el))
+    )
+
+    // Save to backend
+    try {
+      await fetch(`/api/scripts/${scriptId}/elements/${selectedElement.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: newDialogue }),
+      })
+    } catch (error) {
+      console.error('Failed to update element:', error)
+    }
+
+    setShowDialogueModal(false)
   }
 
   const handleContentChange = (elementId: string, content: string) => {
@@ -230,6 +322,23 @@ export default function ScriptEditorPage() {
     )
   }
 
+  // Calculate current page number and total pages
+  const currentPageNumber = selectedElement
+    ? elements.findIndex(el => el.id === selectedElement.id) + 1
+    : 1
+  const totalPages = script?.page_count || 1
+
+  // Build script context for AI
+  const scriptContext = script
+    ? {
+        scriptType: script.script_type,
+        genre: script.genre || [],
+        logline: script.logline || '',
+        setting: '',
+        timePeriod: '',
+      }
+    : undefined
+
   return (
     <div className="flex flex-col h-screen">
       <ScriptToolbar
@@ -239,6 +348,8 @@ export default function ScriptEditorPage() {
         onExportPDF={handleExportPDF}
         onShowCollaborators={handleShowCollaborators}
         onShowBeatBoard={() => setShowBeatBoard(!showBeatBoard)}
+        onShowAIAssistant={() => setSidePanel(prev => (prev === 'ai' ? 'none' : 'ai'))}
+        onShowResearch={() => setSidePanel(prev => (prev === 'research' ? 'none' : 'research'))}
         isSaving={isSaving}
       />
 
@@ -294,7 +405,47 @@ export default function ScriptEditorPage() {
             onDeleteBeat={handleDeleteBeat}
           />
         )}
+
+        {sidePanel === 'ai' && (
+          <div className="w-96 border-l bg-white overflow-hidden">
+            <ScriptAIAssistantPanel
+              scriptId={scriptId}
+              scriptType={script?.script_type || 'screenplay'}
+              selectedElement={selectedElement || undefined}
+              characters={characters}
+              context={{
+                genre: script?.genre || [],
+                logline: script?.logline || '',
+                currentPage: currentPageNumber,
+                totalPages: totalPages,
+              }}
+              onEnhanceDialogue={handleEnhanceDialogue}
+              onAnalyzeStructure={handleAnalyzeStructure}
+              onGenerateBeats={handleGenerateBeats}
+            />
+          </div>
+        )}
+
+        {sidePanel === 'research' && scriptContext && (
+          <div className="w-96 border-l bg-white overflow-hidden">
+            <ScriptResearchPanel scriptId={scriptId} scriptContext={scriptContext} />
+          </div>
+        )}
       </div>
+
+      {showDialogueModal && selectedElement && (
+        <DialogueEnhancementModal
+          scriptId={scriptId}
+          element={selectedElement}
+          character={
+            selectedElement.character_id
+              ? characters.find(c => c.id === selectedElement.character_id)
+              : undefined
+          }
+          onApply={handleApplyDialogue}
+          onClose={() => setShowDialogueModal(false)}
+        />
+      )}
     </div>
   )
 }

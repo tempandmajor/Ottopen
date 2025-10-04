@@ -1,6 +1,7 @@
 import { requireAuth } from '@/lib/server/auth'
 import { EditorDashboard } from './EditorDashboard'
 import { redirect } from 'next/navigation'
+import { EditorErrorBoundary } from '@/src/components/EditorErrorBoundary'
 
 export default async function EditorPage() {
   const user = await requireAuth()
@@ -16,5 +17,9 @@ export default async function EditorPage() {
     redirect('/dashboard?error=ai-editor-writers-only')
   }
 
-  return <EditorDashboard user={user} />
+  return (
+    <EditorErrorBoundary>
+      <EditorDashboard user={user} />
+    </EditorErrorBoundary>
+  )
 }

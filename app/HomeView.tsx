@@ -198,27 +198,28 @@ export function HomeView({ initialPosts, initialAuthors, initialStats }: HomeVie
             {/* Sidebar */}
             <div className="space-y-8">
               <div>
-                <h3 className="font-serif text-xl font-semibold mb-4">Featured Authors</h3>
+                <h3 className="font-serif text-xl font-semibold mb-4">Join the Community</h3>
                 <div className="space-y-4">
-                  {initialAuthors.length > 0 ? (
-                    initialAuthors.map(author => (
-                      <AuthorCard
-                        key={author.id}
-                        name={author.display_name || author.username}
-                        specialty={author.specialty || 'Writer'}
-                        location={author.location || 'Location not specified'}
-                        works={0}
-                        followers={0}
-                        bio={author.bio || 'No bio available.'}
-                        avatar={author.avatar_url}
-                        tags={author.specialty ? [author.specialty] : ['Writer']}
-                      />
-                    ))
-                  ) : (
-                    <div className="text-center py-4">
-                      <p className="text-sm text-muted-foreground">No authors found.</p>
-                    </div>
-                  )}
+                  <div className="p-6 border border-literary-border rounded-lg bg-card">
+                    <h4 className="font-semibold mb-2">Connect with Writers</h4>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Join thousands of authors, screenwriters, and playwrights sharing their
+                      stories and connecting with readers.
+                    </p>
+                    {!user && (
+                      <Button className="w-full" asChild>
+                        <Link href="/auth/signup">Join Now</Link>
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="p-6 border border-literary-border rounded-lg bg-card">
+                    <h4 className="font-semibold mb-2">Privacy First</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Your profile privacy is in your control. Choose who can see your work and
+                      connect with you on your terms.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

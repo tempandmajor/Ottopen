@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { Navigation } from '@/src/components/navigation'
 import { Button } from '@/src/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card'
@@ -25,6 +26,7 @@ import type { Manuscript } from '@/src/types/ai-editor'
 import type { User as SupabaseUser } from '@/src/lib/supabase'
 import type { User as AuthUser } from '@supabase/supabase-js'
 import { toast } from 'react-hot-toast'
+import { logger } from '@/src/lib/editor-logger'
 
 interface EditorDashboardProps {
   user: (AuthUser & { profile?: SupabaseUser }) | null
@@ -49,8 +51,8 @@ export function EditorDashboard({ user }: EditorDashboardProps) {
       const data = await ManuscriptService.getUserManuscripts(user.id)
       setManuscripts(data)
     } catch (error) {
-      console.error('Failed to load manuscripts:', error)
-      toast.error('Failed to load your manuscripts')
+      logger.error('Failed to load manuscripts', error as Error, { userId: user?.id })
+      logger.userError('Failed to load your manuscripts')
     } finally {
       setLoading(false)
     }
@@ -67,8 +69,8 @@ export function EditorDashboard({ user }: EditorDashboardProps) {
       toast.success('Manuscript created!')
       router.push(`/editor/${manuscript.id}`)
     } catch (error) {
-      console.error('Failed to create manuscript:', error)
-      toast.error('Failed to create manuscript')
+      logger.error('Failed to create manuscript', error as Error, { userId: user?.id })
+      logger.userError('Failed to create manuscript')
     }
   }
 
@@ -221,10 +223,11 @@ export function EditorDashboard({ user }: EditorDashboardProps) {
                   <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
                     {manuscript.cover_image_url && (
                       <div className="h-40 bg-gradient-to-br from-primary/20 to-primary/5 relative overflow-hidden">
-                        <img
+                        <Image
                           src={manuscript.cover_image_url}
                           alt={manuscript.title}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
                         />
                       </div>
                     )}

@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from '@/src/components/ui/select'
 import { cn } from '@/src/lib/utils'
+import { Skeleton } from '@/src/components/ui/skeleton'
 
 interface AIAssistantPanelProps {
   manuscriptId: string
@@ -421,8 +422,30 @@ export function AIAssistantPanel({
               </div>
             )}
 
+            {/* Loading Skeleton */}
+            {loading && (
+              <div className="space-y-3 mt-4">
+                <div className="flex items-center justify-between">
+                  <Label>AI Response</Label>
+                  <Skeleton className="h-4 w-32" />
+                </div>
+                <div className="p-3 bg-muted rounded-md space-y-3">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-5/6" />
+                  <Skeleton className="h-4 w-4/6" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground animate-pulse">
+                    Generating AI response...
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Response Display */}
-            {response && (
+            {!loading && response && (
               <div className="space-y-3 mt-4">
                 <div className="flex items-center justify-between">
                   <Label>AI Response</Label>

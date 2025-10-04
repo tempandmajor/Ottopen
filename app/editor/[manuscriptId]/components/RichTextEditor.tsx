@@ -43,6 +43,8 @@ interface RichTextEditorProps {
   onChange: (content: string) => void
   onSave?: () => void
   onAIAssist?: (action: string, selectedText: string) => void
+  aiTextToInsert?: string
+  onAITextInserted?: () => void
   isSaving?: boolean
   lastSaved?: Date | null
   wordCount?: number
@@ -55,6 +57,8 @@ export function RichTextEditor({
   onChange,
   onSave,
   onAIAssist,
+  aiTextToInsert,
+  onAITextInserted,
   isSaving = false,
   lastSaved,
   wordCount,
@@ -102,6 +106,30 @@ export function RichTextEditor({
       editor.commands.setContent(content)
     }
   }, [content, editor])
+
+  // Handle AI text insertion when aiTextToInsert changes
+  useEffect(() => {
+    if (aiTextToInsert && editor) {
+      const { from, to } = editor.state.selection
+
+      // If text is selected, replace it
+      if (from !== to) {
+        editor.chain().focus().deleteSelection().insertContentAt(from, aiTextToInsert).run()
+      } else {
+        // Otherwise insert at cursor position with spacing
+        editor
+          .chain()
+          .focus()
+          .insertContentAt(from, '\n\n' + aiTextToInsert + '\n\n')
+          .run()
+      }
+
+      // Notify parent that insertion is complete
+      if (onAITextInserted) {
+        onAITextInserted()
+      }
+    }
+  }, [aiTextToInsert, editor, onAITextInserted])
 
   if (!editor) {
     return null

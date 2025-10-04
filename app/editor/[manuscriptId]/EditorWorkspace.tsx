@@ -35,6 +35,7 @@ import {
   Lightbulb,
   Wand2,
   MessageSquare,
+  Search,
 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'react-hot-toast'
@@ -47,6 +48,7 @@ import {
   PlotThreadService,
   WritingGoalService,
 } from '@/src/lib/ai-editor-service'
+import { logger } from '@/src/lib/editor-logger'
 import type {
   Manuscript,
   Chapter,
@@ -60,6 +62,7 @@ import type { User as AuthUser } from '@supabase/supabase-js'
 import { RichTextEditor } from './components/RichTextEditor'
 import { ChapterSidebar } from './components/ChapterSidebar'
 import { AIAssistantPanel } from './components/AIAssistantPanel'
+import ResearchPanel from './components/ResearchPanel'
 import { StoryBiblePanel } from './components/StoryBiblePanel'
 import { VersionHistoryPanel } from './components/VersionHistoryPanel'
 import { AnalyticsPanel } from './components/AnalyticsPanel'
@@ -71,7 +74,7 @@ interface EditorWorkspaceProps {
 }
 
 type ViewMode = 'editor' | 'story-bible' | 'outline' | 'analytics'
-type SidePanel = 'none' | 'ai-assistant' | 'comments' | 'versions'
+type SidePanel = 'none' | 'ai-assistant' | 'research' | 'comments' | 'versions'
 
 export function EditorWorkspace({ user, manuscriptId }: EditorWorkspaceProps) {
   // State
@@ -95,6 +98,7 @@ export function EditorWorkspace({ user, manuscriptId }: EditorWorkspaceProps) {
   // Writing session tracking
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [sessionStartWords, setSessionStartWords] = useState(0)
+  const [aiTextToInsert, setAiTextToInsert] = useState<string>('')
 
   // Load manuscript data
   useEffect(() => {
@@ -131,8 +135,8 @@ export function EditorWorkspace({ user, manuscriptId }: EditorWorkspaceProps) {
         setCurrentChapter(chaptersData[0])
       }
     } catch (error) {
-      console.error('Failed to load manuscript data:', error)
-      toast.error('Failed to load manuscript')
+      logger.error('Failed to load manuscript data', error as Error, { manuscriptId })
+      logger.userError('Failed to load manuscript')
     }
   }
 
@@ -145,8 +149,8 @@ export function EditorWorkspace({ user, manuscriptId }: EditorWorkspaceProps) {
         setCurrentScene(scenesData[0])
       }
     } catch (error) {
-      console.error('Failed to load scenes:', error)
-      toast.error('Failed to load scenes')
+      logger.error('Failed to load scenes', error as Error, { chapterId })
+      logger.userError('Failed to load scenes')
     }
   }
 
@@ -162,7 +166,10 @@ export function EditorWorkspace({ user, manuscriptId }: EditorWorkspaceProps) {
       setSessionId(session.id)
       setSessionStartWords(manuscript?.current_word_count || 0)
     } catch (error) {
-      console.error('Failed to start writing session:', error)
+      logger.error('Failed to start writing session', error as Error, {
+        userId: user?.id,
+        manuscriptId,
+      })
     }
   }
 
@@ -173,7 +180,7 @@ export function EditorWorkspace({ user, manuscriptId }: EditorWorkspaceProps) {
       const wordsWritten = manuscript.current_word_count - sessionStartWords
       await WritingGoalService.endWritingSession(sessionId, wordsWritten)
     } catch (error) {
-      console.error('Failed to end writing session:', error)
+      logger.error('Failed to end writing session', error as Error, { sessionId })
     }
   }
 
@@ -198,7 +205,7 @@ export function EditorWorkspace({ user, manuscriptId }: EditorWorkspaceProps) {
       })
       setLastSaved(new Date())
     } catch (error) {
-      console.error('Auto-save failed:', error)
+      logger.error('Auto-save failed', error as Error, { sceneId: currentScene?.id })
     } finally {
       setIsSaving(false)
     }
@@ -216,20 +223,30 @@ export function EditorWorkspace({ user, manuscriptId }: EditorWorkspaceProps) {
       setLastSaved(new Date())
       toast.success('Saved!')
     } catch (error) {
-      console.error('Save failed:', error)
-      toast.error('Failed to save')
+      logger.error('Save failed', error as Error, { sceneId: currentScene?.id })
+      logger.userError('Failed to save')
     } finally {
       setIsSaving(false)
     }
   }
 
   const handleSceneContentChange = (content: string) => {
-    if (!currentScene) return
+    if (!currentScene || !manuscript) return
 
+    const newWordCount = SceneService.countWords(content)
+    const wordCountDiff = newWordCount - (currentScene.word_count || 0)
+
+    // Update scene with new content and word count
     setCurrentScene({
       ...currentScene,
       content,
-      word_count: SceneService.countWords(content),
+      word_count: newWordCount,
+    })
+
+    // Update manuscript word count in real-time
+    setManuscript({
+      ...manuscript,
+      current_word_count: manuscript.current_word_count + wordCountDiff,
     })
   }
 
@@ -243,8 +260,8 @@ export function EditorWorkspace({ user, manuscriptId }: EditorWorkspaceProps) {
       setChapters([...chapters, newChapter])
       toast.success('Chapter created!')
     } catch (error) {
-      console.error('Failed to create chapter:', error)
-      toast.error('Failed to create chapter')
+      logger.error('Failed to create chapter', error as Error, { manuscriptId: manuscript.id })
+      logger.userError('Failed to create chapter')
     }
   }
 
@@ -263,8 +280,8 @@ export function EditorWorkspace({ user, manuscriptId }: EditorWorkspaceProps) {
       setCurrentScene(newScene)
       toast.success('Scene created!')
     } catch (error) {
-      console.error('Failed to create scene:', error)
-      toast.error('Failed to create scene')
+      logger.error('Failed to create scene', error as Error, { chapterId: currentChapter.id })
+      logger.userError('Failed to create scene')
     }
   }
 
@@ -284,13 +301,13 @@ export function EditorWorkspace({ user, manuscriptId }: EditorWorkspaceProps) {
   const handleInsertAIText = (text: string) => {
     if (!currentScene) return
 
-    // Insert AI-generated text at the end of current content
-    const updatedContent = currentScene.content + '\n\n' + text
-    setCurrentScene({
-      ...currentScene,
-      content: updatedContent,
-      word_count: SceneService.countWords(updatedContent),
-    })
+    // Set the AI text to insert - RichTextEditor will handle insertion at cursor
+    setAiTextToInsert(text)
+  }
+
+  const handleAITextInserted = () => {
+    // Clear the AI text after insertion
+    setAiTextToInsert('')
   }
 
   const handleRestoreVersion = (content: string) => {
@@ -464,6 +481,8 @@ export function EditorWorkspace({ user, manuscriptId }: EditorWorkspaceProps) {
                         onChange={handleSceneContentChange}
                         onSave={handleManualSave}
                         onAIAssist={handleAIAssist}
+                        aiTextToInsert={aiTextToInsert}
+                        onAITextInserted={handleAITextInserted}
                         isSaving={isSaving}
                         lastSaved={lastSaved}
                         wordCount={currentScene.word_count}
@@ -516,6 +535,22 @@ export function EditorWorkspace({ user, manuscriptId }: EditorWorkspaceProps) {
                     onInsertText={handleInsertAIText}
                   />
                 )}
+                {sidePanel === 'research' && (
+                  <ResearchPanel
+                    manuscriptId={manuscriptId}
+                    storyContext={{
+                      genre: manuscript?.genre,
+                      setting: manuscript?.premise || '',
+                      timePeriod: '',
+                      characters: characters.map(c => c.name),
+                      currentScene: currentScene?.content?.substring(0, 500),
+                    }}
+                    onAddToStoryBible={(content, title) => {
+                      // TODO: Implement add to story bible
+                      toast.success('Added to Story Bible')
+                    }}
+                  />
+                )}
                 {sidePanel === 'versions' && currentScene && (
                   <VersionHistoryPanel
                     sceneId={currentScene.id}
@@ -538,6 +573,15 @@ export function EditorWorkspace({ user, manuscriptId }: EditorWorkspaceProps) {
               <Button variant="ghost" size="sm" onClick={toggleAIAssistant} className="gap-2">
                 <Sparkles className="h-4 w-4" />
                 AI Assistant
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSidePanel(sidePanel === 'research' ? 'none' : 'research')}
+                className="gap-2"
+              >
+                <Search className="h-4 w-4" />
+                Research
               </Button>
               <Button variant="ghost" size="sm" className="gap-2">
                 <Wand2 className="h-4 w-4" />

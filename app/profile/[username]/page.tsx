@@ -85,9 +85,30 @@ export default function Profile() {
         return
       }
 
+      // Phase 2: Check privacy settings
+      const privacySettings = await dbService.getPrivacySettings(userData.id)
+      const isOwnProfile = currentUser?.profile?.id === userData.id
+      const isFollowing = currentUser?.profile
+        ? await dbService.isFollowing(currentUser.profile.id, userData.id)
+        : false
+
+      // Enforce privacy settings
+      if (privacySettings && !isOwnProfile) {
+        if (privacySettings.profile_visibility === 'private') {
+          setError('This profile is private')
+          toast.error('This profile is private')
+          return
+        }
+        if (privacySettings.profile_visibility === 'followers_only' && !isFollowing) {
+          setError('This profile is only visible to followers')
+          toast.error('This profile is only visible to followers')
+          return
+        }
+      }
+
       setProfile(userData)
 
-      // Phase 2: Load remaining data in parallel for better performance
+      // Phase 3: Load remaining data in parallel for better performance
       const [stats, posts] = await Promise.all([
         dbService.getUserStats(userData.id),
         dbService.getPosts({

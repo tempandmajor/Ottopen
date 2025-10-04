@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/components/ui/ta
 import { ScrollArea } from '@/src/components/ui/scroll-area'
 import { BarChart3, Target, TrendingUp, Clock, Calendar, Award, Zap } from 'lucide-react'
 import { formatDistanceToNow, format, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns'
+import { logger } from '@/src/lib/editor-logger'
 
 interface AnalyticsPanelProps {
   manuscript: Manuscript
@@ -47,7 +48,10 @@ export function AnalyticsPanel({ manuscript, userId }: AnalyticsPanelProps) {
       setSessions(sessionsData)
       setDailyStats(statsData)
     } catch (error) {
-      console.error('Failed to load analytics:', error)
+      logger.error('Failed to load analytics', error as Error, {
+        manuscriptId: manuscript.id,
+        userId,
+      })
     } finally {
       setLoading(false)
     }

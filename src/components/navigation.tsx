@@ -30,6 +30,7 @@ import {
   Briefcase,
   Gift,
   Clapperboard,
+  DollarSign,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -38,7 +39,7 @@ import { useAuth } from '@/src/contexts/auth-context'
 export function Navigation() {
   const currentPath = usePathname()
   const router = useRouter()
-  const { user, signOut } = useAuth()
+  const { user, loading, signOut } = useAuth()
 
   const isActive = (path: string) => currentPath === path
 
@@ -79,7 +80,26 @@ export function Navigation() {
           <div className="flex items-center space-x-2 sm:space-x-4">
             <ThemeToggle />
 
-            {user ? (
+            {user && (
+              <Button
+                variant="ghost"
+                size="sm"
+                asChild
+                className="relative flex items-center space-x-2"
+                title="Earn cash rewards by referring friends"
+              >
+                <Link href="/referrals">
+                  <DollarSign className="h-4 w-4" />
+                  <span className="hidden sm:inline">Earn</span>
+                  <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                </Link>
+              </Button>
+            )}
+
+            {loading ? (
+              /* Loading state - show nothing to prevent flash */
+              <div className="h-10 w-10" />
+            ) : user ? (
               /* Authenticated user menu */
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -160,6 +180,16 @@ export function Navigation() {
                     <Link href="/scripts" className="flex items-center">
                       <Clapperboard className="mr-2 h-4 w-4" />
                       <span>Script Editor</span>
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
+                  {/* Earnings Section */}
+                  <DropdownMenuItem asChild>
+                    <Link href="/referrals" className="flex items-center">
+                      <DollarSign className="mr-2 h-4 w-4 text-green-600" />
+                      <span className="font-medium text-green-600">Earn Cash Rewards</span>
                     </Link>
                   </DropdownMenuItem>
 

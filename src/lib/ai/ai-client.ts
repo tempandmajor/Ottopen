@@ -124,13 +124,13 @@ export class AIClient {
   private getDefaultModelForProvider(provider: AIProvider): AIModel {
     switch (provider) {
       case 'openai':
-        return 'gpt-4-turbo'
+        return 'gpt-5-turbo'
       case 'anthropic':
-        return 'claude-3-5-sonnet-20241022'
+        return 'claude-4.5-sonnet-20250101'
       case 'gemini':
         return 'gemini-pro'
       default:
-        return 'gpt-4-turbo'
+        return 'gpt-5-turbo'
     }
   }
 
@@ -156,9 +156,11 @@ export class AIClient {
   private getModelsForProvider(provider: AIProvider): AIModel[] {
     switch (provider) {
       case 'openai':
-        return ['gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo']
+        return ['gpt-5-turbo', 'gpt-5', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo']
       case 'anthropic':
         return [
+          'claude-4.5-sonnet-20250101',
+          'claude-4.5-opus-20250101',
           'claude-3-5-sonnet-20241022',
           'claude-3-opus-20240229',
           'claude-3-sonnet-20240229',

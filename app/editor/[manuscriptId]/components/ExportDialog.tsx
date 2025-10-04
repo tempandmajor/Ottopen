@@ -24,6 +24,9 @@ import { Download, FileText, File } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { exportToDocx } from '@/src/lib/export/docx-export'
 import { exportToPdf } from '@/src/lib/export/pdf-export'
+import { exportToMarkdown } from '@/src/lib/export/markdown-export'
+import { exportToPlainText } from '@/src/lib/export/plain-text-export'
+import { logger } from '@/src/lib/editor-logger'
 
 interface ExportDialogProps {
   open: boolean
@@ -33,7 +36,7 @@ interface ExportDialogProps {
 }
 
 export function ExportDialog({ open, onOpenChange, manuscript, chapters }: ExportDialogProps) {
-  const [format, setFormat] = useState<'docx' | 'pdf'>('docx')
+  const [format, setFormat] = useState<'docx' | 'pdf' | 'markdown' | 'txt'>('docx')
   const [includeChapterNumbers, setIncludeChapterNumbers] = useState(true)
   const [includeSceneSeparators, setIncludeSceneSeparators] = useState(true)
   const [exporting, setExporting] = useState(false)
@@ -50,15 +53,21 @@ export function ExportDialog({ open, onOpenChange, manuscript, chapters }: Expor
       if (format === 'docx') {
         await exportToDocx(manuscript, chapters, options)
         toast.success('Exported to DOCX successfully!')
-      } else {
+      } else if (format === 'pdf') {
         await exportToPdf(manuscript, chapters, options)
         toast.success('Exported to PDF successfully!')
+      } else if (format === 'markdown') {
+        await exportToMarkdown(manuscript, chapters, { ...options, includeMetadata: true })
+        toast.success('Exported to Markdown successfully!')
+      } else if (format === 'txt') {
+        await exportToPlainText(manuscript, chapters, options)
+        toast.success('Exported to plain text successfully!')
       }
 
       onOpenChange(false)
     } catch (error) {
-      console.error('Export failed:', error)
-      toast.error('Failed to export manuscript')
+      logger.error('Export failed', error as Error, { manuscriptId: manuscript.id, format })
+      logger.userError('Failed to export manuscript')
     } finally {
       setExporting(false)
     }
@@ -98,6 +107,18 @@ export function ExportDialog({ open, onOpenChange, manuscript, chapters }: Expor
                   <div className="flex items-center gap-2">
                     <File className="h-4 w-4" />
                     <span>PDF Document (.pdf)</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="markdown">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    <span>Markdown (.md)</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="txt">
+                  <div className="flex items-center gap-2">
+                    <File className="h-4 w-4" />
+                    <span>Plain Text (.txt)</span>
                   </div>
                 </SelectItem>
               </SelectContent>

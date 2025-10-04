@@ -15,7 +15,7 @@ function getAnthropic(): Anthropic {
 
 export async function callAnthropic(
   request: AICompletionRequest,
-  model: string = 'claude-3-5-sonnet-20241022'
+  model: string = 'claude-4.5-sonnet-20250101'
 ): Promise<AICompletionResponse> {
   try {
     // Separate system messages from user/assistant messages
@@ -31,7 +31,7 @@ export async function callAnthropic(
       model,
       system: systemMessage,
       messages: conversationMessages,
-      max_tokens: request.maxTokens || 4096,
+      max_tokens: request.maxTokens || 8192,
       temperature: request.temperature || 0.7,
       stream: false,
     })
@@ -58,7 +58,7 @@ export async function callAnthropic(
 
 export async function* streamAnthropic(
   request: AICompletionRequest,
-  model: string = 'claude-3-5-sonnet-20241022'
+  model: string = 'claude-4.5-sonnet-20250101'
 ): AsyncGenerator<AIStreamChunk> {
   try {
     const systemMessage = request.messages.find(m => m.role === 'system')?.content || ''
@@ -73,7 +73,7 @@ export async function* streamAnthropic(
       model,
       system: systemMessage,
       messages: conversationMessages,
-      max_tokens: request.maxTokens || 4096,
+      max_tokens: request.maxTokens || 8192,
       temperature: request.temperature || 0.7,
       stream: true,
     })

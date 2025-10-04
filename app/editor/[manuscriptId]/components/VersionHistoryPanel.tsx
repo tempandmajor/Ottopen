@@ -18,6 +18,7 @@ import {
 import { Clock, RotateCcw, Save, Eye, X } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'react-hot-toast'
+import { logger } from '@/src/lib/editor-logger'
 
 interface VersionHistoryPanelProps {
   sceneId: string
@@ -49,8 +50,8 @@ export function VersionHistoryPanel({
       const data = await SceneService.getVersions(sceneId)
       setVersions(data)
     } catch (error) {
-      console.error('Failed to load versions:', error)
-      toast.error('Failed to load version history')
+      logger.error('Failed to load versions', error as Error, { sceneId })
+      logger.userError('Failed to load version history')
     } finally {
       setLoading(false)
     }
@@ -69,8 +70,8 @@ export function VersionHistoryPanel({
       await loadVersions()
       toast.success('Version saved!')
     } catch (error) {
-      console.error('Failed to save version:', error)
-      toast.error('Failed to save version')
+      logger.error('Failed to save version', error as Error, { sceneId, saveLabel })
+      logger.userError('Failed to save version')
     } finally {
       setIsSavingVersion(false)
     }
@@ -101,8 +102,8 @@ export function VersionHistoryPanel({
 
       toast.success('Version restored!')
     } catch (error) {
-      console.error('Failed to restore version:', error)
-      toast.error('Failed to restore version')
+      logger.error('Failed to restore version', error as Error, { sceneId, versionId: version.id })
+      logger.userError('Failed to restore version')
     }
   }
 

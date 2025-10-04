@@ -15,7 +15,7 @@ function getOpenAI(): OpenAI {
 
 export async function callOpenAI(
   request: AICompletionRequest,
-  model: string = 'gpt-4-turbo'
+  model: string = 'gpt-5-turbo'
 ): Promise<AICompletionResponse> {
   try {
     const completion = await getOpenAI().chat.completions.create({
@@ -24,7 +24,7 @@ export async function callOpenAI(
         role: m.role,
         content: m.content,
       })),
-      max_tokens: request.maxTokens || 2000,
+      max_tokens: request.maxTokens || 4096,
       temperature: request.temperature || 0.7,
       stream: false,
     })
@@ -51,7 +51,7 @@ export async function callOpenAI(
 
 export async function* streamOpenAI(
   request: AICompletionRequest,
-  model: string = 'gpt-4-turbo'
+  model: string = 'gpt-5-turbo'
 ): AsyncGenerator<AIStreamChunk> {
   try {
     const stream = await getOpenAI().chat.completions.create({
@@ -60,7 +60,7 @@ export async function* streamOpenAI(
         role: m.role,
         content: m.content,
       })),
-      max_tokens: request.maxTokens || 2000,
+      max_tokens: request.maxTokens || 4096,
       temperature: request.temperature || 0.7,
       stream: true,
     })
