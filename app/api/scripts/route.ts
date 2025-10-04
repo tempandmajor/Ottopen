@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService } from '@/src/lib/script-service'
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic'
+
 // GET /api/scripts - List user's scripts
 export async function GET(request: NextRequest) {
   try {

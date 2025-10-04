@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { researchQuery } from '@/src/lib/ai/perplexity-client'
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic'
+
 // POST /api/scripts/[scriptId]/research - Research with Perplexity (context-aware)
 export async function POST(request: NextRequest, { params }: { params: { scriptId: string } }) {
   try {

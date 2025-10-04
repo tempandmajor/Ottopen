@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { BookClubService } from '@/src/lib/book-club-service'
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic'
+
 // GET /api/book-clubs - List clubs with optional filters
 export async function GET(request: NextRequest) {
   try {

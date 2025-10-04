@@ -3,6 +3,9 @@ import { getServerUser } from '@/lib/server/auth'
 import { callPerplexity, streamPerplexity } from '@/src/lib/ai/perplexity-client'
 import { AIService } from '@/src/lib/ai-editor-service'
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   try {
     const { user } = await getServerUser()

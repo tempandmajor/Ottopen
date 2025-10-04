@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ResearchService } from '@/src/lib/research-service'
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic'
+
 // GET /api/research - Get all research notes for user
 export async function GET(request: NextRequest) {
   try {

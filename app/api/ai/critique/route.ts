@@ -5,6 +5,9 @@ import { buildCritiquePrompt, SYSTEM_PROMPTS } from '@/src/lib/ai/prompts/writin
 import { AIService } from '@/src/lib/ai-editor-service'
 import type { CritiqueRequest } from '@/src/lib/ai/prompts/writing-prompts'
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   try {
     const { user } = await getServerUser()

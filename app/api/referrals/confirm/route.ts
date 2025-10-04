@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic'
+
 /**
  * POST /api/referrals/confirm
  * Confirm a referral when the referred user becomes a paying subscriber

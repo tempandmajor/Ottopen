@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 import { env } from '@/src/lib/env'
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic'
+
 interface HealthCheck {
   status: 'healthy' | 'degraded' | 'unhealthy'
   timestamp: string

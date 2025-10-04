@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic'
+
 // Check if Stripe is configured
 const isStripeConfigured = () => {
   return !!process.env.STRIPE_SECRET_KEY

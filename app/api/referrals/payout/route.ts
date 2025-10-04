@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 import Stripe from 'stripe'
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic'
+
 const MINIMUM_PAYOUT_CENTS = 1000 // $10 minimum payout
 
 function getStripe() {

@@ -3,6 +3,9 @@ import { getServerUser } from '@/lib/server/auth'
 import { ScriptService } from '@/src/lib/script-service'
 import { AIDocumentaryService } from '@/src/lib/ai-documentary-service'
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic'
+
 // POST /api/scripts/[scriptId]/documentary/interview-questions - Generate interview questions
 export async function POST(request: NextRequest, { params }: { params: { scriptId: string } }) {
   try {

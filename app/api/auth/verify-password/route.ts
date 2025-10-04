@@ -4,6 +4,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { withRateLimit, authRateLimiters } from '@/src/lib/rate-limit'
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic'
+
 async function handlePasswordVerification(request: NextRequest): Promise<Response> {
   try {
     const { email, password } = await request.json()
@@ -34,18 +37,12 @@ async function handlePasswordVerification(request: NextRequest): Promise<Respons
     } = await supabase.auth.getUser()
 
     if (userError || !currentUser) {
-      return NextResponse.json(
-        { valid: false, error: 'User not authenticated' },
-        { status: 401 }
-      )
+      return NextResponse.json({ valid: false, error: 'User not authenticated' }, { status: 401 })
     }
 
     // Ensure the email matches the current user (security check)
     if (currentUser.email !== email) {
-      return NextResponse.json(
-        { valid: false, error: 'Email mismatch' },
-        { status: 403 }
-      )
+      return NextResponse.json({ valid: false, error: 'Email mismatch' }, { status: 403 })
     }
 
     // Create admin client for password verification
@@ -78,15 +75,9 @@ async function handlePasswordVerification(request: NextRequest): Promise<Respons
     })
   } catch (error) {
     console.error('Password verification error:', error)
-    return NextResponse.json(
-      { valid: false, error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ valid: false, error: 'Internal server error' }, { status: 500 })
   }
 }
 
 // Apply rate limiting to the endpoint
-export const POST = withRateLimit(
-  authRateLimiters.passwordVerification,
-  handlePasswordVerification
-)
+export const POST = withRateLimit(authRateLimiters.passwordVerification, handlePasswordVerification)

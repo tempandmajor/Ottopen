@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 import { nanoid } from 'nanoid'
 
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic'
+
 /**
  * POST /api/referrals/generate
  * Generate a referral code for the authenticated user
