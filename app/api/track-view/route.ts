@@ -2,8 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { dbService } from '@/src/lib/database'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
+import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
+import { logError } from '@/src/lib/errors'
 
-export async function POST(request: NextRequest) {
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
+
+async function handleTrackView(request: NextRequest) {
   try {
     const body = await request.json()
     const { postId } = body
@@ -32,10 +37,12 @@ export async function POST(request: NextRequest) {
       message: 'View tracked successfully',
     })
   } catch (error) {
-    console.error('Error tracking post view:', error)
+    logError(error, { context: 'track_view' })
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })
   }
 }
+
+export const POST = createRateLimitedHandler('api', handleTrackView)
 
 export async function GET() {
   return NextResponse.json({

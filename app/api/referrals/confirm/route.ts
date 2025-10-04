@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import { logError } from '@/src/lib/errors'
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic'
@@ -7,16 +8,47 @@ export const dynamic = 'force-dynamic'
 /**
  * POST /api/referrals/confirm
  * Confirm a referral when the referred user becomes a paying subscriber
- * This should be called from Stripe webhook handler
+ * SEC-FIX: This should ONLY be called from internal systems (webhook handler)
+ * NOT accessible from external requests
  */
 export async function POST(request: NextRequest) {
   try {
+    // SEC-FIX: Require internal webhook secret for authentication
+    const authHeader = request.headers.get('authorization')
+    const webhookSecret = process.env.INTERNAL_WEBHOOK_SECRET
+
+    if (!authHeader || !webhookSecret || authHeader !== `Bearer ${webhookSecret}`) {
+      logError(new Error('Unauthorized referral confirmation attempt'), {
+        context: 'referral_confirm',
+        ip: request.ip,
+        userAgent: request.headers.get('user-agent'),
+      })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const supabase = createServerSupabaseClient()
     const body = await request.json()
-    const { user_id, subscription_tier } = body
+    const { user_id, subscription_tier, idempotency_key } = body
 
     if (!user_id || !subscription_tier) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    // SEC-FIX: Add idempotency check to prevent duplicate confirmations
+    if (idempotency_key) {
+      const { data: existing } = await supabase
+        .from('referral_confirmations')
+        .select('id')
+        .eq('idempotency_key', idempotency_key)
+        .maybeSingle()
+
+      if (existing) {
+        return NextResponse.json({
+          success: true,
+          referral_confirmed: true,
+          already_processed: true,
+        })
+      }
     }
 
     // Find pending referral for this user
@@ -42,8 +74,18 @@ export async function POST(request: NextRequest) {
       .eq('id', referral.id)
 
     if (updateError) {
-      console.error('Error confirming referral:', updateError)
+      logError(updateError, { context: 'confirm_referral', referralId: referral.id })
       return NextResponse.json({ error: 'Failed to confirm referral' }, { status: 500 })
+    }
+
+    // Store idempotency record if provided
+    if (idempotency_key) {
+      await supabase.from('referral_confirmations').insert({
+        idempotency_key,
+        referral_id: referral.id,
+        user_id,
+        confirmed_at: new Date().toISOString(),
+      })
     }
 
     // The trigger 'mark_earnings_available' will automatically update earnings to 'available'
@@ -82,7 +124,7 @@ export async function POST(request: NextRequest) {
       referral_confirmed: true,
     })
   } catch (error) {
-    console.error('Error in confirm referral:', error)
+    logError(error, { context: 'confirm_referral' })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

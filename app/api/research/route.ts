@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ResearchService } from '@/src/lib/research-service'
+import { logError } from '@/src/lib/errors'
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic'
@@ -34,8 +35,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ notes })
   } catch (error: any) {
-    console.error('Get research notes error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    logError(error, { context: 'GET /api/research' })
+    return NextResponse.json({ error: 'Failed to fetch research notes' }, { status: 500 })
   }
 }
 
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(note, { status: 201 })
   } catch (error: any) {
-    console.error('Create research note error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    logError(error, { context: 'POST /api/research' })
+    return NextResponse.json({ error: 'Failed to create research note' }, { status: 500 })
   }
 }

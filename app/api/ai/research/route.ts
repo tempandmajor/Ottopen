@@ -2,11 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { callPerplexity, streamPerplexity } from '@/src/lib/ai/perplexity-client'
 import { AIService } from '@/src/lib/ai-editor-service'
+import { withRateLimit } from '@/src/lib/rate-limit-new'
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic'
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<Response | NextResponse> {
+  // Apply rate limiting
+  const rateLimitResult = await withRateLimit(request, 'ai')
+  if (!rateLimitResult.success) {
+    return rateLimitResult.error!
+  }
   try {
     const { user } = await getServerUser()
     if (!user) {

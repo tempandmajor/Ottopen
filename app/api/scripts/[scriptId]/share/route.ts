@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService } from '@/src/lib/script-service'
 import { supabase } from '@/src/lib/supabase'
+import { randomBytes } from 'crypto'
+import { logError } from '@/src/lib/errors'
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
 
 // POST /api/scripts/[scriptId]/share - Generate shareable link with permissions
 export async function POST(request: NextRequest, { params }: { params: { scriptId: string } }) {
@@ -23,8 +28,8 @@ export async function POST(request: NextRequest, { params }: { params: { scriptI
     const body = await request.json()
     const { permission, expiresIn } = body // permission: 'read' | 'write' | 'comment'
 
-    // Generate share token
-    const token = crypto.randomUUID()
+    // SEC-FIX: Use cryptographically secure random token instead of UUID
+    const token = randomBytes(32).toString('base64url')
     const expiresAt = expiresIn ? new Date(Date.now() + expiresIn * 1000).toISOString() : null
 
     // Store share link in database
@@ -49,8 +54,8 @@ export async function POST(request: NextRequest, { params }: { params: { scriptI
       url: shareUrl,
     })
   } catch (error: any) {
-    console.error('Failed to create share link:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    logError(error, { context: 'create_share_link', scriptId: params.scriptId })
+    return NextResponse.json({ error: 'Failed to create share link' }, { status: 500 })
   }
 }
 
@@ -81,7 +86,7 @@ export async function GET(request: NextRequest, { params }: { params: { scriptId
 
     return NextResponse.json({ shareLinks })
   } catch (error: any) {
-    console.error('Failed to get share links:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    logError(error, { context: 'get_share_links', scriptId: params.scriptId })
+    return NextResponse.json({ error: 'Failed to get share links' }, { status: 500 })
   }
 }

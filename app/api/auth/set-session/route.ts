@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic'
 
-export async function POST(request: NextRequest) {
+async function handleSetSession(request: NextRequest) {
   try {
     const { access_token, refresh_token } = await request.json()
 
@@ -49,3 +50,5 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
+export const POST = createRateLimitedHandler('auth', handleSetSession)

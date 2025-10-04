@@ -4,11 +4,12 @@ import { AIClient } from '@/src/lib/ai/ai-client'
 import { buildCritiquePrompt, SYSTEM_PROMPTS } from '@/src/lib/ai/prompts/writing-prompts'
 import { AIService } from '@/src/lib/ai-editor-service'
 import type { CritiqueRequest } from '@/src/lib/ai/prompts/writing-prompts'
+import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic'
 
-export async function POST(request: NextRequest) {
+async function handleCritique(request: NextRequest) {
   try {
     const { user } = await getServerUser()
     if (!user) {
@@ -55,3 +56,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message || 'AI request failed' }, { status: 500 })
   }
 }
+
+export const POST = createRateLimitedHandler('ai', handleCritique)

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ResearchService } from '@/src/lib/research-service'
+import { logError } from '@/src/lib/errors'
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic'
@@ -24,8 +25,8 @@ export async function POST(request: NextRequest, { params }: { params: { noteId:
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error('Link research note error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    logError(error, { context: 'POST /api/research/[noteId]/link' })
+    return NextResponse.json({ error: 'Failed to link research note to script' }, { status: 500 })
   }
 }
 
@@ -48,7 +49,10 @@ export async function DELETE(request: NextRequest, { params }: { params: { noteI
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error('Unlink research note error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    logError(error, { context: 'DELETE /api/research/[noteId]/link' })
+    return NextResponse.json(
+      { error: 'Failed to unlink research note from script' },
+      { status: 500 }
+    )
   }
 }

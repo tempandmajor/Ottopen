@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ResearchService } from '@/src/lib/research-service'
+import { logError } from '@/src/lib/errors'
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic'
@@ -18,8 +19,8 @@ export async function PUT(request: NextRequest, { params }: { params: { noteId: 
 
     return NextResponse.json(note)
   } catch (error: any) {
-    console.error('Update research note error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    logError(error, { context: 'PUT /api/research/[noteId]' })
+    return NextResponse.json({ error: 'Failed to update research note' }, { status: 500 })
   }
 }
 
@@ -35,7 +36,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { noteI
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error('Delete research note error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    logError(error, { context: 'DELETE /api/research/[noteId]' })
+    return NextResponse.json({ error: 'Failed to delete research note' }, { status: 500 })
   }
 }
