@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import { logError } from '@/src/lib/errors'
+import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
+import { z } from 'zod'
 
 // Force dynamic route
 export const dynamic = 'force-dynamic'
 
-export async function POST(request: NextRequest, { params }: { params: { postId: string } }) {
+const reportSchema = z.object({
+  reason: z.enum(['spam', 'harassment', 'inappropriate', 'misinformation', 'copyright', 'other']),
+  description: z.string().max(1000).optional(),
+})
+
+async function handleReportPost(request: NextRequest, { params }: { params: { postId: string } }) {
   try {
     const supabase = createServerSupabaseClient()
     const {
@@ -17,16 +25,17 @@ export async function POST(request: NextRequest, { params }: { params: { postId:
 
     const { postId } = params
     const body = await request.json()
-    const { reason, description } = body
 
-    if (
-      !reason ||
-      !['spam', 'harassment', 'inappropriate', 'misinformation', 'copyright', 'other'].includes(
-        reason
+    // SEC-FIX: Validate input with Zod
+    const validationResult = reportSchema.safeParse(body)
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid input', details: validationResult.error.errors },
+        { status: 400 }
       )
-    ) {
-      return NextResponse.json({ error: 'Invalid reason' }, { status: 400 })
     }
+
+    const { reason, description } = validationResult.data
 
     // Check if post exists
     const { data: post, error: fetchError } = await supabase
@@ -64,13 +73,15 @@ export async function POST(request: NextRequest, { params }: { params: { postId:
       .single()
 
     if (createError) {
-      console.error('Failed to create report:', createError)
+      logError(createError, { context: 'POST /api/posts/[postId]/report - create' })
       return NextResponse.json({ error: 'Failed to create report' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, report })
   } catch (error) {
-    console.error('Report post error:', error)
+    logError(error, { context: 'POST /api/posts/[postId]/report' })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+
+export const POST = createRateLimitedHandler('api', handleReportPost)

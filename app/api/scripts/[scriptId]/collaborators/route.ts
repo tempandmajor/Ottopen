@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService, CollaborationService } from '@/src/lib/script-service'
+import { logError } from '@/src/lib/errors'
+import { z } from 'zod'
+
+export const dynamic = 'force-dynamic'
+
+const addCollaboratorSchema = z.object({
+  userId: z.string().uuid(),
+  role: z.enum(['editor', 'viewer', 'commenter']),
+})
 
 // GET /api/scripts/[scriptId]/collaborators - Get all collaborators
 export async function GET(request: NextRequest, { params }: { params: { scriptId: string } }) {
@@ -23,8 +32,8 @@ export async function GET(request: NextRequest, { params }: { params: { scriptId
 
     return NextResponse.json({ collaborators })
   } catch (error: any) {
-    console.error('Failed to get collaborators:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    logError(error, { context: 'GET /api/scripts/[scriptId]/collaborators' })
+    return NextResponse.json({ error: 'Failed to get collaborators' }, { status: 500 })
   }
 }
 
@@ -46,11 +55,17 @@ export async function POST(request: NextRequest, { params }: { params: { scriptI
     }
 
     const body = await request.json()
-    const { userId, role } = body
 
-    if (!userId || !role) {
-      return NextResponse.json({ error: 'userId and role are required' }, { status: 400 })
+    // SEC-FIX: Validate input with Zod
+    const validationResult = addCollaboratorSchema.safeParse(body)
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid input', details: validationResult.error.errors },
+        { status: 400 }
+      )
     }
+
+    const { userId, role } = validationResult.data
 
     const collaborator = await CollaborationService.addCollaborator(
       params.scriptId,
@@ -61,7 +76,7 @@ export async function POST(request: NextRequest, { params }: { params: { scriptI
 
     return NextResponse.json({ collaborator }, { status: 201 })
   } catch (error: any) {
-    console.error('Failed to add collaborator:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    logError(error, { context: 'POST /api/scripts/[scriptId]/collaborators' })
+    return NextResponse.json({ error: 'Failed to add collaborator' }, { status: 500 })
   }
 }

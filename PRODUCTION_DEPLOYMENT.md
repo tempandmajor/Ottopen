@@ -65,11 +65,16 @@ Set these in your hosting platform's environment variables:
 # Supabase (Production)
 NEXT_PUBLIC_SUPABASE_URL=https://wkvatudgffosjfwqyxgt.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_production_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_production_service_role_key
+SUPABASE_SERVICE_ROLE_KEY=your_production_service_role_key  # ⚠️ CRITICAL - Get from Supabase Dashboard
 
 # App Configuration
-NEXT_PUBLIC_APP_URL=https://ottopen.com
+NEXT_PUBLIC_APP_URL=https://ottopen.app
 NODE_ENV=production
+
+# Security - CRITICAL (MUST BE SET)
+NEXTAUTH_SECRET=<GENERATE_NEW_SECRET>  # Generate with: openssl rand -base64 32
+NEXTAUTH_URL=https://ottopen.app
+INTERNAL_WEBHOOK_SECRET=<GENERATE_NEW_SECRET>  # Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 
 # AI Services (USE NEW ROTATED KEYS!)
 ANTHROPIC_API_KEY=your_NEW_anthropic_key_here
@@ -79,6 +84,10 @@ PERPLEXITY_API_KEY=your_NEW_perplexity_key_here
 # Stripe
 STRIPE_SECRET_KEY=sk_live_your_stripe_secret_key
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_your_stripe_publishable_key
+
+# Upstash Redis (for rate limiting - RECOMMENDED)
+UPSTASH_REDIS_REST_URL=your_upstash_redis_url
+UPSTASH_REDIS_REST_TOKEN=your_upstash_redis_token
 
 # Monitoring (Optional but recommended)
 SENTRY_DSN=your_sentry_dsn

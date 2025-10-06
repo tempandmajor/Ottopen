@@ -28,6 +28,19 @@ export class ResearchService {
   }
 
   /**
+   * Get a single research note by ID
+   */
+  static async getById(noteId: string): Promise<{ data: ResearchNote | null; error: any }> {
+    const { data, error } = await supabase
+      .from('research_notes')
+      .select('*')
+      .eq('id', noteId)
+      .single()
+
+    return { data, error }
+  }
+
+  /**
    * Get all research notes for a user
    */
   static async getByUserId(userId: string): Promise<ResearchNote[]> {

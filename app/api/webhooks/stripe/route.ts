@@ -111,12 +111,14 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription, supa
 
     if (subscription.items.data.length > 0) {
       const priceId = subscription.items.data[0].price.id
-      // Map price IDs to tiers (you'll need to set these based on your actual price IDs)
+      // Map price IDs to tiers based on Stripe products
       const tierMap: Record<string, string> = {
-        [process.env.STRIPE_PRICE_PREMIUM || '']: 'premium',
-        [process.env.STRIPE_PRICE_PRO || '']: 'pro',
-        [process.env.STRIPE_PRICE_INDUSTRY_BASIC || '']: 'industry_basic',
-        [process.env.STRIPE_PRICE_INDUSTRY_PREMIUM || '']: 'industry_premium',
+        [process.env.STRIPE_PRICE_PREMIUM || '']: 'premium', // $20/mo - Premium Features
+        [process.env.STRIPE_PRICE_PRO || '']: 'pro', // $50/mo - Writer Pro Plan
+        [process.env.STRIPE_PRICE_INDUSTRY_BASIC || '']: 'industry_basic', // $200/mo - External Agent Access
+        [process.env.STRIPE_PRICE_INDUSTRY_PREMIUM || '']: 'industry_premium', // $500/mo - Producer Premium Access
+        // Publisher Access ($300/mo) maps to industry_premium as well
+        price_1SAflHA5S8NBMyaJ9k93hL7Q: 'industry_premium', // Publisher Access hardcoded for now
       }
       tier = tierMap[priceId] || 'premium'
     }

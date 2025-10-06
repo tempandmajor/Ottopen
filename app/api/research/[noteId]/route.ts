@@ -14,6 +14,15 @@ export async function PUT(request: NextRequest, { params }: { params: { noteId: 
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // SEC-FIX: Verify ownership before allowing update
+    const { data: existingNote } = await ResearchService.getById(params.noteId)
+    if (!existingNote) {
+      return NextResponse.json({ error: 'Research note not found' }, { status: 404 })
+    }
+    if (existingNote.user_id !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const body = await request.json()
     const note = await ResearchService.update(params.noteId, body)
 
@@ -30,6 +39,15 @@ export async function DELETE(request: NextRequest, { params }: { params: { noteI
     const { user } = await getServerUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // SEC-FIX: Verify ownership before allowing deletion
+    const { data: existingNote } = await ResearchService.getById(params.noteId)
+    if (!existingNote) {
+      return NextResponse.json({ error: 'Research note not found' }, { status: 404 })
+    }
+    if (existingNote.user_id !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     await ResearchService.delete(params.noteId)
