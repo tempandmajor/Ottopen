@@ -17,16 +17,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/src/components/ui/ta
 import { Badge } from '@/src/components/ui/badge'
 import { BookClub, ClubMembership } from '@/src/lib/book-club-service'
 import { Avatar, AvatarFallback } from '@/src/components/ui/avatar'
+import { DiscussionList } from './components/DiscussionList'
+import { CritiqueList } from './components/CritiqueList'
+import { CritiqueSubmissionForm } from './components/CritiqueSubmissionForm'
+import { MemberList } from './components/MemberList'
+import { EventList } from './components/EventList'
+import { useAuth } from '@/src/contexts/auth-context'
 
 interface ClubDetailViewProps {
   clubId: string
 }
 
 export function ClubDetailView({ clubId }: ClubDetailViewProps) {
+  const { user } = useAuth()
   const [club, setClub] = useState<BookClub | null>(null)
   const [membership, setMembership] = useState<ClubMembership | null>(null)
   const [loading, setLoading] = useState(true)
   const [joining, setJoining] = useState(false)
+  const [showSubmitDialog, setShowSubmitDialog] = useState(false)
 
   useEffect(() => {
     loadClubData()
@@ -199,63 +207,55 @@ export function ClubDetailView({ clubId }: ClubDetailViewProps) {
             </TabsList>
 
             <TabsContent value="discussions">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Discussions</CardTitle>
-                  <CardDescription>Join conversations with fellow club members</CardDescription>
-                </CardHeader>
-                <CardContent className="py-12 text-center">
-                  <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">No discussions yet. Start one!</p>
-                  <Button className="mt-4">Create Discussion</Button>
-                </CardContent>
-              </Card>
+              <DiscussionList clubId={clubId} isMember={isMember} />
             </TabsContent>
 
             <TabsContent value="critiques">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Critique Exchange</CardTitle>
-                  <CardDescription>
-                    Submit your work for feedback and critique others to earn credits
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="py-12 text-center">
-                  <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">You have {membership?.credits || 0} credits</p>
-                  <div className="flex gap-3 justify-center mt-4">
-                    <Button>Submit for Critique</Button>
-                    <Button variant="outline">Browse Submissions</Button>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold">Critique Exchange</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Submit your work for feedback and critique others to earn credits
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-primary">
+                        {membership?.credits || 0}
+                      </div>
+                      <div className="text-xs text-muted-foreground">credits</div>
+                    </div>
+                    <Button onClick={() => setShowSubmitDialog(true)}>Submit for Critique</Button>
+                  </div>
+                </div>
+                <CritiqueList clubId={clubId} userId={user?.id || ''} />
+              </div>
+
+              <CritiqueSubmissionForm
+                clubId={clubId}
+                open={showSubmitDialog}
+                onOpenChange={setShowSubmitDialog}
+                onSubmissionCreated={() => {
+                  setShowSubmitDialog(false)
+                  loadClubData()
+                }}
+                userCredits={membership?.credits || 0}
+              />
             </TabsContent>
 
             <TabsContent value="members">
-              <Card>
-                <CardHeader>
-                  <CardTitle>{club.member_count} Members</CardTitle>
-                  <CardDescription>Active community members</CardDescription>
-                </CardHeader>
-                <CardContent className="py-12 text-center">
-                  <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">Member directory coming soon</p>
-                </CardContent>
-              </Card>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold">{club.member_count} Members</h3>
+                  <p className="text-sm text-muted-foreground">Active community members</p>
+                </div>
+                <MemberList clubId={clubId} currentUserId={user?.id || ''} />
+              </div>
             </TabsContent>
 
             <TabsContent value="events">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Upcoming Events</CardTitle>
-                  <CardDescription>Join club activities and writing sessions</CardDescription>
-                </CardHeader>
-                <CardContent className="py-12 text-center">
-                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">No upcoming events</p>
-                  <Button className="mt-4">Create Event</Button>
-                </CardContent>
-              </Card>
+              <EventList clubId={clubId} userId={user?.id || ''} isMember={isMember} />
             </TabsContent>
           </Tabs>
         ) : (

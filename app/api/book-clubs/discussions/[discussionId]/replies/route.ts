@@ -1,0 +1,74 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerUser } from '@/lib/server/auth'
+import { DiscussionService } from '@/src/lib/book-club-service'
+import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
+
+export const dynamic = 'force-dynamic'
+
+// GET - Get replies for a discussion
+async function handleGetReplies(
+  request: NextRequest,
+  { params }: { params: { discussionId: string } }
+) {
+  try {
+    const { user } = await getServerUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const replies = await DiscussionService.getReplies(params.discussionId)
+
+    return NextResponse.json({
+      success: true,
+      replies,
+    })
+  } catch (error: any) {
+    console.error('Get replies error:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch replies', details: error.message },
+      { status: 500 }
+    )
+  }
+}
+
+export const GET = createRateLimitedHandler('api', handleGetReplies)
+
+// POST - Add reply to discussion
+async function handleAddReply(
+  request: NextRequest,
+  { params }: { params: { discussionId: string } }
+) {
+  try {
+    const { user } = await getServerUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { content, parentReplyId } = body
+
+    if (!content || !content.trim()) {
+      return NextResponse.json({ error: 'Content is required' }, { status: 400 })
+    }
+
+    const reply = await DiscussionService.addReply(
+      params.discussionId,
+      user.id,
+      content,
+      parentReplyId
+    )
+
+    return NextResponse.json({
+      success: true,
+      reply,
+    })
+  } catch (error: any) {
+    console.error('Add reply error:', error)
+    return NextResponse.json(
+      { error: 'Failed to add reply', details: error.message },
+      { status: 500 }
+    )
+  }
+}
+
+export const POST = createRateLimitedHandler('api', handleAddReply)
