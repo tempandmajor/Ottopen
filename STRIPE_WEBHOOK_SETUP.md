@@ -1,4 +1,4 @@
-# Stripe Webhook Configuration
+# Ottopen - Stripe Webhook Configuration
 
 ## Webhook Endpoint Created ✅
 
@@ -6,6 +6,7 @@
 
 ### Production Webhook Details
 
+- **App:** Ottopen
 - **Endpoint URL:** `https://script-soiree-main.vercel.app/api/webhooks/stripe`
 - **Webhook ID:** `we_1SFHImBCmYmRaOfbmQAF5JvX`
 - **Webhook Secret:** `whsec_jVfHCArbnni3n7X2A5EG8L2YAQm903qi`
