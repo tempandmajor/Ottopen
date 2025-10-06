@@ -26,6 +26,8 @@ import { EventList } from './components/EventList'
 import { Leaderboard } from './components/Leaderboard'
 import { BadgeDisplay } from './components/BadgeDisplay'
 import { CreditsWidget } from './components/CreditsWidget'
+import { ActivityFeed } from './components/ActivityFeed'
+import { NotificationCenter } from './components/NotificationCenter'
 import { useAuth } from '@/src/contexts/auth-context'
 
 interface ClubDetailViewProps {
@@ -171,16 +173,13 @@ export function ClubDetailView({ clubId }: ClubDetailViewProps) {
                 </Button>
               )}
               {isMember && (
-                <>
-                  <Button size="lg" variant="secondary" className="bg-white text-gray-700">
-                    <Bell className="mr-2 h-4 w-4" />
-                    Notifications
-                  </Button>
+                <div className="flex items-center gap-2">
+                  <NotificationCenter userId={user?.id || ''} />
                   <Button size="lg" variant="outline" className="border-white text-white">
                     <Settings className="mr-2 h-4 w-4" />
                     Settings
                   </Button>
-                </>
+                </div>
               )}
             </div>
           </div>
@@ -269,6 +268,7 @@ export function ClubDetailView({ clubId }: ClubDetailViewProps) {
             <TabsContent value="community">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
+                  <ActivityFeed clubId={clubId} />
                   <Leaderboard clubId={clubId} />
                   <BadgeDisplay clubId={clubId} userId={user?.id || ''} />
                 </div>
