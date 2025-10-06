@@ -191,6 +191,16 @@ export interface Manuscript {
   status: 'draft' | 'submitted' | 'under_review' | 'represented' | 'passed'
   is_complete: boolean
   file_path?: string
+  file_url?: string
+  file_size?: number
+  file_type?: string
+  version_number?: number
+  parent_manuscript_id?: string
+  word_count?: number
+  language?: string
+  content_warnings?: string[]
+  previous_publications?: string[]
+  awards?: string[]
   query_letter?: string
   character_count?: number
   target_audience?: string

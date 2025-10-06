@@ -1,6 +1,6 @@
 import { requireAuth } from '@/lib/server/auth'
 import { getServerUserManuscripts, getServerUserSubmissions } from '@/lib/server/data'
-import { SubmissionsView } from './SubmissionsView'
+import { EnhancedSubmissionsView } from './EnhancedSubmissionsView'
 
 export default async function SubmissionsPage() {
   const user = await requireAuth()
@@ -11,5 +11,5 @@ export default async function SubmissionsPage() {
     getServerUserSubmissions(userId),
   ])
 
-  return <SubmissionsView user={user} manuscripts={manuscripts} submissions={submissions} />
+  return <EnhancedSubmissionsView user={user} manuscripts={manuscripts} submissions={submissions} />
 }
