@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/src/lib/supabase/server'
+import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 
 // POST /api/messages/attachments - Add attachment to message
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
+    const supabase = createServerSupabaseClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
 // GET /api/messages/attachments?messageId=xxx - Get attachments for a message
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
+    const supabase = createServerSupabaseClient()
     const searchParams = request.nextUrl.searchParams
     const messageId = searchParams.get('messageId')
     const conversationId = searchParams.get('conversationId')
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
 // DELETE /api/messages/attachments?attachmentId=xxx - Delete attachment
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = await createClient()
+    const supabase = createServerSupabaseClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()

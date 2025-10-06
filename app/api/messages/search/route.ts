@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/src/lib/supabase/server'
+import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 
 // GET /api/messages/search?q=query&conversationId=xxx - Search messages
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
+    const supabase = createServerSupabaseClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()

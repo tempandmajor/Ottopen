@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/src/lib/supabase/server'
+import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 
 // GET /api/messages/threads?parentMessageId=xxx - Get thread replies
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
+    const supabase = createServerSupabaseClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
 // POST /api/messages/threads - Create a reply in a thread
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
+    const supabase = createServerSupabaseClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
