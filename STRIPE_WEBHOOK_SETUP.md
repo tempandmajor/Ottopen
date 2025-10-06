@@ -7,11 +7,12 @@
 ### Production Webhook Details
 
 - **App:** Ottopen
-- **Endpoint URL:** `https://script-soiree-main.vercel.app/api/webhooks/stripe`
+- **Endpoint URL:** `https://ottopen.app/api/webhooks/stripe`
 - **Webhook ID:** `we_1SFHImBCmYmRaOfbmQAF5JvX`
 - **Webhook Secret:** `whsec_jVfHCArbnni3n7X2A5EG8L2YAQm903qi`
 - **Status:** Enabled
 - **Mode:** Test Mode (for development)
+- **Vercel Project:** `ottopen` (prj_SX5KhBL3qFjQXXKJNW4KpkQNkp4D)
 
 ### Enabled Events
 
