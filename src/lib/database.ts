@@ -405,6 +405,77 @@ export class DatabaseService {
     }
   }
 
+  // Full-text search with filters
+  async searchPostsFulltext(
+    query: string,
+    filters: {
+      limit?: number
+      offset?: number
+      genre?: string
+      contentType?: string
+      published?: boolean
+      minReadingTime?: number
+      maxReadingTime?: number
+      sortBy?: string
+    } = {}
+  ): Promise<Post[]> {
+    try {
+      const { data, error } = await this.supabase.rpc('search_posts_fulltext', {
+        search_query: query,
+        search_limit: filters.limit || 20,
+        search_offset: filters.offset || 0,
+        filter_genre: filters.genre || null,
+        filter_content_type: filters.contentType || null,
+        filter_published: filters.published ?? null,
+        min_reading_time: filters.minReadingTime || null,
+        max_reading_time: filters.maxReadingTime || null,
+        sort_by: filters.sortBy || 'relevance',
+      })
+
+      if (error) {
+        logError('Failed to search posts fulltext', error)
+        return []
+      }
+
+      return data || []
+    } catch (error) {
+      logError('Search posts fulltext error', error as Error)
+      return []
+    }
+  }
+
+  async searchUsersFulltext(
+    query: string,
+    filters: {
+      limit?: number
+      offset?: number
+      accountType?: string
+      verified?: boolean
+      sortBy?: string
+    } = {}
+  ): Promise<User[]> {
+    try {
+      const { data, error } = await this.supabase.rpc('search_users_fulltext', {
+        search_query: query,
+        search_limit: filters.limit || 20,
+        search_offset: filters.offset || 0,
+        filter_account_type: filters.accountType || null,
+        filter_verified: filters.verified ?? null,
+        sort_by: filters.sortBy || 'relevance',
+      })
+
+      if (error) {
+        logError('Failed to search users fulltext', error)
+        return []
+      }
+
+      return data || []
+    } catch (error) {
+      logError('Search users fulltext error', error as Error)
+      return []
+    }
+  }
+
   // Comment operations
   async getComments(postId: string): Promise<Comment[]> {
     try {

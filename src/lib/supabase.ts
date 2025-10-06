@@ -121,6 +121,7 @@ export interface Post {
   user?: User
   likes_count?: number
   comments_count?: number
+  reshares_count?: number
   views_count?: number
   // User profile fields from posts_with_stats view
   display_name?: string

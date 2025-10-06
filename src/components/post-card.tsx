@@ -28,10 +28,13 @@ import {
   MoreHorizontal,
   Trash2,
   Flag,
+  Bookmark,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
+import { CommentSection } from '@/src/components/comment-section'
+import { Separator } from '@/src/components/ui/separator'
 
 interface PostCardProps {
   postId?: string
@@ -51,9 +54,12 @@ interface PostCardProps {
   reshares?: number
   isLiked?: boolean
   isReshared?: boolean
+  isBookmarked?: boolean
   onLike?: (postId: string, currentlyLiked: boolean) => Promise<boolean>
   onComment?: (postId: string) => void
   onShare?: (postId: string) => void
+  onReshare?: (postId: string, comment?: string) => Promise<boolean>
+  onBookmark?: (postId: string) => Promise<boolean>
   onDelete?: (postId: string) => void
 }
 
@@ -75,13 +81,17 @@ export function PostCard({
   reshares = 0,
   isLiked = false,
   isReshared = false,
+  isBookmarked = false,
   onLike,
   onComment,
   onShare,
+  onReshare,
+  onBookmark,
   onDelete,
 }: PostCardProps) {
   const [liked, setLiked] = useState(isLiked)
   const [reshared, setReshared] = useState(isReshared)
+  const [bookmarked, setBookmarked] = useState(isBookmarked)
   const [likeCount, setLikeCount] = useState(likes)
   const [reshareCount, setReshareCount] = useState(reshares)
   const [reportDialogOpen, setReportDialogOpen] = useState(false)
@@ -96,8 +106,20 @@ export function PostCard({
   }, [isLiked])
 
   useEffect(() => {
+    setReshared(isReshared)
+  }, [isReshared])
+
+  useEffect(() => {
+    setBookmarked(isBookmarked)
+  }, [isBookmarked])
+
+  useEffect(() => {
     setLikeCount(likes)
   }, [likes])
+
+  useEffect(() => {
+    setReshareCount(reshares)
+  }, [reshares])
 
   const initials = author
     .split(' ')
@@ -121,9 +143,35 @@ export function PostCard({
     }
   }
 
-  const handleReshare = () => {
-    setReshared(!reshared)
-    setReshareCount(reshared ? reshareCount - 1 : reshareCount + 1)
+  const handleReshare = async () => {
+    if (!postId || !onReshare) {
+      // Fallback to local state for components without database integration
+      setReshared(!reshared)
+      setReshareCount(reshared ? reshareCount - 1 : reshareCount + 1)
+      return
+    }
+
+    try {
+      const newResharedState = await onReshare(postId)
+      setReshared(newResharedState)
+    } catch (error) {
+      console.error('Failed to handle reshare:', error)
+    }
+  }
+
+  const handleBookmark = async () => {
+    if (!postId || !onBookmark) {
+      // Fallback to local state
+      setBookmarked(!bookmarked)
+      return
+    }
+
+    try {
+      const newBookmarkedState = await onBookmark(postId)
+      setBookmarked(newBookmarkedState)
+    } catch (error) {
+      console.error('Failed to handle bookmark:', error)
+    }
   }
 
   const handleDeletePost = async () => {
@@ -313,6 +361,15 @@ export function PostCard({
                 <span className="text-xs sm:text-sm">{reshareCount}</span>
               </Button>
 
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`h-7 sm:h-8 px-2 ${bookmarked ? 'text-blue-500' : ''}`}
+                onClick={handleBookmark}
+              >
+                <Bookmark className={`h-3 w-3 sm:h-4 sm:w-4 ${bookmarked ? 'fill-current' : ''}`} />
+              </Button>
+
               {mood ? (
                 <span className="text-xs sm:text-sm px-2 py-1 rounded border border-literary-border bg-muted">
                   Mood: {mood}
@@ -332,6 +389,16 @@ export function PostCard({
           </div>
         </div>
       </CardContent>
+
+      {/* Comments Section */}
+      {postId && (
+        <>
+          <Separator />
+          <CardContent className="p-4 sm:p-6">
+            <CommentSection postId={postId} initialCount={comments} />
+          </CardContent>
+        </>
+      )}
 
       {/* Report Dialog */}
       <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
