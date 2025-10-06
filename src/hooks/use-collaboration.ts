@@ -1,86 +1,108 @@
-// React Hook for Real-time Collaboration
+// React Hook for Real-Time Collaboration
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
-import {
-  RealtimeCollaborationService,
-  type CollaboratorPresence,
-} from '@/src/lib/realtime-collaboration'
+import { CollaborationClient } from '@/src/lib/collaboration/realtime-client'
+import type { CollaboratorPresence, EditorChange, Comment } from '@/src/lib/collaboration/types'
 
 interface UseCollaborationOptions {
-  scriptId: string
+  manuscriptId: string
   userId: string
   userName: string
-  userEmail: string
-  onElementUpdate?: (elementId: string, content: string) => void
+  userColor?: string
+  enabled?: boolean
 }
 
 export function useCollaboration({
-  scriptId,
+  manuscriptId,
   userId,
   userName,
-  userEmail,
-  onElementUpdate,
+  userColor = '#007acc',
+  enabled = true,
 }: UseCollaborationOptions) {
-  const [presences, setPresences] = useState<Record<string, CollaboratorPresence>>({})
+  const [collaborators, setCollaborators] = useState<CollaboratorPresence[]>([])
+  const [comments, setComments] = useState<Comment[]>([])
   const [isConnected, setIsConnected] = useState(false)
-  const serviceRef = useRef<RealtimeCollaborationService | null>(null)
-  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const clientRef = useRef<CollaborationClient | null>(null)
 
-  // Initialize collaboration service
+  // Initialize collaboration client
   useEffect(() => {
-    if (!scriptId || !userId) return
+    if (!enabled || !manuscriptId || !userId) return
 
-    const service = new RealtimeCollaborationService(scriptId, userId, userName, userEmail)
-    serviceRef.current = service
+    const client = new CollaborationClient(manuscriptId, userId, userName, userColor)
+    clientRef.current = client
 
-    // Join collaboration session
-    service
-      .join(
-        presences => setPresences(presences),
-        (elementId, content) => {
-          if (onElementUpdate) {
-            onElementUpdate(elementId, content)
-          }
-        }
-      )
-      .then(() => {
-        setIsConnected(true)
+    const initializeClient = async () => {
+      const channel = await client.join()
+      setIsConnected(true)
 
-        // Start heartbeat to keep presence updated
-        heartbeatIntervalRef.current = setInterval(() => {
-          service.heartbeat()
-        }, 5000) // Update every 5 seconds
+      // Listen for presence changes
+      const updateCollaborators = () => {
+        const currentCollaborators = client.getCollaborators()
+        setCollaborators(currentCollaborators)
+      }
+
+      // Update collaborators periodically
+      const interval = setInterval(updateCollaborators, 1000)
+
+      // Listen for comments
+      client.onCommentAdded(comment => {
+        setComments(prev => [...prev, comment])
       })
 
-    // Cleanup on unmount
-    return () => {
-      if (heartbeatIntervalRef.current) {
-        clearInterval(heartbeatIntervalRef.current)
+      return () => {
+        clearInterval(interval)
+        client.leave()
+        setIsConnected(false)
       }
-      service.leave()
-      setIsConnected(false)
     }
-  }, [scriptId, userId, userName, userEmail, onElementUpdate])
+
+    const cleanup = initializeClient()
+
+    return () => {
+      cleanup.then(fn => fn?.())
+    }
+  }, [manuscriptId, userId, userName, userColor, enabled])
 
   // Update cursor position
-  const updateCursor = useCallback((elementId: string | null, position?: number) => {
-    if (serviceRef.current) {
-      serviceRef.current.updateCursor(elementId, position)
-    }
+  const updateCursor = useCallback((line: number, column: number) => {
+    clientRef.current?.updateCursor(line, column)
   }, [])
 
-  // Broadcast element update
-  const broadcastUpdate = useCallback((elementId: string, content: string) => {
-    if (serviceRef.current) {
-      serviceRef.current.broadcastElementUpdate(elementId, content)
-    }
+  // Update selection
+  const updateSelection = useCallback(
+    (start: { line: number; column: number }, end: { line: number; column: number }) => {
+      clientRef.current?.updateSelection(start, end)
+    },
+    []
+  )
+
+  // Send editor change
+  const sendChange = useCallback((change: EditorChange) => {
+    clientRef.current?.sendChange(change)
   }, [])
+
+  // Listen for editor changes
+  const onEditorChange = useCallback((callback: (change: EditorChange) => void) => {
+    clientRef.current?.onEditorChange(callback)
+  }, [])
+
+  // Add comment
+  const addComment = useCallback(
+    async (comment: Omit<Comment, 'id' | 'createdAt' | 'updatedAt'>) => {
+      await clientRef.current?.sendComment(comment)
+    },
+    []
+  )
 
   return {
-    presences,
+    collaborators,
+    comments,
     isConnected,
     updateCursor,
-    broadcastUpdate,
+    updateSelection,
+    sendChange,
+    onEditorChange,
+    addComment,
   }
 }
