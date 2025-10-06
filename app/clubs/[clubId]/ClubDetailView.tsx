@@ -10,6 +10,7 @@ import {
   UserPlus,
   LogOut,
   Bell,
+  Trophy,
 } from 'lucide-react'
 import { Button } from '@/src/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
@@ -22,6 +23,9 @@ import { CritiqueList } from './components/CritiqueList'
 import { CritiqueSubmissionForm } from './components/CritiqueSubmissionForm'
 import { MemberList } from './components/MemberList'
 import { EventList } from './components/EventList'
+import { Leaderboard } from './components/Leaderboard'
+import { BadgeDisplay } from './components/BadgeDisplay'
+import { CreditsWidget } from './components/CreditsWidget'
 import { useAuth } from '@/src/contexts/auth-context'
 
 interface ClubDetailViewProps {
@@ -204,6 +208,10 @@ export function ClubDetailView({ clubId }: ClubDetailViewProps) {
                 <Calendar className="mr-2 h-4 w-4" />
                 Events
               </TabsTrigger>
+              <TabsTrigger value="community">
+                <Trophy className="mr-2 h-4 w-4" />
+                Community
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="discussions">
@@ -256,6 +264,18 @@ export function ClubDetailView({ clubId }: ClubDetailViewProps) {
 
             <TabsContent value="events">
               <EventList clubId={clubId} userId={user?.id || ''} isMember={isMember} />
+            </TabsContent>
+
+            <TabsContent value="community">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-6">
+                  <Leaderboard clubId={clubId} />
+                  <BadgeDisplay clubId={clubId} userId={user?.id || ''} />
+                </div>
+                <div>
+                  <CreditsWidget clubId={clubId} currentCredits={membership?.credits || 0} />
+                </div>
+              </div>
             </TabsContent>
           </Tabs>
         ) : (
