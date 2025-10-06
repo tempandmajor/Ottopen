@@ -72,10 +72,32 @@ export async function POST(request: NextRequest) {
         await handleAccountUpdated(event.data.object as Stripe.Account, supabaseAdmin)
         break
 
+      case 'payment_intent.succeeded':
+        await handlePaymentSucceeded(event.data.object as Stripe.PaymentIntent, supabaseAdmin)
+        break
+
+      case 'payment_intent.payment_failed':
+        await handlePaymentFailed(event.data.object as Stripe.PaymentIntent, supabaseAdmin)
+        break
+
+      case 'charge.dispute.created':
+        await handleDisputeCreated(event.data.object as Stripe.Dispute, supabaseAdmin)
+        break
+
       default:
         // Log unhandled event types for monitoring
         logError(new Error('Unhandled webhook event type'), { eventType: event.type })
     }
+
+    // Log webhook event for audit
+    await supabaseAdmin.from('webhook_events').insert({
+      webhook_type: 'stripe',
+      event_type: event.type,
+      payload: event,
+      headers: Object.fromEntries(headers().entries()),
+      status: 'completed',
+      processed_at: new Date().toISOString(),
+    })
 
     return NextResponse.json({ received: true })
   } catch (error: unknown) {
@@ -246,5 +268,99 @@ async function handleAccountUpdated(account: Stripe.Account, supabaseAdmin: any)
     logError(new Error('Updated Connect status'), { userId })
   } catch (error: unknown) {
     logError(error, { context: 'handleAccountUpdated' })
+  }
+}
+
+/**
+ * Handle successful payment
+ */
+async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, supabaseAdmin: any) {
+  try {
+    // Log security event for payment
+    await supabaseAdmin.from('security_events').insert({
+      event_type: 'payment_succeeded',
+      user_id: paymentIntent.metadata?.user_id,
+      details: {
+        amount: paymentIntent.amount,
+        currency: paymentIntent.currency,
+        payment_intent_id: paymentIntent.id,
+      },
+    })
+  } catch (error: unknown) {
+    logError(error, { context: 'handlePaymentSucceeded' })
+  }
+}
+
+/**
+ * Handle failed payment
+ */
+async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent, supabaseAdmin: any) {
+  try {
+    // Log security event for failed payment
+    await supabaseAdmin.from('security_events').insert({
+      event_type: 'payment_failed',
+      user_id: paymentIntent.metadata?.user_id,
+      risk_score: 50,
+      risk_factors: ['payment_failure'],
+      details: {
+        amount: paymentIntent.amount,
+        currency: paymentIntent.currency,
+        payment_intent_id: paymentIntent.id,
+        last_payment_error: paymentIntent.last_payment_error,
+      },
+    })
+  } catch (error: unknown) {
+    logError(error, { context: 'handlePaymentFailed' })
+  }
+}
+
+/**
+ * Handle dispute created
+ */
+async function handleDisputeCreated(dispute: Stripe.Dispute, supabaseAdmin: any) {
+  try {
+    const customerId = dispute.charge?.toString() || ''
+
+    // Find user by charge/customer
+    const { data: user } = await supabaseAdmin
+      .from('users')
+      .select('id')
+      .eq('stripe_customer_id', customerId)
+      .single()
+
+    if (!user) return
+
+    // Log high-risk security event
+    await supabaseAdmin.from('security_events').insert({
+      event_type: 'payment_dispute',
+      user_id: user.id,
+      risk_score: 80,
+      risk_factors: ['payment_dispute', 'chargeback'],
+      details: {
+        dispute_id: dispute.id,
+        amount: dispute.amount,
+        currency: dispute.currency,
+        reason: dispute.reason,
+        status: dispute.status,
+      },
+    })
+
+    // Log audit event
+    await supabaseAdmin.from('audit_logs').insert({
+      user_id: user.id,
+      actor_type: 'system',
+      action: 'dispute.created',
+      resource_type: 'payment',
+      resource_id: dispute.id,
+      severity: 'warning',
+      description: `Payment dispute created: ${dispute.reason}`,
+      metadata: {
+        amount: dispute.amount,
+        currency: dispute.currency,
+        dispute_id: dispute.id,
+      },
+    })
+  } catch (error: unknown) {
+    logError(error, { context: 'handleDisputeCreated' })
   }
 }
