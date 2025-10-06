@@ -74,6 +74,8 @@ export interface User {
   stripe_connect_charges_enabled?: boolean
   stripe_connect_payouts_enabled?: boolean
   is_admin?: boolean
+  is_online?: boolean
+  last_seen?: string
   account_type:
     | 'writer'
     | 'platform_agent'
@@ -176,6 +178,7 @@ export interface Conversation {
   user1?: User
   user2?: User
   last_message?: Message
+  unread_count: number
 }
 
 // Manuscript and Submission interfaces
