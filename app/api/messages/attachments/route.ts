@@ -75,25 +75,50 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    let query = supabase.from('message_attachments').select(`
-        *,
-        message:messages(id, conversation_id, sender_id, created_at)
-      `)
+    let attachments
+    let error
 
     if (messageId) {
-      query = query.eq('message_id', messageId)
-    } else if (conversationId) {
-      query = query
+      const result = await supabase
+        .from('message_attachments')
         .select(
           `
         *,
-        message:messages!inner(id, conversation_id, sender_id, created_at)
+        message:messages(id, conversation_id, sender_id, created_at)
       `
         )
-        .eq('message.conversation_id', conversationId)
-    }
+        .eq('message_id', messageId)
+        .order('created_at', { ascending: false })
 
-    const { data: attachments, error } = await query.order('created_at', { ascending: false })
+      attachments = result.data
+      error = result.error
+    } else if (conversationId) {
+      // Get all messages in the conversation first
+      const { data: messages } = await supabase
+        .from('messages')
+        .select('id')
+        .eq('conversation_id', conversationId)
+
+      if (messages && messages.length > 0) {
+        const messageIds = messages.map(m => m.id)
+        const result = await supabase
+          .from('message_attachments')
+          .select(
+            `
+          *,
+          message:messages(id, conversation_id, sender_id, created_at)
+        `
+          )
+          .in('message_id', messageIds)
+          .order('created_at', { ascending: false })
+
+        attachments = result.data
+        error = result.error
+      } else {
+        attachments = []
+        error = null
+      }
+    }
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
