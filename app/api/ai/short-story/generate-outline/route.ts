@@ -3,7 +3,7 @@ import { getServerUser } from '@/lib/server/auth'
 import { AIClient } from '@/src/lib/ai/ai-client'
 import { AIService } from '@/src/lib/ai-editor-service'
 import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
-import { createClient } from '@/lib/supabase/server'
+import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 
@@ -172,9 +172,9 @@ Generate a rich, specific outline that a writer can immediately use to start dra
     )
 
     // Save outline to database
-    const supabase = await createClient()
+    const supabase = createServerSupabaseClient()
     const { data: outline, error: outlineError } = await supabase
-      .from('ai_editor_short_story_outlines')
+      .from('short_story_outlines')
       .insert({
         manuscript_id: body.manuscriptId || null,
         user_id: user.id,

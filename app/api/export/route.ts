@@ -3,7 +3,7 @@ import { getServerUser } from '@/lib/server/auth'
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, PageBreak } from 'docx'
 import { jsPDF } from 'jspdf'
 import Epub from 'epub-gen'
-import { createClient } from '@/lib/supabase/server'
+import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,14 +32,14 @@ async function handleExport(request: NextRequest) {
       return NextResponse.json({ error: 'Manuscript ID and format are required' }, { status: 400 })
     }
 
-    const supabase = await createClient()
+    const supabase = createServerSupabaseClient()
 
     // Fetch manuscript data
     const { data: manuscript, error: manuscriptError } = await supabase
-      .from('ai_editor_manuscripts')
+      .from('manuscripts')
       .select('*')
       .eq('id', body.manuscriptId)
-      .eq('author_id', user.id)
+      .eq('user_id', user.id)
       .single()
 
     if (manuscriptError || !manuscript) {
@@ -48,7 +48,7 @@ async function handleExport(request: NextRequest) {
 
     // Fetch chapters
     let chaptersQuery = supabase
-      .from('ai_editor_chapters')
+      .from('chapters')
       .select('*')
       .eq('manuscript_id', body.manuscriptId)
       .order('order_index', { ascending: true })
@@ -254,10 +254,10 @@ async function exportToEpub(manuscript: any, chapters: any[], metadata: any): Pr
     content,
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise<Buffer>((resolve, reject) => {
     new Epub(options, '/tmp/temp.epub').promise.then(
-      (buffer: Buffer) => {
-        resolve(buffer)
+      (buffer: any) => {
+        resolve(buffer as Buffer)
       },
       (error: any) => {
         reject(error)

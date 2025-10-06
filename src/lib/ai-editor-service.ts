@@ -847,21 +847,25 @@ import {
 } from './ai/prompts/writing-prompts'
 
 export class AIService {
-  private static async logUsage(
+  static async logUsage(
     userId: string,
-    featureType: string,
-    tokensUsed: number,
-    aiModel: string,
-    manuscriptId?: string,
-    sceneId?: string
+    data: {
+      manuscriptId?: string
+      sceneId?: string
+      feature: string
+      tokensUsed: number
+      model: string
+      provider: string
+    }
   ) {
     await supabase.from('ai_suggestions').insert({
       user_id: userId,
-      manuscript_id: manuscriptId,
-      scene_id: sceneId,
-      feature_type: featureType,
-      tokens_used: tokensUsed,
-      ai_model: aiModel,
+      manuscript_id: data.manuscriptId,
+      scene_id: data.sceneId,
+      feature_type: data.feature,
+      tokens_used: data.tokensUsed,
+      ai_model: data.model,
+      ai_provider: data.provider,
     })
   }
 
@@ -890,7 +894,12 @@ export class AIService {
       'expand'
     )
 
-    await this.logUsage(userId, 'expand', response.tokensUsed.total, response.model)
+    await this.logUsage(userId, {
+      feature: 'expand',
+      tokensUsed: response.tokensUsed.total,
+      model: response.model,
+      provider: response.provider,
+    })
 
     return {
       suggestions: [response.content],
@@ -923,7 +932,12 @@ export class AIService {
       'rewrite'
     )
 
-    await this.logUsage(userId, 'rewrite', response.tokensUsed.total, response.model)
+    await this.logUsage(userId, {
+      feature: 'rewrite',
+      tokensUsed: response.tokensUsed.total,
+      model: response.model,
+      provider: response.provider,
+    })
 
     return {
       suggestions: [response.content],
@@ -958,7 +972,12 @@ export class AIService {
       'describe'
     )
 
-    await this.logUsage(userId, 'describe', response.tokensUsed.total, response.model)
+    await this.logUsage(userId, {
+      feature: 'describe',
+      tokensUsed: response.tokensUsed.total,
+      model: response.model,
+      provider: response.provider,
+    })
 
     return {
       descriptions: [response.content],
@@ -992,7 +1011,12 @@ export class AIService {
       'brainstorm'
     )
 
-    await this.logUsage(userId, 'brainstorm', response.tokensUsed.total, response.model)
+    await this.logUsage(userId, {
+      feature: 'brainstorm',
+      tokensUsed: response.tokensUsed.total,
+      model: response.model,
+      provider: response.provider,
+    })
 
     // Parse the response into structured suggestions
     const lines = response.content.split('\n').filter(line => line.trim())
@@ -1050,7 +1074,12 @@ export class AIService {
       'critique'
     )
 
-    await this.logUsage(userId, 'critique', response.tokensUsed.total, response.model)
+    await this.logUsage(userId, {
+      feature: 'critique',
+      tokensUsed: response.tokensUsed.total,
+      model: response.model,
+      provider: response.provider,
+    })
 
     // Parse critique response
     const content = response.content
@@ -1096,7 +1125,12 @@ export class AIService {
       'character'
     )
 
-    await this.logUsage(userId, 'character', response.tokensUsed.total, response.model)
+    await this.logUsage(userId, {
+      feature: 'character',
+      tokensUsed: response.tokensUsed.total,
+      model: response.model,
+      provider: response.provider,
+    })
 
     // Parse the response into character fields
     return {
@@ -1134,7 +1168,12 @@ export class AIService {
       'outline'
     )
 
-    await this.logUsage(userId, 'outline', response.tokensUsed.total, response.model)
+    await this.logUsage(userId, {
+      feature: 'outline',
+      tokensUsed: response.tokensUsed.total,
+      model: response.model,
+      provider: response.provider,
+    })
 
     // Parse into plot points
     const beats: { title: string; description: string; act: number }[] = []
