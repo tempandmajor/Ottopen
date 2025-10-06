@@ -11,6 +11,7 @@ import {
   LogOut,
   Bell,
   Trophy,
+  Zap,
 } from 'lucide-react'
 import { Button } from '@/src/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
@@ -28,6 +29,7 @@ import { BadgeDisplay } from './components/BadgeDisplay'
 import { CreditsWidget } from './components/CreditsWidget'
 import { ActivityFeed } from './components/ActivityFeed'
 import { NotificationCenter } from './components/NotificationCenter'
+import { SprintList } from './components/SprintList'
 import { useAuth } from '@/src/contexts/auth-context'
 
 interface ClubDetailViewProps {
@@ -195,6 +197,10 @@ export function ClubDetailView({ clubId }: ClubDetailViewProps) {
                 <MessageSquare className="mr-2 h-4 w-4" />
                 Discussions
               </TabsTrigger>
+              <TabsTrigger value="sprints">
+                <Zap className="mr-2 h-4 w-4" />
+                Writing Sprints
+              </TabsTrigger>
               <TabsTrigger value="critiques">
                 <BookOpen className="mr-2 h-4 w-4" />
                 Critique Exchange
@@ -215,6 +221,10 @@ export function ClubDetailView({ clubId }: ClubDetailViewProps) {
 
             <TabsContent value="discussions">
               <DiscussionList clubId={clubId} isMember={isMember} />
+            </TabsContent>
+
+            <TabsContent value="sprints">
+              <SprintList clubId={clubId} userId={user?.id || ''} />
             </TabsContent>
 
             <TabsContent value="critiques">
