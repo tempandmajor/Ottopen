@@ -41,6 +41,9 @@ export function Navigation() {
   const router = useRouter()
   const { user, loading, signOut } = useAuth()
 
+  // Debug logging to help diagnose auth state issues
+  console.log('Navigation - user:', !!user, 'loading:', loading)
+
   const isActive = (path: string) => currentPath === path
 
   const handleSignOut = async () => {
@@ -97,8 +100,15 @@ export function Navigation() {
             )}
 
             {loading ? (
-              /* Loading state - show nothing to prevent flash */
-              <div className="h-10 w-10" />
+              /* Loading state - show sign in buttons to prevent empty header */
+              <div className="hidden sm:flex items-center space-x-2">
+                <Button variant="outline" size="sm" disabled>
+                  <span className="opacity-50">Sign In</span>
+                </Button>
+                <Button size="sm" className="font-medium" disabled>
+                  <span className="opacity-50">Join Network</span>
+                </Button>
+              </div>
             ) : user ? (
               /* Authenticated user menu */
               <DropdownMenu>
