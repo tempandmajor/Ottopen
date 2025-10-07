@@ -152,6 +152,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           error,
         } = await supabase.auth.getSession()
 
+        console.log('Auth initialization - session:', !!session, 'user:', !!session?.user)
+
         if (error) {
           console.error('Auth session error:', error)
           if (mounted) {
@@ -179,12 +181,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
           if (mounted) {
             const userWithProfile = await fetchUserProfile(session.user)
+            console.log('Setting user with profile:', !!(userWithProfile as any).profile)
             setUser(userWithProfile)
+            stopLoading()
           }
-        }
-
-        if (mounted) {
-          stopLoading()
+        } else {
+          // No session, stop loading
+          if (mounted) {
+            stopLoading()
+          }
         }
       } catch (error) {
         console.error('Auth initialization error:', error)
