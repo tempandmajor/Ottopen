@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { getCsrfToken } from '@/src/lib/csrf'
 
+// Force dynamic rendering since this route uses cookies
+export const dynamic = 'force-dynamic'
+
 /**
  * GET /api/csrf-token
  *

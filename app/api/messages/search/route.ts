@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 
+// Force dynamic rendering since this route uses cookies
+export const dynamic = 'force-dynamic'
+
 // GET /api/messages/search?q=query&conversationId=xxx - Search messages
 export async function GET(request: NextRequest) {
   try {

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { dbService } from '@/src/lib/database'
 import { getServerUser } from '@/lib/server/auth'
 
+// Force dynamic rendering since this route uses cookies
+export const dynamic = 'force-dynamic'
+
 export async function GET(req: NextRequest) {
   try {
     // Get authenticated user
