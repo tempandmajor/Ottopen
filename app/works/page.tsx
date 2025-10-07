@@ -30,6 +30,10 @@ import {
   Sparkles,
   Clock,
   X,
+  Bookmark,
+  BookmarkCheck,
+  Play,
+  TrendingUp,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect, useMemo } from 'react'
@@ -64,6 +68,9 @@ export default function Works() {
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set())
   const [quickViewPost, setQuickViewPost] = useState<Post | null>(null)
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set())
+  const [bookmarkedPostIds, setBookmarkedPostIds] = useState<Set<string>>(new Set())
+  const [previewPost, setPreviewPost] = useState<Post | null>(null)
+  const [showPreview, setShowPreview] = useState(false)
 
   // Load posts on mount
   useEffect(() => {
@@ -71,6 +78,7 @@ export default function Works() {
     if (user) {
       loadLikedPosts()
       loadFollowingStatus()
+      loadBookmarkedPosts()
     }
   }, [user])
 
@@ -259,6 +267,59 @@ export default function Works() {
     }
   }
 
+  const loadBookmarkedPosts = async () => {
+    try {
+      if (!user) return
+
+      const userId = user.profile?.id || user.id
+      // Mock implementation - would be replaced with actual database call
+      // const bookmarked = await dbService.getUserBookmarks(userId)
+      // setBookmarkedPostIds(new Set(bookmarked.map(b => b.post_id)))
+
+      // For now, load from localStorage as a placeholder
+      const saved = localStorage.getItem(`bookmarks_${userId}`)
+      if (saved) {
+        setBookmarkedPostIds(new Set(JSON.parse(saved)))
+      }
+    } catch (error) {
+      console.error('Failed to load bookmarked posts:', error)
+    }
+  }
+
+  const handleBookmark = async (postId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation()
+
+    if (!user) {
+      toast.error('Please sign in to bookmark works')
+      return
+    }
+
+    try {
+      const userId = user.profile?.id || user.id
+      const isBookmarked = bookmarkedPostIds.has(postId)
+
+      // Mock implementation - would be replaced with actual database call
+      // await dbService.toggleBookmark(userId, postId)
+
+      setBookmarkedPostIds(prev => {
+        const next = new Set(prev)
+        if (isBookmarked) {
+          next.delete(postId)
+          toast.success('Removed from reading list')
+        } else {
+          next.add(postId)
+          toast.success('Added to reading list')
+        }
+
+        // Save to localStorage as placeholder
+        localStorage.setItem(`bookmarks_${userId}`, JSON.stringify([...next]))
+        return next
+      })
+    } catch (error) {
+      toast.error('Failed to update bookmark')
+    }
+  }
+
   // Apply all filters
   const applyFilters = (postList: Post[]) => {
     let filtered = [...postList]
@@ -397,6 +458,7 @@ export default function Works() {
   // Create WorkCard component for real posts
   const WorkCard = ({ post }: { post: Post }) => {
     const isLiked = likedPostIds.has(post.id)
+    const isBookmarked = bookmarkedPostIds.has(post.id)
     const isFollowingAuthor = post.user?.id ? followingIds.has(post.user.id) : false
 
     return (
@@ -486,6 +548,19 @@ export default function Works() {
                   >
                     <Heart className={`h-4 w-4 mr-1 ${isLiked ? 'fill-current' : ''}`} />
                     <span>{post.likes_count || 0}</span>
+                  </button>
+                  <button
+                    onClick={e => handleBookmark(post.id, e)}
+                    className={`flex items-center transition-colors ${
+                      isBookmarked ? 'text-primary' : 'hover:text-primary'
+                    }`}
+                    title={isBookmarked ? 'Remove from reading list' : 'Add to reading list'}
+                  >
+                    {isBookmarked ? (
+                      <BookmarkCheck className="h-4 w-4 fill-current" />
+                    ) : (
+                      <Bookmark className="h-4 w-4" />
+                    )}
                   </button>
                   <div className="flex items-center">
                     <span>{post.comments_count || 0} comments</span>
@@ -813,6 +888,102 @@ export default function Works() {
             </Card>
           </div>
 
+          {/* Curated Collections */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-serif font-bold">Curated Collections</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Editor's Picks */}
+              <Card className="card-bg card-shadow border-border hover:shadow-lg transition-all duration-300 cursor-pointer group">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                      <Sparkles className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg">Editor&apos;s Picks</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {posts.slice(0, 5).length} works
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Hand-selected masterpieces chosen by our editorial team for exceptional
+                    storytelling and craftsmanship.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {posts.slice(0, 3).map(post => (
+                      <Badge key={post.id} variant="secondary" className="text-xs">
+                        {post.title.length > 20 ? post.title.substring(0, 20) + '...' : post.title}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Trending This Week */}
+              <Card className="card-bg card-shadow border-border hover:shadow-lg transition-all duration-300 cursor-pointer group">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center group-hover:bg-red-500/20 transition-colors">
+                      <TrendingUp className="h-6 w-6 text-red-500" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg">Trending This Week</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {trending.slice(0, 5).length} works
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    The most popular and talked-about stories gaining momentum right now.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {trending.slice(0, 3).map(post => (
+                      <Badge key={post.id} variant="secondary" className="text-xs">
+                        {post.title.length > 20 ? post.title.substring(0, 20) + '...' : post.title}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Must-Read Classics */}
+              <Card className="card-bg card-shadow border-border hover:shadow-lg transition-all duration-300 cursor-pointer group">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
+                      <BookOpen className="h-6 w-6 text-amber-500" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg">Must-Read Classics</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {posts.filter(p => p.completion_status === 'complete').length} works
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Timeless completed works that have stood the test of time and readers&apos;
+                    acclaim.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {posts
+                      .filter(p => p.completion_status === 'complete')
+                      .slice(0, 3)
+                      .map(post => (
+                        <Badge key={post.id} variant="secondary" className="text-xs">
+                          {post.title.length > 20
+                            ? post.title.substring(0, 20) + '...'
+                            : post.title}
+                        </Badge>
+                      ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
           {/* Works Tabs */}
           <Tabs defaultValue="featured" className="space-y-6">
             <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-muted">
@@ -919,7 +1090,13 @@ export default function Works() {
           )}
 
           {/* Quick View Modal */}
-          <Dialog open={!!quickViewPost} onOpenChange={() => setQuickViewPost(null)}>
+          <Dialog
+            open={!!quickViewPost}
+            onOpenChange={() => {
+              setQuickViewPost(null)
+              setShowPreview(false)
+            }}
+          >
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
               {quickViewPost && (
                 <>
@@ -1049,12 +1226,29 @@ export default function Works() {
                       </div>
                     )}
 
+                    {/* Preview Section */}
+                    {showPreview && quickViewPost.content && (
+                      <div className="border-t pt-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="font-semibold">Preview</h4>
+                          <Button variant="ghost" size="sm" onClick={() => setShowPreview(false)}>
+                            Hide Preview
+                          </Button>
+                        </div>
+                        <div className="prose prose-sm max-w-none dark:prose-invert p-4 bg-muted/30 rounded-lg max-h-96 overflow-y-auto">
+                          <p className="whitespace-pre-wrap text-sm">
+                            {quickViewPost.content.substring(0, 2000)}
+                            {quickViewPost.content.length > 2000 && '...'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Actions */}
-                    <div className="flex gap-2 pt-4 border-t">
+                    <div className="grid grid-cols-2 gap-2 pt-4 border-t">
                       <Button
                         onClick={e => handleLike(quickViewPost.id, e)}
                         variant={likedPostIds.has(quickViewPost.id) ? 'default' : 'outline'}
-                        className="flex-1"
                       >
                         <Heart
                           className={`h-4 w-4 mr-2 ${
@@ -1063,7 +1257,24 @@ export default function Works() {
                         />
                         {likedPostIds.has(quickViewPost.id) ? 'Liked' : 'Like'}
                       </Button>
-                      <Button variant="default" className="flex-1" asChild>
+                      <Button
+                        onClick={e => handleBookmark(quickViewPost.id, e)}
+                        variant={bookmarkedPostIds.has(quickViewPost.id) ? 'default' : 'outline'}
+                      >
+                        {bookmarkedPostIds.has(quickViewPost.id) ? (
+                          <BookmarkCheck className="h-4 w-4 mr-2" />
+                        ) : (
+                          <Bookmark className="h-4 w-4 mr-2" />
+                        )}
+                        {bookmarkedPostIds.has(quickViewPost.id) ? 'Saved' : 'Save'}
+                      </Button>
+                      {!showPreview && (
+                        <Button variant="outline" onClick={() => setShowPreview(true)}>
+                          <Play className="h-4 w-4 mr-2" />
+                          Preview
+                        </Button>
+                      )}
+                      <Button variant="default" asChild>
                         <Link href={`/posts/${quickViewPost.id}`}>Read Full Work</Link>
                       </Button>
                     </div>
