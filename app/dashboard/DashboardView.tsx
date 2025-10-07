@@ -17,6 +17,14 @@ import {
   Eye,
   PenTool,
   Calendar,
+  Plus,
+  Edit3,
+  FileText,
+  Send,
+  Bell,
+  TrendingUp,
+  Zap,
+  Clock,
 } from 'lucide-react'
 import type {
   Post,
@@ -85,6 +93,53 @@ export function DashboardView({
             </p>
           </div>
 
+          {/* Quick Actions */}
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+              <Button
+                variant="outline"
+                className="h-auto flex flex-col items-center p-4 space-y-2 border-2 hover:border-primary hover:bg-primary/5"
+                asChild
+              >
+                <Link href="/editor">
+                  <Plus className="h-6 w-6 text-primary" />
+                  <span className="text-sm font-medium">New Story</span>
+                </Link>
+              </Button>
+              <Button
+                variant="outline"
+                className="h-auto flex flex-col items-center p-4 space-y-2 border-2 hover:border-primary hover:bg-primary/5"
+                asChild
+              >
+                <Link href="/scripts">
+                  <FileText className="h-6 w-6 text-primary" />
+                  <span className="text-sm font-medium">New Script</span>
+                </Link>
+              </Button>
+              <Button
+                variant="outline"
+                className="h-auto flex flex-col items-center p-4 space-y-2 border-2 hover:border-primary hover:bg-primary/5"
+                asChild
+              >
+                <Link href="/editor">
+                  <Edit3 className="h-6 w-6 text-primary" />
+                  <span className="text-sm font-medium">Continue Draft</span>
+                </Link>
+              </Button>
+              <Button
+                variant="outline"
+                className="h-auto flex flex-col items-center p-4 space-y-2 border-2 hover:border-primary hover:bg-primary/5"
+                asChild
+              >
+                <Link href="/works">
+                  <BookOpen className="h-6 w-6 text-primary" />
+                  <span className="text-sm font-medium">Browse Works</span>
+                </Link>
+              </Button>
+            </div>
+          </div>
+
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-6">
@@ -129,6 +184,66 @@ export function DashboardView({
                   </CardContent>
                 </Card>
               </div>
+
+              {/* Recent Works Carousel */}
+              <Card className="card-bg card-shadow border-literary-border">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center space-x-2">
+                      <BookOpen className="h-5 w-5" />
+                      <span>Your Recent Works</span>
+                    </CardTitle>
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link href="/scripts">View All</Link>
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {stats.totalWorks > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {/* Mock data - would be replaced with actual recent works */}
+                      {[1, 2, 3].slice(0, stats.totalWorks).map(i => (
+                        <Link
+                          key={i}
+                          href="/editor"
+                          className="group block p-4 border border-literary-border rounded-lg hover:shadow-md hover:border-primary transition-all"
+                        >
+                          <div className="flex items-start space-x-3">
+                            <div className="w-12 h-16 bg-muted rounded flex items-center justify-center flex-shrink-0">
+                              <FileText className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-sm group-hover:text-primary transition-colors truncate">
+                                Draft {i}
+                              </h3>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Last edited 2 days ago
+                              </p>
+                              <div className="flex items-center mt-2 text-xs text-muted-foreground">
+                                <Clock className="h-3 w-3 mr-1" />
+                                <span>In Progress</span>
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <BookOpen className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+                      <p className="text-muted-foreground mb-4">
+                        You haven&apos;t created any works yet
+                      </p>
+                      <Button asChild>
+                        <Link href="/editor">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create Your First Work
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
               {/* Writing Progress */}
               <Card className="card-bg card-shadow border-literary-border">
@@ -209,6 +324,79 @@ export function DashboardView({
 
             {/* Sidebar */}
             <div className="space-y-6">
+              {/* Notifications Center */}
+              <Card className="card-bg card-shadow border-literary-border">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center space-x-2 text-lg">
+                      <Bell className="h-5 w-5" />
+                      <span>Notifications</span>
+                    </CardTitle>
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link href="/notifications">View All</Link>
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {/* Mock notifications - would be replaced with actual data */}
+                    {stats.totalLikes > 0 || stats.totalViews > 0 ? (
+                      <>
+                        {stats.totalLikes > 0 && (
+                          <div className="flex items-start space-x-3 p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+                            <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center flex-shrink-0">
+                              <Heart className="h-4 w-4 text-red-500" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm">
+                                <span className="font-medium">Your work</span> received new likes
+                              </p>
+                              <p className="text-xs text-muted-foreground">2 hours ago</p>
+                            </div>
+                          </div>
+                        )}
+                        {stats.totalFollowers > 0 && (
+                          <div className="flex items-start space-x-3 p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+                            <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                              <Users className="h-4 w-4 text-blue-500" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm">
+                                <span className="font-medium">New followers</span> added to your
+                                network
+                              </p>
+                              <p className="text-xs text-muted-foreground">5 hours ago</p>
+                            </div>
+                          </div>
+                        )}
+                        {stats.postsThisMonth > 0 && (
+                          <div className="flex items-start space-x-3 p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+                            <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                              <MessageCircle className="h-4 w-4 text-green-500" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm">
+                                <span className="font-medium">New comments</span> on your recent
+                                post
+                              </p>
+                              <p className="text-xs text-muted-foreground">1 day ago</p>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="text-center py-6">
+                        <Bell className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">No new notifications</p>
+                      </div>
+                    )}
+                  </div>
+                  <Button variant="outline" size="sm" className="w-full mt-4" asChild>
+                    <Link href="/notifications">View All Notifications</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+
               {/* Writing Goals */}
               <Card className="card-bg card-shadow border-literary-border">
                 <CardHeader>
