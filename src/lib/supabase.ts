@@ -11,7 +11,7 @@ function getSupabaseConfig() {
   }
 
   // Development fallback - use environment variables if available
-  if (process.env.NODE_ENV === 'development') {
+  if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') {
     const fallbackUrl = process.env.SUPABASE_FALLBACK_URL
     const fallbackKey = process.env.SUPABASE_FALLBACK_ANON_KEY
 
@@ -23,36 +23,34 @@ function getSupabaseConfig() {
     console.warn('⚠️  No Supabase configuration found. Please set environment variables.')
   }
 
-  throw new Error(
-    'Supabase configuration is missing. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.'
-  )
+  // Return empty config instead of throwing - this allows the module to load
+  return { url: '', anonKey: '' }
 }
 
 const { url: supabaseUrl, anonKey: supabaseAnonKey } = getSupabaseConfig()
 
-// Client-side Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-    flowType: 'pkce',
-  },
-})
+// Client-side Supabase client - only create if config is valid
+export const supabase =
+  supabaseUrl && supabaseAnonKey
+    ? createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          flowType: 'pkce',
+        },
+      })
+    : null
 
 // Check if Supabase is properly configured
 export const isSupabaseConfigured = () => {
   // If explicitly disabled, return false
-  if (process.env.DISABLE_SUPABASE === 'true') {
+  if (typeof process !== 'undefined' && process.env?.DISABLE_SUPABASE === 'true') {
     return false
   }
 
-  try {
-    getSupabaseConfig()
-    return true
-  } catch {
-    return false
-  }
+  // Check if supabase client was successfully created
+  return supabase !== null
 }
 
 // Database types

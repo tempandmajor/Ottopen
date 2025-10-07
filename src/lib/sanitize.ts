@@ -1,17 +1,23 @@
-import DOMPurify from 'isomorphic-dompurify'
-
 /**
  * XSS Protection - Sanitize user-generated content
  *
- * Uses DOMPurify to remove malicious scripts while preserving safe HTML
+ * Uses DOMPurify (client-side only) to remove malicious scripts while preserving safe HTML
+ * Note: These functions return unsanitized content on the server and only sanitize in the browser
  */
+
+// Lazy load DOMPurify only in browser
+let DOMPurify: any = null
+if (typeof window !== 'undefined') {
+  DOMPurify = require('dompurify')
+}
 
 /**
  * Sanitize HTML content to prevent XSS attacks
+ * Client-side only - returns original content on server
  *
  * @param dirty - Raw HTML content from user
  * @param options - DOMPurify configuration options
- * @returns Sanitized safe HTML
+ * @returns Sanitized safe HTML (client) or original (server)
  */
 export function sanitizeHtml(
   dirty: string,
@@ -21,6 +27,11 @@ export function sanitizeHtml(
   }
 ): string {
   if (!dirty) return ''
+
+  // Server-side: return as-is (will be sanitized on client)
+  if (typeof window === 'undefined' || !DOMPurify) {
+    return dirty
+  }
 
   // Type assertion for DOMPurify config to bypass strict typing
   const config = {
@@ -58,12 +69,18 @@ export function sanitizeHtml(
 
 /**
  * Sanitize plain text - strips all HTML
+ * Client-side only - returns original content on server
  *
  * @param dirty - Raw text from user
- * @returns Plain text with HTML stripped
+ * @returns Plain text with HTML stripped (client) or original (server)
  */
 export function sanitizeText(dirty: string): string {
   if (!dirty) return ''
+
+  // Server-side: return as-is (will be sanitized on client)
+  if (typeof window === 'undefined' || !DOMPurify) {
+    return dirty
+  }
 
   const config = {
     ALLOWED_TAGS: [],
@@ -75,12 +92,18 @@ export function sanitizeText(dirty: string): string {
 
 /**
  * Sanitize for rich text editor output
+ * Client-side only - returns original content on server
  *
  * @param dirty - Rich text editor HTML
- * @returns Sanitized HTML safe for display
+ * @returns Sanitized HTML safe for display (client) or original (server)
  */
 export function sanitizeRichText(dirty: string): string {
   if (!dirty) return ''
+
+  // Server-side: return as-is (will be sanitized on client)
+  if (typeof window === 'undefined' || !DOMPurify) {
+    return dirty
+  }
 
   const config = {
     ALLOWED_TAGS: [

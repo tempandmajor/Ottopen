@@ -30,11 +30,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<(SupabaseUser & { profile?: User }) | null>(null)
-  const [loading, setLoading] = useState(true)
+  // Start with loading: false on server, will be set to true in useEffect on client
+  const [loading, setLoading] = useState(false)
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false)
   const [timeoutWarningTime, setTimeoutWarningTime] = useState(0)
-
-  console.log('AuthProvider render - userExists:', !!user, 'loading:', loading)
 
   // Helper function to fetch and attach user profile
   const fetchUserProfile = async (supabaseUser: SupabaseUser) => {
@@ -54,6 +53,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Helper to sync current session to server cookies and attach profile locally
   const syncSessionAndAttachProfile = async () => {
+    if (!supabase) return false
+
     try {
       const {
         data: { session },
@@ -112,25 +113,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user])
 
   useEffect(() => {
-    if (!isSupabaseConfigured()) {
-      console.log('Supabase not configured')
+    if (!isSupabaseConfigured() || !supabase) {
       setLoading(false)
       return
     }
 
+    // Set loading to true when starting auth initialization (client-side only)
+    setLoading(true)
     let mounted = true
 
     // Get initial session
     const initAuth = async () => {
       try {
-        console.log('Getting initial session...')
         const {
           data: { session },
           error,
         } = await supabase.auth.getSession()
 
         if (error) {
-          console.error('Initial session error:', error)
+          console.error('Auth session error:', error)
           if (mounted) {
             setUser(null)
             setLoading(false)
@@ -139,7 +140,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (session?.user) {
-          console.log('Initial session found')
           // Sync session to server cookies so middleware sees authenticated state
           try {
             if (session.access_token && session.refresh_token) {
@@ -153,21 +153,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               })
             }
           } catch (e) {
-            console.warn('Failed to sync session to server on init', e)
+            console.warn('Failed to sync session to server', e)
           }
           if (mounted) {
             const userWithProfile = await fetchUserProfile(session.user)
             setUser(userWithProfile)
           }
-        } else {
-          console.log('No initial session found')
         }
 
         if (mounted) {
           setLoading(false)
         }
       } catch (error) {
-        console.error('Init auth error:', error)
+        console.error('Auth initialization error:', error)
         if (mounted) {
           setUser(null)
           setLoading(false)
@@ -178,11 +176,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initAuth()
 
     // Listen for auth changes
+    if (!supabase) return
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state change:', event, 'has session:', !!session)
-
       if (!mounted) return
 
       // Log auth state changes for monitoring
@@ -193,7 +191,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
 
       if (session?.user) {
-        console.log('Setting user from auth change')
         // Sync session to server cookies on sign-in/refresh
         try {
           if (session.access_token && session.refresh_token) {
@@ -229,11 +226,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email: string,
     password: string
   ): Promise<{ success: boolean; error?: string }> => {
+    if (!supabase) {
+      return { success: false, error: 'Supabase client not initialized' }
+    }
+
     const trimmedEmail = email.trim()
     logAuthEvent('signin_attempt', { email: trimmedEmail })
 
     try {
-      console.log('SignIn attempt initiated')
       setLoading(true)
 
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -252,7 +252,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (data.user) {
-        console.log('SignIn successful')
         logAuthEvent('signin_success', {
           userId: data.user.id,
           email: data.user.email,
@@ -290,6 +289,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     specialty?: string
     accountType?: string
   }): Promise<{ success: boolean; error?: string }> => {
+    if (!supabase) {
+      return { success: false, error: 'Supabase client not initialized' }
+    }
+
     const trimmedEmail = data.email.trim()
     logAuthEvent('signup_attempt', { email: trimmedEmail })
 
@@ -351,6 +354,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return
+    }
+
     try {
       console.log('SignOut attempt')
       logAuthEvent('signout_attempt', { userId: user?.id, email: user?.email })
@@ -377,6 +385,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const forgotPassword = async (email: string): Promise<{ success: boolean; error?: string }> => {
+    if (!supabase) {
+      return { success: false, error: 'Supabase client not initialized' }
+    }
+
     const trimmedEmail = email.trim()
     logAuthEvent('password_reset_request', { email: trimmedEmail })
 
@@ -418,10 +430,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Watchdog: if loading persists abnormally, probe server auth and resync cookies once
   useEffect(() => {
-    if (!loading) return
+    if (!loading || !supabase) return
     let cancelled = false
     const t = setTimeout(async () => {
-      if (cancelled) return
+      if (cancelled || !supabase) return
       try {
         const { data: sessionData } = await supabase.auth.getSession()
         const clientHasSession = !!sessionData.session?.user
