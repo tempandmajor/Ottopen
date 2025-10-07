@@ -148,6 +148,27 @@ export class DatabaseService {
   }
 
   // User operations
+  async checkUsernameAvailability(username: string): Promise<boolean> {
+    try {
+      const { data, error } = await this.supabase
+        .from('users')
+        .select('username')
+        .eq('username', username)
+        .maybeSingle()
+
+      if (error) {
+        logError('Check username availability error', error)
+        return false
+      }
+
+      // If no user found, username is available
+      return data === null
+    } catch (error) {
+      logError('Check username availability exception', error as Error)
+      return false
+    }
+  }
+
   async getUser(id: string): Promise<DatabaseResult<User>> {
     const configCheck = this.checkSupabaseConfig()
     if (!configCheck.success) {
