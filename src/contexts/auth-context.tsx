@@ -122,12 +122,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true)
     let mounted = true
 
+    // Safety timeout to prevent loading state from hanging forever
+    const loadingTimeout = setTimeout(() => {
+      if (mounted) {
+        console.warn('Auth initialization timeout - setting loading to false')
+        setLoading(false)
+      }
+    }, 3000) // 3 second timeout
+
+    // Helper to stop loading and clear timeout
+    const stopLoading = () => {
+      clearTimeout(loadingTimeout)
+      setLoading(false)
+    }
+
     // Get initial session
     const initAuth = async () => {
       if (!supabase) {
         if (mounted) {
           setUser(null)
-          setLoading(false)
+          stopLoading()
         }
         return
       }
@@ -142,7 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error('Auth session error:', error)
           if (mounted) {
             setUser(null)
-            setLoading(false)
+            stopLoading()
           }
           return
         }
@@ -170,13 +184,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (mounted) {
-          setLoading(false)
+          stopLoading()
         }
       } catch (error) {
         console.error('Auth initialization error:', error)
         if (mounted) {
           setUser(null)
-          setLoading(false)
+          stopLoading()
         }
       }
     }
@@ -226,6 +240,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       mounted = false
+      clearTimeout(loadingTimeout)
       subscription.unsubscribe()
     }
   }, [])
