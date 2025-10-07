@@ -19,6 +19,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { Activity, Eye, Clock, TrendingUp, Users, FileText } from 'lucide-react'
+import { ErrorBoundary } from '@/src/components/error-boundary'
 
 interface UserAnalytics {
   engagement: {
@@ -52,7 +53,7 @@ interface UserAnalytics {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D']
 
-export default function AnalyticsPage() {
+function AnalyticsContent() {
   const [analytics, setAnalytics] = useState<UserAnalytics | null>(null)
   const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState('30')
@@ -303,5 +304,13 @@ export default function AnalyticsPage() {
         </div>
       </Card>
     </div>
+  )
+}
+
+export default function AnalyticsPage() {
+  return (
+    <ErrorBoundary>
+      <AnalyticsContent />
+    </ErrorBoundary>
   )
 }

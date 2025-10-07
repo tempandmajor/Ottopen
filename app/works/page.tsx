@@ -36,8 +36,10 @@ import { useState, useEffect, useMemo } from 'react'
 import { dbService } from '@/src/lib/database'
 import type { Post } from '@/src/lib/supabase'
 import { toast } from 'react-hot-toast'
+import { useAuth } from '@/src/contexts/auth-context'
 
 export default function Works() {
+  const { user } = useAuth()
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -59,11 +61,18 @@ export default function Works() {
     readingTime: null as string | null,
     completionStatus: [] as string[],
   })
+  const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set())
+  const [quickViewPost, setQuickViewPost] = useState<Post | null>(null)
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set())
 
   // Load posts on mount
   useEffect(() => {
     loadPosts()
-  }, [])
+    if (user) {
+      loadLikedPosts()
+      loadFollowingStatus()
+    }
+  }, [user])
 
   // Search functionality with debouncing (300ms)
   useEffect(() => {
@@ -143,6 +152,110 @@ export default function Works() {
       toast.error('Failed to load more works')
     } finally {
       setLoadingMore(false)
+    }
+  }
+
+  const loadLikedPosts = async () => {
+    try {
+      if (!user) return
+
+      const userId = user.profile?.id || user.id
+      const likedPosts = await dbService.getUserLikedPosts(userId)
+      setLikedPostIds(new Set(likedPosts.map(post => post.id)))
+    } catch (error) {
+      console.error('Failed to load liked posts:', error)
+    }
+  }
+
+  const loadFollowingStatus = async () => {
+    try {
+      if (!user) return
+
+      const userId = user.profile?.id || user.id
+      const following = await dbService.getFollowing(userId)
+      setFollowingIds(new Set(following.map(f => f.id)))
+    } catch (error) {
+      console.error('Failed to load following status:', error)
+    }
+  }
+
+  const handleLike = async (postId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation()
+
+    if (!user) {
+      toast.error('Please sign in to like works')
+      return
+    }
+
+    try {
+      const userId = user.profile?.id || user.id
+      const isLiked = likedPostIds.has(postId)
+
+      await dbService.toggleLike(postId, userId)
+
+      setLikedPostIds(prev => {
+        const next = new Set(prev)
+        if (isLiked) {
+          next.delete(postId)
+          toast.success('Like removed')
+        } else {
+          next.add(postId)
+          toast.success('Work liked!')
+        }
+        return next
+      })
+
+      // Update likes count in posts
+      setPosts(prev =>
+        prev.map(post =>
+          post.id === postId
+            ? { ...post, likes_count: (post.likes_count || 0) + (isLiked ? -1 : 1) }
+            : post
+        )
+      )
+
+      // Update in search results if present
+      if (searchResults.length > 0) {
+        setSearchResults(prev =>
+          prev.map(post =>
+            post.id === postId
+              ? { ...post, likes_count: (post.likes_count || 0) + (isLiked ? -1 : 1) }
+              : post
+          )
+        )
+      }
+    } catch (error) {
+      toast.error('Failed to update like')
+    }
+  }
+
+  const handleFollow = async (authorId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation()
+
+    if (!user) {
+      toast.error('Please sign in to follow authors')
+      return
+    }
+
+    try {
+      const userId = user.profile?.id || user.id
+      const isFollowing = followingIds.has(authorId)
+
+      await dbService.toggleFollow(userId, authorId)
+
+      setFollowingIds(prev => {
+        const next = new Set(prev)
+        if (isFollowing) {
+          next.delete(authorId)
+          toast.success('Unfollowed successfully')
+        } else {
+          next.add(authorId)
+          toast.success('Following successfully')
+        }
+        return next
+      })
+    } catch (error) {
+      toast.error('Failed to update follow status')
     }
   }
 
@@ -272,88 +385,128 @@ export default function Works() {
     }
   }
 
+  // Helper to check if work is new (< 7 days)
+  const isNewWork = (createdAt: string) => {
+    const created = new Date(createdAt)
+    const now = new Date()
+    const diffTime = Math.abs(now.getTime() - created.getTime())
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays <= 7
+  }
+
   // Create WorkCard component for real posts
-  const WorkCard = ({ post }: { post: Post }) => (
-    <Card className="card-bg card-shadow border-border hover:shadow-lg transition-all duration-300">
-      <CardContent className="p-6">
-        <div className="flex space-x-4">
-          <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-lg bg-muted flex-shrink-0 flex items-center justify-center font-bold text-lg shadow-md">
-            <BookOpen className="h-8 w-8" />
-          </div>
+  const WorkCard = ({ post }: { post: Post }) => {
+    const isLiked = likedPostIds.has(post.id)
+    const isFollowingAuthor = post.user?.id ? followingIds.has(post.user.id) : false
 
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
-              <div className="min-w-0">
-                <h3 className="font-serif text-lg sm:text-xl font-semibold mb-1 truncate">
-                  {post.title}
-                </h3>
-                <Link
-                  href={`/profile/${post.user?.username || 'unknown'}`}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  by {post.user?.display_name || 'Unknown Author'}
-                </Link>
-              </div>
-              <div className="flex items-center space-x-2 flex-shrink-0 flex-wrap gap-2">
-                {getCompletionBadge(post.completion_status)}
-                <Badge variant="outline" className="border-border">
-                  {formatContentType(post.content_type)}
-                </Badge>
-                {post.genre && (
-                  <Badge variant="secondary" className="bg-muted">
-                    {post.genre}
+    return (
+      <Card
+        className="card-bg card-shadow border-border hover:shadow-lg transition-all duration-300 cursor-pointer"
+        onClick={() => setQuickViewPost(post)}
+      >
+        <CardContent className="p-6">
+          <div className="flex space-x-4">
+            <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-lg bg-muted flex-shrink-0 flex items-center justify-center font-bold text-lg shadow-md">
+              <BookOpen className="h-8 w-8" />
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-serif text-lg sm:text-xl font-semibold truncate">
+                      {post.title}
+                    </h3>
+                    {isNewWork(post.created_at) && (
+                      <Badge
+                        variant="outline"
+                        className="bg-green-500/10 text-green-600 border-green-500/20 flex-shrink-0"
+                      >
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        New
+                      </Badge>
+                    )}
+                  </div>
+                  <Link
+                    href={`/profile/${post.user?.username || 'unknown'}`}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    by {post.user?.display_name || 'Unknown Author'}
+                  </Link>
+                </div>
+                <div className="flex items-center space-x-2 flex-shrink-0 flex-wrap gap-2">
+                  {getCompletionBadge(post.completion_status)}
+                  <Badge variant="outline" className="border-border">
+                    {formatContentType(post.content_type)}
                   </Badge>
+                  {post.genre && (
+                    <Badge variant="secondary" className="bg-muted">
+                      {post.genre}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                {post.excerpt || post.content?.substring(0, 150) + '...'}
+              </p>
+
+              <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground mb-4">
+                <div className="flex items-center">
+                  <Calendar className="h-3 w-3 mr-1" />
+                  {new Date(post.created_at).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                  })}
+                </div>
+                {post.reading_time_minutes && (
+                  <div className="flex items-center">
+                    <Clock className="h-3 w-3 mr-1" />
+                    {post.reading_time_minutes} min read
+                  </div>
                 )}
+                <div className="flex items-center">
+                  <User className="h-3 w-3 mr-1" />
+                  {post.user?.display_name || 'Unknown'}
+                </div>
               </div>
-            </div>
 
-            <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-              {post.excerpt || post.content?.substring(0, 150) + '...'}
-            </p>
-
-            <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground mb-4">
-              <div className="flex items-center">
-                <Calendar className="h-3 w-3 mr-1" />
-                {new Date(post.created_at).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'short',
-                })}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                  <div className="flex items-center">
+                    <Eye className="h-4 w-4 mr-1" />
+                    <span>{(post.views_count || 0).toLocaleString()}</span>
+                  </div>
+                  <button
+                    onClick={e => handleLike(post.id, e)}
+                    className={`flex items-center transition-colors ${
+                      isLiked ? 'text-red-500' : 'hover:text-red-500'
+                    }`}
+                  >
+                    <Heart className={`h-4 w-4 mr-1 ${isLiked ? 'fill-current' : ''}`} />
+                    <span>{post.likes_count || 0}</span>
+                  </button>
+                  <div className="flex items-center">
+                    <span>{post.comments_count || 0} comments</span>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-border hover:bg-muted"
+                  asChild
+                  onClick={e => e.stopPropagation()}
+                >
+                  <Link href={`/posts/${post.id}`}>Read</Link>
+                </Button>
               </div>
-              {post.reading_time_minutes && (
-                <div className="flex items-center">
-                  <Clock className="h-3 w-3 mr-1" />
-                  {post.reading_time_minutes} min read
-                </div>
-              )}
-              <div className="flex items-center">
-                <User className="h-3 w-3 mr-1" />
-                {post.user?.display_name || 'Unknown'}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                <div className="flex items-center">
-                  <Eye className="h-4 w-4 mr-1" />
-                  <span>{(post.views_count || 0).toLocaleString()}</span>
-                </div>
-                <div className="flex items-center">
-                  <Heart className="h-4 w-4 mr-1" />
-                  <span>{post.likes_count || 0}</span>
-                </div>
-                <div className="flex items-center">
-                  <span>{post.comments_count || 0} comments</span>
-                </div>
-              </div>
-              <Button variant="outline" size="sm" className="border-border hover:bg-muted" asChild>
-                <Link href={`/posts/${post.id}`}>Read</Link>
-              </Button>
             </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
+        </CardContent>
+      </Card>
+    )
+  }
 
   const genres = [
     'Literary Fiction',
@@ -764,6 +917,161 @@ export default function Works() {
               </Button>
             </div>
           )}
+
+          {/* Quick View Modal */}
+          <Dialog open={!!quickViewPost} onOpenChange={() => setQuickViewPost(null)}>
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+              {quickViewPost && (
+                <>
+                  <DialogHeader>
+                    <div className="flex items-start gap-4">
+                      <div className="w-20 h-24 rounded-lg bg-muted flex-shrink-0 flex items-center justify-center font-bold text-lg shadow-md">
+                        <BookOpen className="h-10 w-10" />
+                      </div>
+                      <div className="flex-1">
+                        <DialogTitle className="text-2xl font-serif mb-2">
+                          {quickViewPost.title}
+                        </DialogTitle>
+                        <Link
+                          href={`/profile/${quickViewPost.user?.username || 'unknown'}`}
+                          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          by {quickViewPost.user?.display_name || 'Unknown Author'}
+                        </Link>
+                      </div>
+                    </div>
+                  </DialogHeader>
+
+                  <div className="space-y-4 mt-4">
+                    {/* Badges */}
+                    <div className="flex flex-wrap gap-2">
+                      {isNewWork(quickViewPost.created_at) && (
+                        <Badge
+                          variant="outline"
+                          className="bg-green-500/10 text-green-600 border-green-500/20"
+                        >
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          New
+                        </Badge>
+                      )}
+                      {getCompletionBadge(quickViewPost.completion_status)}
+                      <Badge variant="outline" className="border-border">
+                        {formatContentType(quickViewPost.content_type)}
+                      </Badge>
+                      {quickViewPost.genre && (
+                        <Badge variant="secondary" className="bg-muted">
+                          {quickViewPost.genre}
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Excerpt/Description */}
+                    <div>
+                      <h4 className="font-semibold mb-2">Description</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {quickViewPost.excerpt || quickViewPost.content?.substring(0, 300) + '...'}
+                      </p>
+                    </div>
+
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+                      <div className="text-center">
+                        <div className="flex items-center justify-center space-x-2 mb-1">
+                          <Eye className="h-5 w-5 text-muted-foreground" />
+                          <span className="text-2xl font-bold">
+                            {(quickViewPost.views_count || 0).toLocaleString()}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Views</p>
+                      </div>
+                      <div className="text-center">
+                        <div className="flex items-center justify-center space-x-2 mb-1">
+                          <Heart
+                            className={`h-5 w-5 ${
+                              likedPostIds.has(quickViewPost.id)
+                                ? 'text-red-500 fill-current'
+                                : 'text-muted-foreground'
+                            }`}
+                          />
+                          <span className="text-2xl font-bold">
+                            {quickViewPost.likes_count || 0}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Likes</p>
+                      </div>
+                      <div className="text-center">
+                        <div className="flex items-center justify-center space-x-2 mb-1">
+                          <Clock className="h-5 w-5 text-muted-foreground" />
+                          <span className="text-2xl font-bold">
+                            {quickViewPost.reading_time_minutes || 0}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Min Read</p>
+                      </div>
+                    </div>
+
+                    {/* Author Info */}
+                    {quickViewPost.user && (
+                      <div className="pt-4 border-t">
+                        <h4 className="font-semibold mb-3">About the Author</h4>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-12 w-12">
+                            <AvatarImage src={quickViewPost.user.avatar_url} />
+                            <AvatarFallback>
+                              {quickViewPost.user.display_name?.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <p className="font-medium">{quickViewPost.user.display_name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {quickViewPost.user.specialty || 'Writer'}
+                            </p>
+                          </div>
+                          <Button
+                            variant={
+                              quickViewPost.user.id && followingIds.has(quickViewPost.user.id)
+                                ? 'default'
+                                : 'outline'
+                            }
+                            size="sm"
+                            onClick={e => {
+                              if (quickViewPost.user?.id) {
+                                handleFollow(quickViewPost.user.id, e)
+                              }
+                            }}
+                          >
+                            {quickViewPost.user.id && followingIds.has(quickViewPost.user.id)
+                              ? 'Following'
+                              : 'Follow'}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex gap-2 pt-4 border-t">
+                      <Button
+                        onClick={e => handleLike(quickViewPost.id, e)}
+                        variant={likedPostIds.has(quickViewPost.id) ? 'default' : 'outline'}
+                        className="flex-1"
+                      >
+                        <Heart
+                          className={`h-4 w-4 mr-2 ${
+                            likedPostIds.has(quickViewPost.id) ? 'fill-current' : ''
+                          }`}
+                        />
+                        {likedPostIds.has(quickViewPost.id) ? 'Liked' : 'Like'}
+                      </Button>
+                      <Button variant="default" className="flex-1" asChild>
+                        <Link href={`/posts/${quickViewPost.id}`}>Read Full Work</Link>
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>

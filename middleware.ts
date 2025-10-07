@@ -109,7 +109,29 @@ export async function middleware(request: NextRequest) {
     logger.error('Middleware error:', error instanceof Error ? error : new Error(String(error)), {
       pathname: request.nextUrl.pathname,
     })
-    // Continue without auth protection on error
+
+    // For protected routes, redirect to signin on auth errors
+    const { pathname } = request.nextUrl
+    const protectedRoutes = [
+      '/dashboard',
+      '/feed',
+      '/messages',
+      '/settings',
+      '/profile',
+      '/referrals',
+      '/submissions',
+      '/opportunities',
+      '/admin',
+    ]
+
+    const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
+
+    if (isProtectedRoute) {
+      logger.warn('Auth error on protected route - redirecting to signin', { pathname })
+      return NextResponse.redirect(new URL('/auth/signin?error=auth-failed', request.url))
+    }
+
+    // For public routes, allow through
     return response
   }
 }

@@ -58,10 +58,10 @@ export function HomeView({ initialPosts, initialAuthors, initialStats }: HomeVie
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
               <div className="space-y-4">
-                <h1 className="font-sans text-5xl lg:text-6xl font-bold leading-tight">
+                <h1 className="font-sans text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
                   Where <span className="italic">Stories</span> Connect
                 </h1>
-                <p className="text-xl text-muted-foreground leading-relaxed">
+                <p className="text-base sm:text-lg md:text-xl text-muted-foreground leading-relaxed">
                   Join a community of authors, screenwriters, and playwrights. Share your work,
                   discover new voices, and build meaningful connections in the literary world.
                 </p>
@@ -82,7 +82,7 @@ export function HomeView({ initialPosts, initialAuthors, initialStats }: HomeVie
                 </Button>
               </div>
 
-              <div className="flex items-center space-x-8 text-sm text-muted-foreground">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8 text-sm text-muted-foreground">
                 <div className="flex items-center space-x-2">
                   <TrendingUp className="h-4 w-4" />
                   <span>
@@ -111,7 +111,7 @@ export function HomeView({ initialPosts, initialAuthors, initialStats }: HomeVie
             </div>
 
             <div className="relative">
-              <div className="rounded-xl literary-shadow w-full h-[400px] overflow-hidden">
+              <div className="rounded-xl literary-shadow w-full h-[300px] sm:h-[350px] lg:h-[400px] overflow-hidden">
                 <Image
                   src="/ottopen-image.png"
                   alt="Ottopen - Where Stories Connect"

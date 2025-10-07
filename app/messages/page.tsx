@@ -30,8 +30,10 @@ import type { User, Message, Conversation } from '@/src/lib/supabase'
 import { toast } from 'react-hot-toast'
 import Link from 'next/link'
 import { formatDistanceToNow, isToday, isYesterday, format } from 'date-fns'
+import { ErrorBoundary } from '@/src/components/error-boundary'
+import { sanitizeText } from '@/src/lib/sanitize'
 
-export default function Messages() {
+function MessagesContent() {
   const { user } = useAuth()
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState('')
@@ -387,7 +389,9 @@ export default function Messages() {
                                       </div>
                                     </div>
                                     <p className="text-xs text-muted-foreground line-clamp-2">
-                                      {conv.last_message?.content || 'No messages yet'}
+                                      {conv.last_message?.content
+                                        ? sanitizeText(conv.last_message.content)
+                                        : 'No messages yet'}
                                     </p>
                                   </div>
                                 </div>
@@ -534,7 +538,9 @@ export default function Messages() {
                                             : 'bg-muted text-foreground mr-2'
                                         }`}
                                       >
-                                        <p className="text-sm leading-relaxed">{message.content}</p>
+                                        <p className="text-sm leading-relaxed">
+                                          {sanitizeText(message.content)}
+                                        </p>
                                       </div>
                                       <p
                                         className={`text-xs text-muted-foreground mt-1 ${
@@ -638,5 +644,13 @@ export default function Messages() {
         </div>
       </div>
     </ProtectedRoute>
+  )
+}
+
+export default function Messages() {
+  return (
+    <ErrorBoundary>
+      <MessagesContent />
+    </ErrorBoundary>
   )
 }

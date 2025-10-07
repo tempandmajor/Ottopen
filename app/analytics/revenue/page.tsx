@@ -19,6 +19,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { DollarSign, TrendingUp, ShoppingCart, Eye, Percent } from 'lucide-react'
+import { ErrorBoundary } from '@/src/components/error-boundary'
 
 interface RevenueAnalytics {
   summary: {
@@ -53,7 +54,7 @@ interface RevenueAnalytics {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28']
 
-export default function RevenueAnalyticsPage() {
+function RevenueAnalyticsPageContent() {
   const [analytics, setAnalytics] = useState<RevenueAnalytics | null>(null)
   const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState('30')
@@ -387,5 +388,13 @@ export default function RevenueAnalyticsPage() {
         </div>
       </Card>
     </div>
+  )
+}
+
+export default function RevenueAnalyticsPage() {
+  return (
+    <ErrorBoundary>
+      <RevenueAnalyticsPageContent />
+    </ErrorBoundary>
   )
 }

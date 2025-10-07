@@ -2,6 +2,78 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================
+   ACCESSIBILITY & MOBILE UTILITIES
+   ============================================ */
+
+@layer utilities {
+  /* Screen reader only - visible to screen readers, hidden visually */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* Show element when focused (for skip links) */
+  .sr-only.focus\:not-sr-only:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: inherit;
+    margin: inherit;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+
+  /* Focus visible styles for keyboard navigation */
+  .focus-visible-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+
+  /* High contrast focus for better accessibility */
+  .focus-high-contrast {
+    @apply focus:outline-2 focus:outline-offset-2 focus:outline-primary;
+  }
+
+  /* Touch target size (minimum 44x44px for mobile) */
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Prevent text from being too small on mobile */
+  .text-mobile-friendly {
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
+  }
+
+  /* Responsive container with proper padding */
+  .container-mobile {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Stack elements on mobile, row on desktop */
+  .stack-mobile {
+    @apply flex flex-col sm:flex-row;
+  }
+
+  /* Hide on mobile, show on desktop */
+  .hide-mobile {
+    @apply hidden sm:block;
+  }
+
+  /* Show on mobile, hide on desktop */
+  .show-mobile {
+    @apply block sm:hidden;
+  }
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */

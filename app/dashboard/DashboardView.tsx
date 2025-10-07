@@ -6,6 +6,7 @@ import { AuthorCard } from '@/src/components/author-card'
 import { Button } from '@/src/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card'
 import { Progress } from '@/src/components/ui/progress'
+import { WelcomeModal } from '@/src/components/WelcomeModal'
 import {
   BookOpen,
   Users,
@@ -66,6 +67,10 @@ export function DashboardView({
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
+      <WelcomeModal
+        userName={user?.profile?.display_name || user?.profile?.username || undefined}
+        userEmail={user?.email}
+      />
 
       <div className="container mx-auto px-4 py-6 sm:py-8">
         <div className="max-w-7xl mx-auto">
@@ -84,16 +89,16 @@ export function DashboardView({
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-6">
               {/* Quick Stats */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 <Card className="card-bg border-literary-border">
-                  <CardContent className="p-4 text-center">
+                  <CardContent className="p-3 sm:p-4 text-center">
                     <BookOpen className="h-5 w-5 text-primary mx-auto mb-2" />
                     <div className="text-2xl font-bold">{stats.totalWorks}</div>
                     <p className="text-xs text-muted-foreground">Works</p>
                   </CardContent>
                 </Card>
                 <Card className="card-bg border-literary-border">
-                  <CardContent className="p-4 text-center">
+                  <CardContent className="p-3 sm:p-4 text-center">
                     <Users className="h-5 w-5 text-primary mx-auto mb-2" />
                     <div className="text-2xl font-bold">
                       {stats.totalFollowers.toLocaleString()}
@@ -102,7 +107,7 @@ export function DashboardView({
                   </CardContent>
                 </Card>
                 <Card className="card-bg border-literary-border">
-                  <CardContent className="p-4 text-center">
+                  <CardContent className="p-3 sm:p-4 text-center">
                     <Heart className="h-5 w-5 text-primary mx-auto mb-2" />
                     <div className="text-2xl font-bold">
                       {stats.totalLikes > 1000
@@ -113,7 +118,7 @@ export function DashboardView({
                   </CardContent>
                 </Card>
                 <Card className="card-bg border-literary-border">
-                  <CardContent className="p-4 text-center">
+                  <CardContent className="p-3 sm:p-4 text-center">
                     <Eye className="h-5 w-5 text-primary mx-auto mb-2" />
                     <div className="text-2xl font-bold">
                       {stats.totalViews > 1000

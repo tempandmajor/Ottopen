@@ -41,7 +41,22 @@ import {
   CreditCard,
   Crown,
   ExternalLink,
+  Twitter,
+  Linkedin,
+  Github,
+  Link as LinkIcon,
 } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/src/components/ui/alert-dialog'
 import { useState, useEffect } from 'react'
 import { dbService } from '@/src/lib/database'
 import { authService } from '@/src/lib/auth'
@@ -73,6 +88,24 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
     website: '',
     specialty: '',
   })
+
+  const [appearanceSettings, setAppearanceSettings] = useState({
+    theme: 'system' as 'light' | 'dark' | 'system',
+    language: 'en',
+    timezone: 'UTC',
+  })
+
+  const [socialLinks, setSocialLinks] = useState({
+    twitter: '',
+    linkedin: '',
+    github: '',
+    website: '',
+    other: '',
+  })
+
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   const [notificationSettings, setNotificationSettings] = useState({
     emailNotifications: true,
@@ -130,6 +163,7 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
       loadSubscriptionData()
       loadNotificationSettings()
       loadPrivacySettings()
+      loadSocialLinks()
     }
   }, [currentUser])
 
@@ -200,9 +234,15 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
         username: profile.username || '',
         email: currentUser.email || '',
         bio: profile.bio || '',
-        location: '', // Not in current User interface
-        website: '', // Not in current User interface
+        location: (profile as any).location || '',
+        website: (profile as any).website || '',
         specialty: profile.specialty || '',
+      })
+
+      setAppearanceSettings({
+        theme: ((profile as any).theme as 'light' | 'dark' | 'system') || 'system',
+        language: (profile as any).language || 'en',
+        timezone: (profile as any).timezone || 'UTC',
       })
 
       // Notification & privacy loaded separately
@@ -246,6 +286,32 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
         currentPeriodEnd: '',
         cancelAtPeriodEnd: false,
       })
+    }
+  }
+
+  const loadSocialLinks = async () => {
+    if (!currentUser?.profile) return
+    try {
+      const { data } = await supabase
+        .from('user_social_links')
+        .select('platform, url')
+        .eq('user_id', currentUser.profile.id)
+
+      if (data) {
+        const links: any = {}
+        data.forEach(link => {
+          links[link.platform] = link.url
+        })
+        setSocialLinks({
+          twitter: links.twitter || '',
+          linkedin: links.linkedin || '',
+          github: links.github || '',
+          website: links.website || '',
+          other: links.other || '',
+        })
+      }
+    } catch (error) {
+      console.error('Failed to load social links:', error)
     }
   }
 
@@ -309,7 +375,9 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
         username: profileData.username,
         bio: profileData.bio,
         specialty: profileData.specialty,
-      })
+        location: profileData.location,
+        website: profileData.website,
+      } as any)
 
       if (updatedProfile) {
         setUserProfile(updatedProfile)
@@ -401,6 +469,131 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
       toast.error('Failed to save privacy settings')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleSaveAppearance = async () => {
+    try {
+      setSaving(true)
+      if (!currentUser?.profile) throw new Error('No user')
+
+      const updatedProfile = await dbService.updateUser(currentUser.profile.id, {
+        theme: appearanceSettings.theme,
+        language: appearanceSettings.language,
+        timezone: appearanceSettings.timezone,
+      } as any)
+
+      if (updatedProfile) {
+        // Apply theme immediately
+        document.documentElement.classList.remove('light', 'dark')
+        if (appearanceSettings.theme !== 'system') {
+          document.documentElement.classList.add(appearanceSettings.theme)
+        } else {
+          // Apply system preference
+          const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+          document.documentElement.classList.add(isDark ? 'dark' : 'light')
+        }
+
+        toast.success('Appearance settings saved!')
+      }
+    } catch (error) {
+      console.error('Failed to save appearance settings:', error)
+      toast.error('Failed to save appearance settings')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleSaveSocialLinks = async () => {
+    try {
+      setSaving(true)
+      if (!currentUser?.profile) throw new Error('No user')
+
+      // Delete existing links
+      await supabase.from('user_social_links').delete().eq('user_id', currentUser.profile.id)
+
+      // Insert new links (only non-empty ones)
+      const linksToInsert = Object.entries(socialLinks)
+        .filter(([_, url]) => url.trim())
+        .map(([platform, url]) => ({
+          user_id: currentUser.profile!.id,
+          platform,
+          url,
+        }))
+
+      if (linksToInsert.length > 0) {
+        await supabase.from('user_social_links').insert(linksToInsert)
+      }
+
+      toast.success('Social links saved!')
+    } catch (error) {
+      console.error('Failed to save social links:', error)
+      toast.error('Failed to save social links')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleExportData = async () => {
+    try {
+      setSaving(true)
+      const response = await fetch('/api/settings/export-data')
+
+      if (!response.ok) {
+        throw new Error('Export failed')
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `ottopen-data-${Date.now()}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+
+      toast.success('Data exported successfully!')
+    } catch (error) {
+      console.error('Failed to export data:', error)
+      toast.error('Failed to export data')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) {
+      toast.error('Please enter your password')
+      return
+    }
+
+    try {
+      setDeleting(true)
+
+      const response = await fetch('/api/settings/delete-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: deletePassword }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete account')
+      }
+
+      toast.success('Account deleted successfully')
+
+      // Redirect to home page after short delay
+      setTimeout(() => {
+        window.location.href = '/'
+      }, 2000)
+    } catch (error: any) {
+      console.error('Failed to delete account:', error)
+      toast.error(error.message || 'Failed to delete account')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -692,7 +885,82 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
                       </div>
                     </div>
 
-                    <div className="flex justify-end">
+                    <Separator />
+
+                    {/* Social Links Section */}
+                    <div className="space-y-4">
+                      <div>
+                        <Label className="text-base font-semibold">Social Links</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Add links to your social media and professional profiles
+                        </p>
+                      </div>
+
+                      <div className="grid gap-4">
+                        <div className="flex items-center gap-3">
+                          <Twitter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <Input
+                            placeholder="https://twitter.com/username"
+                            value={socialLinks.twitter}
+                            onChange={e =>
+                              setSocialLinks(prev => ({ ...prev, twitter: e.target.value }))
+                            }
+                            className="border-literary-border"
+                            disabled={saving}
+                          />
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <Linkedin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <Input
+                            placeholder="https://linkedin.com/in/username"
+                            value={socialLinks.linkedin}
+                            onChange={e =>
+                              setSocialLinks(prev => ({ ...prev, linkedin: e.target.value }))
+                            }
+                            className="border-literary-border"
+                            disabled={saving}
+                          />
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <Github className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <Input
+                            placeholder="https://github.com/username"
+                            value={socialLinks.github}
+                            onChange={e =>
+                              setSocialLinks(prev => ({ ...prev, github: e.target.value }))
+                            }
+                            className="border-literary-border"
+                            disabled={saving}
+                          />
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <LinkIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <Input
+                            placeholder="Other link (portfolio, blog, etc.)"
+                            value={socialLinks.other}
+                            onChange={e =>
+                              setSocialLinks(prev => ({ ...prev, other: e.target.value }))
+                            }
+                            className="border-literary-border"
+                            disabled={saving}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between gap-3">
+                      <Button
+                        variant="outline"
+                        onClick={handleSaveSocialLinks}
+                        disabled={saving}
+                        className="flex items-center space-x-2"
+                      >
+                        <Save className="h-4 w-4" />
+                        <span>Save Social Links</span>
+                      </Button>
                       <Button
                         onClick={handleSaveProfile}
                         disabled={saving}
@@ -706,7 +974,7 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
                         ) : (
                           <>
                             <Save className="h-4 w-4" />
-                            <span>Save Changes</span>
+                            <span>Save Profile</span>
                           </>
                         )}
                       </Button>
@@ -1302,15 +1570,33 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
                       <div className="space-y-2">
                         <Label>Theme</Label>
                         <div className="grid grid-cols-3 gap-3">
-                          <Button variant="outline" className="h-20 flex-col space-y-2">
+                          <Button
+                            variant={appearanceSettings.theme === 'light' ? 'default' : 'outline'}
+                            className="h-20 flex-col space-y-2"
+                            onClick={() =>
+                              setAppearanceSettings(prev => ({ ...prev, theme: 'light' }))
+                            }
+                          >
                             <div className="w-8 h-8 bg-white border rounded"></div>
                             <span className="text-xs">Light</span>
                           </Button>
-                          <Button variant="outline" className="h-20 flex-col space-y-2">
+                          <Button
+                            variant={appearanceSettings.theme === 'dark' ? 'default' : 'outline'}
+                            className="h-20 flex-col space-y-2"
+                            onClick={() =>
+                              setAppearanceSettings(prev => ({ ...prev, theme: 'dark' }))
+                            }
+                          >
                             <div className="w-8 h-8 bg-gray-900 rounded"></div>
                             <span className="text-xs">Dark</span>
                           </Button>
-                          <Button variant="outline" className="h-20 flex-col space-y-2">
+                          <Button
+                            variant={appearanceSettings.theme === 'system' ? 'default' : 'outline'}
+                            className="h-20 flex-col space-y-2"
+                            onClick={() =>
+                              setAppearanceSettings(prev => ({ ...prev, theme: 'system' }))
+                            }
+                          >
                             <div className="w-8 h-8 bg-gradient-to-br from-white to-gray-900 rounded"></div>
                             <span className="text-xs">System</span>
                           </Button>
@@ -1321,7 +1607,12 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
 
                       <div className="space-y-2">
                         <Label>Language</Label>
-                        <Select defaultValue="en">
+                        <Select
+                          value={appearanceSettings.language}
+                          onValueChange={value =>
+                            setAppearanceSettings(prev => ({ ...prev, language: value }))
+                          }
+                        >
                           <SelectTrigger className="border-literary-border">
                             <SelectValue />
                           </SelectTrigger>
@@ -1337,24 +1628,50 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
 
                       <div className="space-y-2">
                         <Label>Timezone</Label>
-                        <Select defaultValue="utc">
+                        <Select
+                          value={appearanceSettings.timezone}
+                          onValueChange={value =>
+                            setAppearanceSettings(prev => ({ ...prev, timezone: value }))
+                          }
+                        >
                           <SelectTrigger className="border-literary-border">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="utc">UTC (GMT+0)</SelectItem>
-                            <SelectItem value="est">Eastern Time (GMT-5)</SelectItem>
-                            <SelectItem value="pst">Pacific Time (GMT-8)</SelectItem>
-                            <SelectItem value="cet">Central European Time (GMT+1)</SelectItem>
+                            <SelectItem value="UTC">UTC (GMT+0)</SelectItem>
+                            <SelectItem value="America/New_York">Eastern Time (GMT-5)</SelectItem>
+                            <SelectItem value="America/Los_Angeles">
+                              Pacific Time (GMT-8)
+                            </SelectItem>
+                            <SelectItem value="Europe/Paris">
+                              Central European Time (GMT+1)
+                            </SelectItem>
+                            <SelectItem value="Asia/Tokyo">Japan Time (GMT+9)</SelectItem>
+                            <SelectItem value="Australia/Sydney">
+                              Australian Eastern Time (GMT+10)
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
 
                     <div className="flex justify-end">
-                      <Button className="flex items-center space-x-2">
-                        <Save className="h-4 w-4" />
-                        <span>Save Preferences</span>
+                      <Button
+                        onClick={handleSaveAppearance}
+                        disabled={saving}
+                        className="flex items-center space-x-2"
+                      >
+                        {saving ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Saving...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Save className="h-4 w-4" />
+                            <span>Save Preferences</span>
+                          </>
+                        )}
                       </Button>
                     </div>
                   </CardContent>
@@ -1538,11 +1855,23 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
                       <div>
                         <p className="font-medium">Download Your Data</p>
                         <p className="text-sm text-muted-foreground">
-                          Get a copy of all your Ottopen data
+                          Get a copy of all your Ottopen data (GDPR compliant)
                         </p>
                       </div>
-                      <Button variant="outline" size="sm">
-                        Request
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExportData}
+                        disabled={saving}
+                      >
+                        {saving ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Download className="h-4 w-4 mr-2" />
+                            Export
+                          </>
+                        )}
                       </Button>
                     </div>
 
@@ -1553,10 +1882,69 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
                           Permanently delete your account and all data
                         </p>
                       </div>
-                      <Button variant="destructive" size="sm">
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
-                      </Button>
+                      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" size="sm">
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete your
+                              account and remove all your data from our servers.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <div className="space-y-4 py-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="delete-password">
+                                Enter your password to confirm
+                              </Label>
+                              <Input
+                                id="delete-password"
+                                type="password"
+                                placeholder="Your password"
+                                value={deletePassword}
+                                onChange={e => setDeletePassword(e.target.value)}
+                                className="border-destructive/50"
+                              />
+                            </div>
+                            <div className="p-3 border border-destructive/20 rounded-lg bg-destructive/5">
+                              <p className="text-sm text-destructive font-medium">
+                                ⚠️ This will delete:
+                              </p>
+                              <ul className="text-xs text-muted-foreground mt-2 space-y-1">
+                                <li>• All your written works and posts</li>
+                                <li>• All comments and interactions</li>
+                                <li>• Your profile and settings</li>
+                                <li>• All messages and conversations</li>
+                                <li>• Your subscription (if any)</li>
+                              </ul>
+                            </div>
+                          </div>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel onClick={() => setDeletePassword('')}>
+                              Cancel
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={handleDeleteAccount}
+                              disabled={deleting || !deletePassword}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              {deleting ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                  Deleting...
+                                </>
+                              ) : (
+                                'Delete My Account'
+                              )}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </CardContent>
                 </Card>

@@ -16,6 +16,7 @@ import {
 } from '@/src/components/ui/dialog'
 import { Label } from '@/src/components/ui/label'
 import { Checkbox } from '@/src/components/ui/checkbox'
+import { Avatar, AvatarFallback, AvatarImage } from '@/src/components/ui/avatar'
 import {
   Search,
   Filter,
@@ -29,12 +30,16 @@ import {
   Award,
   MapPin,
 } from 'lucide-react'
+import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { dbService } from '@/src/lib/database'
 import type { User } from '@/src/lib/supabase'
 import { toast } from 'react-hot-toast'
+import { useAuth } from '@/src/contexts/auth-context'
+import { ErrorBoundary } from '@/src/components/error-boundary'
 
-export default function Authors() {
+function AuthorsContent() {
+  const { user } = useAuth()
   const [authors, setAuthors] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -60,11 +65,29 @@ export default function Authors() {
     acceptingBetaReaders: false,
     minFollowers: 0,
   })
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set())
+  const [quickViewAuthor, setQuickViewAuthor] = useState<
+    (User & { works: number; followers: number }) | null
+  >(null)
 
   // Load authors on mount
   useEffect(() => {
     loadAuthors()
+    loadFollowingStatus()
   }, [])
+
+  // Load user's following status
+  const loadFollowingStatus = async () => {
+    try {
+      if (!user) return
+
+      const userId = user.profile?.id || user.id
+      const following = await dbService.getFollowing(userId)
+      setFollowingIds(new Set(following.map(f => f.id)))
+    } catch (error) {
+      console.error('Failed to load following status:', error)
+    }
+  }
 
   // Search functionality with debouncing (300ms)
   useEffect(() => {
@@ -189,6 +212,42 @@ export default function Authors() {
     setSelectedSpecialty(selectedSpecialty === specialty ? null : specialty)
   }
 
+  const handleFollow = async (authorId: string) => {
+    try {
+      if (!user) {
+        toast.error('Please sign in to follow authors')
+        return
+      }
+
+      const userId = user.profile?.id || user.id
+      const isFollowing = followingIds.has(authorId)
+      await dbService.toggleFollow(userId, authorId)
+
+      setFollowingIds(prev => {
+        const next = new Set(prev)
+        if (isFollowing) {
+          next.delete(authorId)
+          toast.success('Unfollowed successfully')
+        } else {
+          next.add(authorId)
+          toast.success('Following successfully')
+        }
+        return next
+      })
+
+      // Update follower count in displayed authors
+      setAuthorsWithStats(prev =>
+        prev.map(author =>
+          author.id === authorId
+            ? { ...author, followers: author.followers + (isFollowing ? -1 : 1) }
+            : author
+        )
+      )
+    } catch (error) {
+      toast.error('Failed to update follow status')
+    }
+  }
+
   const applyFilters = (authorList: (User & { works: number; followers: number })[]) => {
     let filtered = [...authorList]
 
@@ -276,6 +335,101 @@ export default function Authors() {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
+
+      {/* Quick View Modal */}
+      <Dialog open={!!quickViewAuthor} onOpenChange={() => setQuickViewAuthor(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={quickViewAuthor?.avatar_url} />
+                <AvatarFallback>
+                  {quickViewAuthor?.display_name?.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h3 className="text-xl font-serif">{quickViewAuthor?.display_name}</h3>
+                <p className="text-sm text-muted-foreground">{quickViewAuthor?.specialty}</p>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-4">
+            {/* Location */}
+            {quickViewAuthor?.location && (
+              <div className="flex items-center text-sm text-muted-foreground">
+                <MapPin className="h-4 w-4 mr-2" />
+                <span>{quickViewAuthor.location}</span>
+              </div>
+            )}
+
+            {/* Bio */}
+            <div>
+              <h4 className="font-semibold mb-2">About</h4>
+              <p className="text-sm text-muted-foreground">
+                {quickViewAuthor?.bio || 'No bio available'}
+              </p>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-4">
+              <Card className="p-3 text-center">
+                <BookOpen className="h-5 w-5 mx-auto mb-1 text-primary" />
+                <div className="text-lg font-bold">{quickViewAuthor?.works || 0}</div>
+                <p className="text-xs text-muted-foreground">Works</p>
+              </Card>
+              <Card className="p-3 text-center">
+                <Users className="h-5 w-5 mx-auto mb-1 text-primary" />
+                <div className="text-lg font-bold">
+                  {quickViewAuthor?.followers.toLocaleString() || 0}
+                </div>
+                <p className="text-xs text-muted-foreground">Followers</p>
+              </Card>
+              <Card className="p-3 text-center">
+                <Star className="h-5 w-5 mx-auto mb-1 text-primary" />
+                <div className="text-lg font-bold">
+                  {quickViewAuthor?.account_type === 'writer' ? 'Writer' : 'Professional'}
+                </div>
+                <p className="text-xs text-muted-foreground">Type</p>
+              </Card>
+            </div>
+
+            {/* Collaboration Status */}
+            {(quickViewAuthor?.open_for_collaboration ||
+              quickViewAuthor?.accepting_beta_readers) && (
+              <div className="space-y-2">
+                <h4 className="font-semibold">Availability</h4>
+                <div className="flex gap-2">
+                  {quickViewAuthor?.open_for_collaboration && (
+                    <Badge variant="secondary">Open for Collaboration</Badge>
+                  )}
+                  {quickViewAuthor?.accepting_beta_readers && (
+                    <Badge variant="secondary">Accepting Beta Readers</Badge>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-2 pt-4 border-t">
+              <Button
+                onClick={() => {
+                  if (quickViewAuthor) handleFollow(quickViewAuthor.id)
+                }}
+                variant={
+                  quickViewAuthor && followingIds.has(quickViewAuthor.id) ? 'default' : 'outline'
+                }
+                className="flex-1"
+              >
+                {quickViewAuthor && followingIds.has(quickViewAuthor.id) ? 'Following' : 'Follow'}
+              </Button>
+              <Button variant="outline" className="flex-1" asChild>
+                <Link href={`/profile/${quickViewAuthor?.username}`}>View Full Profile</Link>
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="container mx-auto px-4 py-6 sm:py-8">
         <div className="max-w-7xl mx-auto">
@@ -543,18 +697,30 @@ export default function Authors() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {risingStars.length > 0 ? (
                     risingStars.map(author => (
-                      <AuthorCard
+                      <div
                         key={author.id}
-                        name={author.display_name}
-                        specialty={author.specialty || 'Writer'}
-                        location={author.location || 'Location not specified'}
-                        works={author.works}
-                        followers={author.followers}
-                        bio={author.bio || 'No bio available'}
-                        avatar={author.avatar_url}
-                        tags={author.specialty ? [author.specialty] : ['Writer']}
-                        username={author.username}
-                      />
+                        onClick={() => setQuickViewAuthor(author)}
+                        className="cursor-pointer"
+                      >
+                        <AuthorCard
+                          name={author.display_name}
+                          specialty={author.specialty || 'Writer'}
+                          location={author.location || 'Location not specified'}
+                          works={author.works}
+                          followers={author.followers}
+                          bio={author.bio || 'No bio available'}
+                          avatar={author.avatar_url}
+                          tags={author.specialty ? [author.specialty] : ['Writer']}
+                          username={author.username}
+                          onFollow={e => {
+                            e?.stopPropagation()
+                            handleFollow(author.id)
+                          }}
+                          isFollowing={followingIds.has(author.id)}
+                          createdAt={author.created_at}
+                          accountType={author.account_type}
+                        />
+                      </div>
                     ))
                   ) : (
                     <div className="col-span-2 text-center py-8">
@@ -569,18 +735,30 @@ export default function Authors() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {mostActive.length > 0 ? (
                   mostActive.map(author => (
-                    <AuthorCard
+                    <div
                       key={author.id}
-                      name={author.display_name}
-                      specialty={author.specialty || 'Writer'}
-                      location={author.location || 'Location not specified'}
-                      works={author.works}
-                      followers={author.followers}
-                      bio={author.bio || 'No bio available'}
-                      avatar={author.avatar_url}
-                      tags={author.specialty ? [author.specialty] : ['Writer']}
-                      username={author.username}
-                    />
+                      onClick={() => setQuickViewAuthor(author)}
+                      className="cursor-pointer"
+                    >
+                      <AuthorCard
+                        name={author.display_name}
+                        specialty={author.specialty || 'Writer'}
+                        location={author.location || 'Location not specified'}
+                        works={author.works}
+                        followers={author.followers}
+                        bio={author.bio || 'No bio available'}
+                        avatar={author.avatar_url}
+                        tags={author.specialty ? [author.specialty] : ['Writer']}
+                        username={author.username}
+                        onFollow={e => {
+                          e?.stopPropagation()
+                          handleFollow(author.id)
+                        }}
+                        isFollowing={followingIds.has(author.id)}
+                        createdAt={author.created_at}
+                        accountType={author.account_type}
+                      />
+                    </div>
                   ))
                 ) : (
                   <div className="col-span-2 text-center py-8">
@@ -594,18 +772,30 @@ export default function Authors() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {mostFollowed.length > 0 ? (
                   mostFollowed.map(author => (
-                    <AuthorCard
+                    <div
                       key={author.id}
-                      name={author.display_name}
-                      specialty={author.specialty || 'Writer'}
-                      location={author.location || 'Location not specified'}
-                      works={author.works}
-                      followers={author.followers}
-                      bio={author.bio || 'No bio available'}
-                      avatar={author.avatar_url}
-                      tags={author.specialty ? [author.specialty] : ['Writer']}
-                      username={author.username}
-                    />
+                      onClick={() => setQuickViewAuthor(author)}
+                      className="cursor-pointer"
+                    >
+                      <AuthorCard
+                        name={author.display_name}
+                        specialty={author.specialty || 'Writer'}
+                        location={author.location || 'Location not specified'}
+                        works={author.works}
+                        followers={author.followers}
+                        bio={author.bio || 'No bio available'}
+                        avatar={author.avatar_url}
+                        tags={author.specialty ? [author.specialty] : ['Writer']}
+                        username={author.username}
+                        onFollow={e => {
+                          e?.stopPropagation()
+                          handleFollow(author.id)
+                        }}
+                        isFollowing={followingIds.has(author.id)}
+                        createdAt={author.created_at}
+                        accountType={author.account_type}
+                      />
+                    </div>
                   ))
                 ) : (
                   <div className="col-span-2 text-center py-8">
@@ -619,18 +809,30 @@ export default function Authors() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {newWriters.length > 0 ? (
                   newWriters.map(author => (
-                    <AuthorCard
+                    <div
                       key={author.id}
-                      name={author.display_name}
-                      specialty={author.specialty || 'Writer'}
-                      location={author.location || 'Location not specified'}
-                      works={author.works}
-                      followers={author.followers}
-                      bio={author.bio || 'No bio available'}
-                      avatar={author.avatar_url}
-                      tags={author.specialty ? [author.specialty] : ['Writer']}
-                      username={author.username}
-                    />
+                      onClick={() => setQuickViewAuthor(author)}
+                      className="cursor-pointer"
+                    >
+                      <AuthorCard
+                        name={author.display_name}
+                        specialty={author.specialty || 'Writer'}
+                        location={author.location || 'Location not specified'}
+                        works={author.works}
+                        followers={author.followers}
+                        bio={author.bio || 'No bio available'}
+                        avatar={author.avatar_url}
+                        tags={author.specialty ? [author.specialty] : ['Writer']}
+                        username={author.username}
+                        onFollow={e => {
+                          e?.stopPropagation()
+                          handleFollow(author.id)
+                        }}
+                        isFollowing={followingIds.has(author.id)}
+                        createdAt={author.created_at}
+                        accountType={author.account_type}
+                      />
+                    </div>
                   ))
                 ) : (
                   <div className="col-span-2 text-center py-8">
@@ -665,5 +867,13 @@ export default function Authors() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function Authors() {
+  return (
+    <ErrorBoundary>
+      <AuthorsContent />
+    </ErrorBoundary>
   )
 }

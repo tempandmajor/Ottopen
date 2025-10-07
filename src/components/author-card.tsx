@@ -4,8 +4,17 @@ import { Card, CardContent } from '@/src/components/ui/card'
 import { Badge } from '@/src/components/ui/badge'
 import { Button } from '@/src/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/src/components/ui/avatar'
-import { MapPin, Book, Users } from 'lucide-react'
+import { MapPin, Book, Users, CheckCircle, Crown, Sparkles } from 'lucide-react'
 import Link from 'next/link'
+
+// Helper function to check if author joined within days
+function isWithinDays(dateString: string, days: number): boolean {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffTime = Math.abs(now.getTime() - date.getTime())
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  return diffDays <= days
+}
 
 interface AuthorCardProps {
   name: string
@@ -17,8 +26,12 @@ interface AuthorCardProps {
   avatar?: string
   tags: string[]
   username?: string
-  onFollow?: () => void
+  onFollow?: (e?: React.MouseEvent) => void
   isFollowing?: boolean
+  verified?: boolean
+  subscriptionTier?: string
+  createdAt?: string
+  accountType?: string
 }
 
 export function AuthorCard({
@@ -33,11 +46,54 @@ export function AuthorCard({
   username,
   onFollow,
   isFollowing = false,
+  verified = false,
+  subscriptionTier,
+  createdAt,
+  accountType,
 }: AuthorCardProps) {
   const initials = name
     .split(' ')
     .map(n => n[0])
     .join('')
+
+  // Generate badges
+  const badges = []
+
+  // New author badge (joined < 7 days ago)
+  if (createdAt && isWithinDays(createdAt, 7)) {
+    badges.push({
+      label: 'New',
+      icon: Sparkles,
+      className: 'bg-green-500/10 text-green-600 border-green-500/20',
+    })
+  }
+
+  // Verified badge
+  if (verified) {
+    badges.push({
+      label: 'Verified',
+      icon: CheckCircle,
+      className: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+    })
+  }
+
+  // Top contributor badge (100+ works or 1000+ followers)
+  if (works >= 100 || followers >= 1000) {
+    badges.push({
+      label: 'Top Contributor',
+      icon: Crown,
+      className: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20',
+    })
+  }
+
+  // Premium subscriber badge
+  if (subscriptionTier === 'premium' || subscriptionTier === 'pro') {
+    badges.push({
+      label: 'Premium',
+      icon: Crown,
+      className: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
+    })
+  }
 
   return (
     <Card className="card-bg card-shadow hover:shadow-lg transition-all duration-300 border-literary-border">
@@ -62,13 +118,32 @@ export function AuthorCard({
                 variant={isFollowing ? 'default' : 'outline'}
                 size="sm"
                 className="self-start xs:self-auto text-xs sm:text-sm"
-                onClick={onFollow}
+                onClick={e => {
+                  e.stopPropagation()
+                  onFollow?.(e)
+                }}
               >
                 {isFollowing ? 'Following' : 'Follow'}
               </Button>
             </div>
 
             <p className="text-xs sm:text-sm text-literary-accent font-medium mb-2">{specialty}</p>
+
+            {/* Badges */}
+            {badges.length > 0 && (
+              <div className="flex flex-wrap gap-1 sm:gap-2 mb-3">
+                {badges.map((badge, index) => (
+                  <Badge
+                    key={index}
+                    variant="outline"
+                    className={`text-xs flex items-center gap-1 ${badge.className}`}
+                  >
+                    <badge.icon className="h-3 w-3" />
+                    {badge.label}
+                  </Badge>
+                ))}
+              </div>
+            )}
 
             <div className="flex items-center text-xs sm:text-sm text-muted-foreground mb-3">
               <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />

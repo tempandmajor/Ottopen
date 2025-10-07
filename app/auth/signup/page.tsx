@@ -95,6 +95,9 @@ export default function SignUp() {
         'Account created successfully! Please check your email to confirm your account before signing in.'
       )
 
+      // Mark as new user for welcome modal
+      localStorage.setItem('isNewUser', 'true')
+
       // Show confirmation message and don't redirect immediately
       setTimeout(() => {
         router.push('/auth/signin?message=confirm-email')

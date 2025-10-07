@@ -35,6 +35,7 @@ import { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
 import { CommentSection } from '@/src/components/comment-section'
 import { Separator } from '@/src/components/ui/separator'
+import { sanitizeText } from '@/src/lib/sanitize'
 
 interface PostCardProps {
   postId?: string
@@ -309,11 +310,11 @@ export function PostCard({
             <div className="prose prose-sm max-w-none mb-3 sm:mb-4">
               {excerpt ? (
                 <blockquote className="border-l-2 pl-3 italic text-muted-foreground">
-                  {excerpt}
+                  {sanitizeText(excerpt)}
                 </blockquote>
               ) : null}
               <p className="text-foreground text-sm sm:text-base leading-relaxed whitespace-pre-line break-words">
-                {content}
+                {sanitizeText(content)}
               </p>
               {imageUrl ? (
                 <div className="mt-3">

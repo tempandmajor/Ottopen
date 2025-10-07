@@ -10,6 +10,7 @@ import { ClubDiscussion } from '@/src/lib/book-club-service'
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
 import { CreateDiscussionDialog } from './CreateDiscussionDialog'
+import { sanitizeText } from '@/src/lib/sanitize'
 
 interface DiscussionListProps {
   clubId: string
@@ -123,7 +124,7 @@ export function DiscussionList({ clubId, isMember }: DiscussionListProps) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold text-lg hover:text-blue-600 transition-colors">
-                          {discussion.title}
+                          {sanitizeText(discussion.title)}
                         </h3>
                         {discussion.pinned && (
                           <Badge variant="secondary" className="text-xs">
@@ -133,7 +134,7 @@ export function DiscussionList({ clubId, isMember }: DiscussionListProps) {
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                        {discussion.content}
+                        {sanitizeText(discussion.content)}
                       </p>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
