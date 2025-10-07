@@ -70,6 +70,11 @@ export function SprintRoom({ sprint, clubId, userId, onLeave }: SprintRoomProps)
 
     // Subscribe to real-time updates
     const supabase = dbService.getSupabaseClient()
+    if (!supabase) {
+      console.warn('Supabase client not available for real-time updates')
+      return
+    }
+
     const channel = supabase
       .channel(`sprint:${sprint.id}`)
       .on(

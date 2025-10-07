@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { dbService } from '@/src/lib/database'
-import { supabase } from '@/src/lib/supabase'
+import { getServerUser } from '@/lib/server/auth'
 
 export async function GET(req: NextRequest) {
   try {
     // Get authenticated user
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
+    const { user, supabase } = await getServerUser()
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const userId = session.user.id
+    const userId = user.id
 
     // Get user profile
     const profile = (await dbService.getUser(userId)) as any
@@ -53,7 +51,7 @@ export async function GET(req: NextRequest) {
       export_date: new Date().toISOString(),
       user: {
         id: userId,
-        email: session.user.email,
+        email: user.email,
         display_name: profile?.display_name,
         username: profile?.username,
         bio: profile?.bio,

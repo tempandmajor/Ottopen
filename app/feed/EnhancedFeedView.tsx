@@ -114,7 +114,7 @@ export default function EnhancedFeedView() {
       const following = await dbService.getFollowing(user.id)
       const followedIds = following.map(f => f.id)
 
-      if (followedIds.length === 0) return
+      if (followedIds.length === 0 || !supabase) return
 
       const channel = supabase
         .channel('feed_updates')
@@ -151,7 +151,7 @@ export default function EnhancedFeedView() {
   }
 
   const loadResharedPosts = async () => {
-    if (!user) return
+    if (!user || !supabase) return
     try {
       const { data } = await supabase.from('reshares').select('post_id').eq('user_id', user.id)
       setResharedPosts(new Set(data?.map(r => r.post_id) || []))
@@ -161,7 +161,7 @@ export default function EnhancedFeedView() {
   }
 
   const loadBookmarkedPosts = async () => {
-    if (!user) return
+    if (!user || !supabase) return
     try {
       const { data } = await supabase.from('bookmarks').select('post_id').eq('user_id', user.id)
       setBookmarkedPosts(new Set(data?.map(b => b.post_id) || []))
@@ -171,7 +171,7 @@ export default function EnhancedFeedView() {
   }
 
   const checkAdmin = async () => {
-    if (user) {
+    if (user && supabase) {
       const { data } = await supabase.from('users').select('is_admin').eq('id', user.id).single()
       setIsAdmin(data?.is_admin === true)
     }
@@ -215,7 +215,7 @@ export default function EnhancedFeedView() {
   }
 
   const loadFollowingFeed = async (pageNum: number) => {
-    if (!user) return []
+    if (!user || !supabase) return []
 
     const following = await dbService.getFollowing(user.id)
 
@@ -244,7 +244,7 @@ export default function EnhancedFeedView() {
   }
 
   const loadDiscoverFeed = async (pageNum: number) => {
-    if (!user) return []
+    if (!user || !supabase) return []
 
     const following = await dbService.getFollowing(user.id)
     const followingIds = following.map(f => f.id)
@@ -279,6 +279,8 @@ export default function EnhancedFeedView() {
   }
 
   const loadTrendingFeed = async (pageNum: number) => {
+    if (!supabase) return []
+
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
 
     const { data, error } = await supabase
@@ -329,7 +331,7 @@ export default function EnhancedFeedView() {
   }
 
   const handleCreatePost = async () => {
-    if (!newPostContent.trim() || !user) return
+    if (!newPostContent.trim() || !user || !supabase) return
 
     try {
       setCreatingPost(true)
@@ -419,7 +421,7 @@ export default function EnhancedFeedView() {
   }
 
   const handleResharePost = async (postId: string, comment?: string): Promise<boolean> => {
-    if (!user) return false
+    if (!user || !supabase) return false
 
     try {
       const isReshared = resharedPosts.has(postId)
@@ -467,7 +469,7 @@ export default function EnhancedFeedView() {
   }
 
   const handleBookmarkPost = async (postId: string): Promise<boolean> => {
-    if (!user) return false
+    if (!user || !supabase) return false
 
     try {
       const isBookmarked = bookmarkedPosts.has(postId)

@@ -36,11 +36,12 @@ function ensureClient() {
 // ============================================================================
 
 export class ScriptService {
+
   /**
    * Create a new script
    */
   static async create(userId: string, data: Partial<Script>): Promise<Script> {
-    const { data: script, error } = await ensureClient()
+    const { data: script, error } = await this.ensureClient()
       .from('scripts')
       .insert({
         user_id: userId,
@@ -64,11 +65,7 @@ export class ScriptService {
    * Get script by ID
    */
   static async getById(scriptId: string): Promise<Script | null> {
-    const { data, error } = await ensureClient()
-      .from('scripts')
-      .select('*')
-      .eq('id', scriptId)
-      .single()
+    const { data, error } = await this.ensureClient().from('scripts').select('*').eq('id', scriptId).single()
 
     if (error) return null
     return data
@@ -81,7 +78,7 @@ export class ScriptService {
     userId: string,
     filters?: { script_type?: ScriptType; status?: string }
   ): Promise<Script[]> {
-    let query = ensureClient().from('scripts').select('*').eq('user_id', userId)
+    let query = this.ensureClient().from('scripts').select('*').eq('user_id', userId)
 
     if (filters?.script_type) {
       query = query.eq('script_type', filters.script_type)
@@ -101,7 +98,7 @@ export class ScriptService {
    * Update script
    */
   static async update(scriptId: string, data: Partial<Script>): Promise<Script> {
-    const { data: script, error } = await ensureClient()
+    const { data: script, error } = await this.ensureClient()
       .from('scripts')
       .update(data)
       .eq('id', scriptId)
@@ -116,7 +113,7 @@ export class ScriptService {
    * Delete script
    */
   static async delete(scriptId: string): Promise<void> {
-    const { error } = await ensureClient().from('scripts').delete().eq('id', scriptId)
+    const { error } = await this.ensureClient().from('scripts').delete().eq('id', scriptId)
 
     if (error) throw error
   }
@@ -159,7 +156,7 @@ export class ElementService {
    * Get all elements for a script
    */
   static async getByScriptId(scriptId: string): Promise<ScriptElement[]> {
-    const { data, error } = await ensureClient()
+    const { data, error } = await this.ensureClient()
       .from('script_elements')
       .select('*')
       .eq('script_id', scriptId)
@@ -173,7 +170,7 @@ export class ElementService {
    * Update element
    */
   static async update(elementId: string, data: Partial<ScriptElement>): Promise<ScriptElement> {
-    const { data: element, error } = await ensureClient()
+    const { data: element, error } = await this.ensureClient()
       .from('script_elements')
       .update(data)
       .eq('id', elementId)
@@ -188,7 +185,7 @@ export class ElementService {
    * Delete element
    */
   static async delete(elementId: string): Promise<void> {
-    const { error } = await ensureClient().from('script_elements').delete().eq('id', elementId)
+    const { error } = await this.ensureClient().from('script_elements').delete().eq('id', elementId)
 
     if (error) throw error
   }
@@ -197,9 +194,8 @@ export class ElementService {
    * Reorder elements
    */
   static async reorder(scriptId: string, elementIds: string[]): Promise<void> {
-    const client = ensureClient()
     const updates = elementIds.map((id, index) =>
-      client.from('script_elements').update({ order_index: index }).eq('id', id)
+      supabase.from('script_elements').update({ order_index: index }).eq('id', id)
     )
 
     await Promise.all(updates)
@@ -212,7 +208,7 @@ export class ElementService {
     scriptId: string,
     elements: Array<Partial<ScriptElement>>
   ): Promise<ScriptElement[]> {
-    const { data, error } = await ensureClient()
+    const { data, error } = await this.ensureClient()
       .from('script_elements')
       .insert(
         elements.map((el, index) => ({
@@ -244,7 +240,7 @@ export class ElementService {
    * Create single element
    */
   static async create(scriptId: string, data: Partial<ScriptElement>): Promise<ScriptElement> {
-    const { data: element, error } = await ensureClient()
+    const { data: element, error } = await this.ensureClient()
       .from('script_elements')
       .insert({
         script_id: scriptId,
@@ -279,7 +275,7 @@ export class BeatService {
    * Create beat
    */
   static async create(scriptId: string, data: Partial<ScriptBeat>): Promise<ScriptBeat> {
-    const { data: beat, error } = await ensureClient()
+    const { data: beat, error } = await this.ensureClient()
       .from('script_beats')
       .insert({
         script_id: scriptId,
@@ -301,7 +297,7 @@ export class BeatService {
    * Get beats for script
    */
   static async getByScriptId(scriptId: string): Promise<ScriptBeat[]> {
-    const { data, error } = await ensureClient()
+    const { data, error } = await this.ensureClient()
       .from('script_beats')
       .select('*')
       .eq('script_id', scriptId)
@@ -315,7 +311,7 @@ export class BeatService {
    * Update beat
    */
   static async update(beatId: string, data: Partial<ScriptBeat>): Promise<ScriptBeat> {
-    const { data: beat, error } = await ensureClient()
+    const { data: beat, error } = await this.ensureClient()
       .from('script_beats')
       .update(data)
       .eq('id', beatId)
@@ -330,7 +326,7 @@ export class BeatService {
    * Delete beat
    */
   static async delete(beatId: string): Promise<void> {
-    const { error } = await ensureClient().from('script_beats').delete().eq('id', beatId)
+    const { error } = await this.ensureClient().from('script_beats').delete().eq('id', beatId)
 
     if (error) throw error
   }
@@ -345,7 +341,7 @@ export class CharacterService {
    * Get characters for script
    */
   static async getByScriptId(scriptId: string): Promise<ScriptCharacter[]> {
-    const { data, error } = await ensureClient()
+    const { data, error } = await this.ensureClient()
       .from('script_characters')
       .select('*')
       .eq('script_id', scriptId)
@@ -360,7 +356,7 @@ export class CharacterService {
    */
   static async populateFromElements(scriptId: string): Promise<void> {
     // Get all character elements
-    const { data: elements, error: elementsError } = await ensureClient()
+    const { data: elements, error: elementsError } = await this.ensureClient()
       .from('script_elements')
       .select('*')
       .eq('script_id', scriptId)
@@ -372,7 +368,7 @@ export class CharacterService {
     const characterNames = [...new Set(elements.map(el => el.content.trim()))]
 
     // Get existing characters
-    const { data: existingChars } = await ensureClient()
+    const { data: existingChars } = await this.ensureClient()
       .from('script_characters')
       .select('name')
       .eq('script_id', scriptId)
@@ -389,7 +385,7 @@ export class CharacterService {
       }))
 
     if (newCharacters.length > 0) {
-      await ensureClient().from('script_characters').insert(newCharacters)
+      await this.ensureClient().from('script_characters').insert(newCharacters)
     }
   }
 
@@ -397,7 +393,7 @@ export class CharacterService {
    * Create character
    */
   static async create(scriptId: string, data: Partial<ScriptCharacter>): Promise<ScriptCharacter> {
-    const { data: character, error } = await ensureClient()
+    const { data: character, error } = await this.ensureClient()
       .from('script_characters')
       .insert({
         script_id: scriptId,
@@ -422,7 +418,7 @@ export class LocationService {
    * Get locations for script
    */
   static async getByScriptId(scriptId: string): Promise<ScriptLocation[]> {
-    const { data, error } = await ensureClient()
+    const { data, error } = await this.ensureClient()
       .from('script_locations')
       .select('*')
       .eq('script_id', scriptId)
@@ -437,7 +433,7 @@ export class LocationService {
    */
   static async populateFromElements(scriptId: string): Promise<void> {
     // Get all scene heading elements
-    const { data: elements, error: elementsError } = await ensureClient()
+    const { data: elements, error: elementsError } = await this.ensureClient()
       .from('script_elements')
       .select('*')
       .eq('script_id', scriptId)
@@ -474,7 +470,7 @@ export class LocationService {
     })
 
     // Get existing locations
-    const { data: existingLocs } = await ensureClient()
+    const { data: existingLocs } = await this.ensureClient()
       .from('script_locations')
       .select('name')
       .eq('script_id', scriptId)
@@ -492,7 +488,7 @@ export class LocationService {
       }))
 
     if (newLocations.length > 0) {
-      await ensureClient().from('script_locations').insert(newLocations)
+      await this.ensureClient().from('script_locations').insert(newLocations)
     }
   }
 
@@ -500,7 +496,7 @@ export class LocationService {
    * Create location
    */
   static async create(scriptId: string, data: Partial<ScriptLocation>): Promise<ScriptLocation> {
-    const { data: location, error } = await ensureClient()
+    const { data: location, error } = await this.ensureClient()
       .from('script_locations')
       .insert({
         script_id: scriptId,
@@ -525,7 +521,7 @@ export class SceneService {
    * Get scenes for script
    */
   static async getByScriptId(scriptId: string): Promise<ScriptScene[]> {
-    const { data, error } = await ensureClient()
+    const { data, error } = await this.ensureClient()
       .from('script_scenes')
       .select('*')
       .eq('script_id', scriptId)
@@ -588,10 +584,10 @@ export class SceneService {
     }
 
     // Delete existing scenes
-    await ensureClient().from('script_scenes').delete().eq('script_id', scriptId)
+    await this.ensureClient().from('script_scenes').delete().eq('script_id', scriptId)
 
     // Insert new scenes
-    const { data, error } = await ensureClient()
+    const { data, error } = await this.ensureClient()
       .from('script_scenes')
       .insert(scenes as any)
       .select()
@@ -838,7 +834,7 @@ export class CollaborationService {
     invitedBy: string,
     role: string = 'writer'
   ): Promise<ScriptCollaborator> {
-    const { data, error } = await ensureClient()
+    const { data, error } = await this.ensureClient()
       .from('script_collaborators')
       .insert({
         script_id: scriptId,
@@ -857,7 +853,7 @@ export class CollaborationService {
    * Get collaborators
    */
   static async getCollaborators(scriptId: string): Promise<ScriptCollaborator[]> {
-    const { data, error } = await ensureClient()
+    const { data, error } = await this.ensureClient()
       .from('script_collaborators')
       .select('*')
       .eq('script_id', scriptId)
@@ -870,7 +866,7 @@ export class CollaborationService {
    * Remove collaborator
    */
   static async removeCollaborator(scriptId: string, userId: string): Promise<void> {
-    const { error } = await ensureClient()
+    const { error } = await this.ensureClient()
       .from('script_collaborators')
       .delete()
       .eq('script_id', scriptId)

@@ -49,6 +49,8 @@ export function CommentSection({ postId, initialCount = 0 }: CommentSectionProps
   }, [postId, sortBy])
 
   const loadComments = async () => {
+    if (!supabase) return
+
     try {
       setLoading(true)
 
@@ -112,7 +114,7 @@ export function CommentSection({ postId, initialCount = 0 }: CommentSectionProps
   }
 
   const handleSubmitComment = async () => {
-    if (!newComment.trim() || !user) return
+    if (!newComment.trim() || !user || !supabase) return
 
     try {
       setSubmitting(true)
@@ -146,7 +148,7 @@ export function CommentSection({ postId, initialCount = 0 }: CommentSectionProps
   }
 
   const handleSubmitReply = async (parentId: string) => {
-    if (!replyContent.trim() || !user) return
+    if (!replyContent.trim() || !user || !supabase) return
 
     try {
       setSubmitting(true)
@@ -190,7 +192,7 @@ export function CommentSection({ postId, initialCount = 0 }: CommentSectionProps
   }
 
   const handleLikeComment = async (commentId: string, currentlyLiked: boolean) => {
-    if (!user) return
+    if (!user || !supabase) return
 
     try {
       if (currentlyLiked) {
@@ -237,7 +239,7 @@ export function CommentSection({ postId, initialCount = 0 }: CommentSectionProps
   }
 
   const handleDeleteComment = async (commentId: string) => {
-    if (!user) return
+    if (!user || !supabase) return
 
     try {
       const { error } = await supabase

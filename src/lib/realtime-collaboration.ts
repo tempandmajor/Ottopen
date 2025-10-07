@@ -71,6 +71,11 @@ export class RealtimeCollaborationService {
     onPresenceChange: (presences: Record<string, CollaboratorPresence>) => void,
     onElementUpdate: (elementId: string, content: string) => void
   ): Promise<void> {
+    if (!supabase) {
+      console.warn('Supabase client not available for realtime collaboration')
+      return
+    }
+
     // Create channel for this script
     this.channel = supabase.channel(`script:${this.scriptId}`)
 

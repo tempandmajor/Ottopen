@@ -74,6 +74,10 @@ function MessagesContent() {
     if (!selectedConversationId) return
 
     const supabase = dbService.getSupabaseClient()
+    if (!supabase) {
+      console.warn('Supabase client not available for real-time messages')
+      return
+    }
 
     // Subscribe to new messages in the selected conversation
     const messagesChannel = supabase

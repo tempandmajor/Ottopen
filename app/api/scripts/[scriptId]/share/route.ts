@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService } from '@/src/lib/script-service'
-import { supabase } from '@/src/lib/supabase'
 import { randomBytes } from 'crypto'
 import { logError } from '@/src/lib/errors'
 
@@ -11,7 +10,7 @@ export const dynamic = 'force-dynamic'
 // POST /api/scripts/[scriptId]/share - Generate shareable link with permissions
 export async function POST(request: NextRequest, { params }: { params: { scriptId: string } }) {
   try {
-    const { user } = await getServerUser()
+    const { user, supabase } = await getServerUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -62,7 +61,7 @@ export async function POST(request: NextRequest, { params }: { params: { scriptI
 // GET /api/scripts/[scriptId]/share - List all share links for script
 export async function GET(request: NextRequest, { params }: { params: { scriptId: string } }) {
   try {
-    const { user } = await getServerUser()
+    const { user, supabase } = await getServerUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

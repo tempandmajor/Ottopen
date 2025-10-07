@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { dbService } from '@/src/lib/database'
-import { supabase } from '@/src/lib/supabase'
+import { getServerUser } from '@/lib/server/auth'
 import { authService } from '@/src/lib/auth'
 
 export async function POST(req: NextRequest) {
@@ -13,15 +13,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Get authenticated user
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
+    const { user, supabase } = await getServerUser()
 
-    if (!session?.user) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const userId = session.user.id
+    const userId = user.id
 
     // Verify password
     const verifyResult = await authService.verifyCurrentPassword(password)

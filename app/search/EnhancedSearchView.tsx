@@ -188,6 +188,11 @@ export default function EnhancedSearchView() {
   }
 
   const handleSaveSearch = async () => {
+    if (!supabase) {
+      toast.error('Unable to save search')
+      return
+    }
+
     try {
       const {
         data: { user },

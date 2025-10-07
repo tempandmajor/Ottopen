@@ -494,6 +494,10 @@ export function OpportunitiesView({
 
     const dbService = new DatabaseService()
     const supabase = dbService.getSupabaseClient()
+    if (!supabase) {
+      console.warn('Supabase client not available for real-time updates')
+      return
+    }
 
     const channel = supabase
       .channel('jobs')

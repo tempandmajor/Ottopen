@@ -45,7 +45,7 @@ export type ForgotPasswordData = z.infer<typeof forgotPasswordSchema>
 // Auth service functions
 export const authService = {
   async signUp(data: SignUpData) {
-    if (!isSupabaseConfigured()) {
+    if (!isSupabaseConfigured() || !supabase) {
       const error = new Error('Supabase is not configured')
       return { data: null, error }
     }
@@ -99,7 +99,7 @@ export const authService = {
   },
 
   async signIn(data: SignInData) {
-    if (!isSupabaseConfigured()) {
+    if (!isSupabaseConfigured() || !supabase) {
       const error = new Error('Supabase is not configured')
       return { data: null, error }
     }
@@ -126,7 +126,7 @@ export const authService = {
   },
 
   async signOut() {
-    if (!isSupabaseConfigured()) {
+    if (!isSupabaseConfigured() || !supabase) {
       const error = new Error('Supabase is not configured')
       return { error }
     }
@@ -148,7 +148,7 @@ export const authService = {
   },
 
   async forgotPassword(data: ForgotPasswordData) {
-    if (!isSupabaseConfigured()) {
+    if (!isSupabaseConfigured() || !supabase) {
       const error = new Error('Supabase is not configured')
       return { error }
     }
@@ -174,7 +174,7 @@ export const authService = {
   },
 
   async getCurrentUser() {
-    if (!isSupabaseConfigured()) {
+    if (!isSupabaseConfigured() || !supabase) {
       const error = new Error('Supabase is not configured')
       return { user: null, error }
     }
@@ -232,7 +232,7 @@ export const authService = {
   },
 
   async updatePassword(newPassword: string) {
-    if (!isSupabaseConfigured()) {
+    if (!isSupabaseConfigured() || !supabase) {
       return { error: 'Supabase is not configured' }
     }
 
@@ -261,7 +261,7 @@ export const authService = {
   },
 
   async verifyCurrentPassword(currentPassword: string) {
-    if (!isSupabaseConfigured()) {
+    if (!isSupabaseConfigured() || !supabase) {
       return { valid: false, error: 'Supabase is not configured' }
     }
 
@@ -283,7 +283,7 @@ export const authService = {
         },
         body: JSON.stringify({
           email: user.email,
-          password: currentPassword
+          password: currentPassword,
         }),
       })
 

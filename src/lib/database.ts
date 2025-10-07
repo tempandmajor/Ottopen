@@ -40,10 +40,14 @@ export interface DatabaseBooleanResult {
 }
 
 export class DatabaseService {
-  private supabase: typeof supabase
+  private supabase: NonNullable<typeof supabase>
 
   constructor(client?: typeof supabase) {
-    this.supabase = client || supabase
+    const supabaseClient = client || supabase
+    if (!supabaseClient) {
+      throw new Error('Supabase client is required for DatabaseService')
+    }
+    this.supabase = supabaseClient
   }
 
   // Public getter for Supabase client (needed for real-time subscriptions)

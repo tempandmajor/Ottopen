@@ -290,7 +290,7 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
   }
 
   const loadSocialLinks = async () => {
-    if (!currentUser?.profile) return
+    if (!currentUser?.profile || !supabase) return
     try {
       const { data } = await supabase
         .from('user_social_links')
@@ -507,7 +507,7 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
   const handleSaveSocialLinks = async () => {
     try {
       setSaving(true)
-      if (!currentUser?.profile) throw new Error('No user')
+      if (!currentUser?.profile || !supabase) throw new Error('No user')
 
       // Delete existing links
       await supabase.from('user_social_links').delete().eq('user_id', currentUser.profile.id)
@@ -699,6 +699,11 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
                                 toast.error('Image too large. Max size is 5MB')
                                 return
                               }
+                              if (!supabase) {
+                                toast.error('Unable to upload avatar')
+                                return
+                              }
+
                               const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
                               const path = `${currentUser.profile.id}/avatar.${ext}`
                               // Upload to avatars bucket; upsert to replace existing

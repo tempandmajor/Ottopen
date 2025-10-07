@@ -80,6 +80,11 @@ export function FileUpload({
   )
 
   const uploadFile = async (fileToUpload: File) => {
+    if (!supabase) {
+      setError('Upload unavailable')
+      return
+    }
+
     setUploading(true)
     setError(null)
 
@@ -121,7 +126,7 @@ export function FileUpload({
   }
 
   const handleRemove = async () => {
-    if (uploadedUrl && file) {
+    if (uploadedUrl && file && supabase) {
       try {
         // Extract file path from public URL
         const urlParts = uploadedUrl.split(`${bucket}/`)

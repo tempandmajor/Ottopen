@@ -124,6 +124,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Get initial session
     const initAuth = async () => {
+      if (!supabase) {
+        if (mounted) {
+          setUser(null)
+          setLoading(false)
+        }
+        return
+      }
+
       try {
         const {
           data: { session },

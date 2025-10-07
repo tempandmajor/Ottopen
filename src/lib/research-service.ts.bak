@@ -35,10 +35,6 @@ export class ResearchService {
    * Get a single research note by ID
    */
   static async getById(noteId: string): Promise<{ data: ResearchNote | null; error: any }> {
-    if (!supabase) {
-      throw new Error('Supabase client not available')
-    }
-
     const { data, error } = await supabase
       .from('research_notes')
       .select('*')
@@ -52,7 +48,6 @@ export class ResearchService {
    * Get all research notes for a user
    */
   static async getByUserId(userId: string): Promise<ResearchNote[]> {
-    if (!supabase) throw new Error('Supabase client not available')
     const { data, error } = await supabase
       .from('research_notes')
       .select('*')
@@ -67,7 +62,6 @@ export class ResearchService {
    * Get research notes linked to a specific script
    */
   static async getByScriptId(scriptId: string): Promise<ResearchNote[]> {
-    if (!supabase) throw new Error('Supabase client not available')
     const { data, error } = await supabase
       .from('research_notes')
       .select('*')
@@ -89,7 +83,6 @@ export class ResearchService {
       source_type?: string
     }
   ): Promise<ResearchNote[]> {
-    if (!supabase) throw new Error('Supabase client not available')
     let queryBuilder = supabase
       .from('research_notes')
       .select('*')
@@ -114,7 +107,6 @@ export class ResearchService {
    * Update a research note
    */
   static async update(noteId: string, data: Partial<ResearchNote>): Promise<ResearchNote> {
-    if (!supabase) throw new Error('Supabase client not available')
     const { data: note, error } = await supabase
       .from('research_notes')
       .update({
@@ -191,7 +183,6 @@ export class ResearchService {
    * Unlink a note from a script
    */
   static async unlinkFromScript(noteId: string, scriptId: string): Promise<void> {
-    if (!supabase) throw new Error('Supabase client not available')
     // Get current note
     const { data: note, error: fetchError } = await supabase
       .from('research_notes')
@@ -228,7 +219,6 @@ export class ResearchService {
    * Get all tags used by a user (for autocomplete)
    */
   static async getAllTags(userId: string): Promise<string[]> {
-    if (!supabase) throw new Error('Supabase client not available')
     const { data, error } = await supabase
       .from('research_notes')
       .select('tags')
