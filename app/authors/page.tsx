@@ -29,6 +29,9 @@ import {
   Flame,
   Award,
   MapPin,
+  CheckCircle2,
+  Crown,
+  Shield,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
@@ -67,6 +70,9 @@ function AuthorsContent() {
   })
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set())
   const [quickViewAuthor, setQuickViewAuthor] = useState<
+    (User & { works: number; followers: number }) | null
+  >(null)
+  const [spotlightAuthor, setSpotlightAuthor] = useState<
     (User & { works: number; followers: number }) | null
   >(null)
 
@@ -129,6 +135,14 @@ function AuthorsContent() {
       setAuthorsWithStats(authorsWithDetailedStats)
       setCurrentOffset(20)
       setHasMore(allAuthors.length === 20)
+
+      // Set spotlight author (most followed author with works)
+      const spotlight = [...authorsWithDetailedStats]
+        .filter(a => a.works > 0 && a.followers > 50)
+        .sort((a, b) => b.followers - a.followers)[0]
+      if (spotlight) {
+        setSpotlightAuthor(spotlight)
+      }
 
       // Calculate stats
       const thirtyDaysAgo = new Date()
@@ -332,6 +346,38 @@ function AuthorsContent() {
     (filters.acceptingBetaReaders ? 1 : 0) +
     (filters.minFollowers > 0 ? 1 : 0)
 
+  // Get verification badge for author
+  const getVerificationBadge = (author: User & { works: number; followers: number }) => {
+    // Top Contributor - 100+ followers and 10+ works
+    if (author.followers >= 100 && author.works >= 10) {
+      return {
+        icon: Crown,
+        label: 'Top Contributor',
+        color: 'text-amber-500',
+        bgColor: 'bg-amber-500/10',
+      }
+    }
+    // Verified - 50+ followers and 5+ works
+    if (author.followers >= 50 && author.works >= 5) {
+      return {
+        icon: CheckCircle2,
+        label: 'Verified',
+        color: 'text-blue-500',
+        bgColor: 'bg-blue-500/10',
+      }
+    }
+    // Professional account types
+    if (['platform_agent', 'external_agent', 'producer'].includes(author.account_type)) {
+      return {
+        icon: Shield,
+        label: 'Professional',
+        color: 'text-purple-500',
+        bgColor: 'bg-purple-500/10',
+      }
+    }
+    return null
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -348,7 +394,16 @@ function AuthorsContent() {
                 </AvatarFallback>
               </Avatar>
               <div>
-                <h3 className="text-xl font-serif">{quickViewAuthor?.display_name}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xl font-serif">{quickViewAuthor?.display_name}</h3>
+                  {quickViewAuthor &&
+                    getVerificationBadge(quickViewAuthor) &&
+                    (() => {
+                      const badge = getVerificationBadge(quickViewAuthor)
+                      const Icon = badge?.icon
+                      return Icon ? <Icon className={`h-5 w-5 ${badge.color}`} /> : null
+                    })()}
+                </div>
                 <p className="text-sm text-muted-foreground">{quickViewAuthor?.specialty}</p>
               </div>
             </DialogTitle>
@@ -653,6 +708,156 @@ function AuthorsContent() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Author Spotlight */}
+          {spotlightAuthor && (
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-serif font-bold flex items-center gap-2">
+                  <Sparkles className="h-6 w-6 text-primary" />
+                  Author Spotlight
+                </h2>
+              </div>
+              <Card className="card-bg card-shadow border-border overflow-hidden">
+                <div className="relative">
+                  {/* Gradient background */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-purple-500/10" />
+
+                  <CardContent className="relative p-8">
+                    <div className="flex flex-col md:flex-row gap-6 items-start">
+                      {/* Avatar */}
+                      <div className="relative">
+                        <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-background shadow-xl">
+                          <AvatarImage src={spotlightAuthor.avatar_url} />
+                          <AvatarFallback className="text-2xl">
+                            {spotlightAuthor.display_name?.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        {getVerificationBadge(spotlightAuthor) && (
+                          <div
+                            className={`absolute -bottom-2 -right-2 ${
+                              getVerificationBadge(spotlightAuthor)?.bgColor
+                            } rounded-full p-2`}
+                          >
+                            {(() => {
+                              const badge = getVerificationBadge(spotlightAuthor)
+                              const Icon = badge?.icon
+                              return Icon ? <Icon className={`h-5 w-5 ${badge.color}`} /> : null
+                            })()}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-4 mb-3">
+                          <div>
+                            <h3 className="text-2xl font-serif font-bold mb-1">
+                              {spotlightAuthor.display_name}
+                            </h3>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-muted-foreground">
+                                {spotlightAuthor.specialty || 'Writer'}
+                              </p>
+                              {getVerificationBadge(spotlightAuthor) && (
+                                <Badge
+                                  variant="secondary"
+                                  className={getVerificationBadge(spotlightAuthor)?.bgColor}
+                                >
+                                  {getVerificationBadge(spotlightAuthor)?.label}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <Button
+                            onClick={() => handleFollow(spotlightAuthor.id)}
+                            variant={followingIds.has(spotlightAuthor.id) ? 'default' : 'outline'}
+                          >
+                            {followingIds.has(spotlightAuthor.id) ? (
+                              <>
+                                <CheckCircle2 className="h-4 w-4 mr-2" />
+                                Following
+                              </>
+                            ) : (
+                              'Follow'
+                            )}
+                          </Button>
+                        </div>
+
+                        {/* Bio */}
+                        <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+                          {spotlightAuthor.bio || 'No bio available'}
+                        </p>
+
+                        {/* Stats */}
+                        <div className="grid grid-cols-3 gap-4 sm:gap-6 mb-4">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <BookOpen className="h-4 w-4 text-primary" />
+                              <span className="text-xl sm:text-2xl font-bold">
+                                {spotlightAuthor.works}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">Published Works</p>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <Users className="h-4 w-4 text-primary" />
+                              <span className="text-xl sm:text-2xl font-bold">
+                                {spotlightAuthor.followers.toLocaleString()}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">Followers</p>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <Star className="h-4 w-4 text-primary" />
+                              <span className="text-xl sm:text-2xl font-bold">
+                                {(
+                                  (spotlightAuthor.followers / Math.max(spotlightAuthor.works, 1)) *
+                                  10
+                                ).toFixed(0)}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">Engagement</p>
+                          </div>
+                        </div>
+
+                        {/* Location & Availability */}
+                        <div className="flex flex-wrap gap-2 items-center">
+                          {spotlightAuthor.location && (
+                            <div className="flex items-center text-xs text-muted-foreground">
+                              <MapPin className="h-3 w-3 mr-1" />
+                              {spotlightAuthor.location}
+                            </div>
+                          )}
+                          {spotlightAuthor.open_for_collaboration && (
+                            <Badge variant="secondary" className="text-xs">
+                              Open for Collaboration
+                            </Badge>
+                          )}
+                          {spotlightAuthor.accepting_beta_readers && (
+                            <Badge variant="secondary" className="text-xs">
+                              Accepting Beta Readers
+                            </Badge>
+                          )}
+                        </div>
+
+                        {/* View Profile Link */}
+                        <div className="mt-4">
+                          <Button variant="link" className="p-0 h-auto" asChild>
+                            <Link href={`/profile/${spotlightAuthor.username}`}>
+                              View Full Profile →
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </div>
+              </Card>
+            </div>
+          )}
 
           {/* Author Tabs with Icons */}
           <Tabs defaultValue="rising" className="space-y-6">

@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/src/components/ui/card'
 import { Badge } from '@/src/components/ui/badge'
 import { Button } from '@/src/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/src/components/ui/avatar'
-import { MapPin, Book, Users, CheckCircle, Crown, Sparkles } from 'lucide-react'
+import { MapPin, Book, Users, CheckCircle, Crown, Sparkles, Shield } from 'lucide-react'
 import Link from 'next/link'
 
 // Helper function to check if author joined within days
@@ -68,21 +68,28 @@ export function AuthorCard({
     })
   }
 
-  // Verified badge
-  if (verified) {
+  // Top Contributor - 100+ followers and 10+ works (highest tier)
+  if (followers >= 100 && works >= 10) {
+    badges.push({
+      label: 'Top Contributor',
+      icon: Crown,
+      className: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+    })
+  }
+  // Verified - 50+ followers and 5+ works
+  else if (followers >= 50 && works >= 5) {
     badges.push({
       label: 'Verified',
       icon: CheckCircle,
       className: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
     })
   }
-
-  // Top contributor badge (100+ works or 1000+ followers)
-  if (works >= 100 || followers >= 1000) {
+  // Professional account types
+  else if (accountType && ['platform_agent', 'external_agent', 'producer'].includes(accountType)) {
     badges.push({
-      label: 'Top Contributor',
-      icon: Crown,
-      className: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20',
+      label: 'Professional',
+      icon: Shield,
+      className: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
     })
   }
 
