@@ -7,6 +7,7 @@ import { Button } from '@/src/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card'
 import { Progress } from '@/src/components/ui/progress'
 import { WelcomeModal } from '@/src/components/WelcomeModal'
+import { OnboardingTour, type TourStep } from '@/src/components/onboarding-tour'
 import {
   BookOpen,
   Users,
@@ -72,6 +73,34 @@ export function DashboardView({
     ? (weeklyGoal.current_value / weeklyGoal.target_value) * 100
     : 0
 
+  // Onboarding tour steps
+  const tourSteps: TourStep[] = [
+    {
+      target: '[data-tour="quick-actions"]',
+      title: 'Quick Actions',
+      description: 'Start writing, editing, or browsing works with these convenient shortcuts.',
+      placement: 'bottom',
+    },
+    {
+      target: '[data-tour="stats"]',
+      title: 'Your Stats',
+      description: 'Track your progress, engagement, and growth as a writer.',
+      placement: 'bottom',
+    },
+    {
+      target: '[data-tour="recent-works"]',
+      title: 'Recent Works',
+      description: 'Quickly access your latest creations and continue where you left off.',
+      placement: 'top',
+    },
+    {
+      target: '[data-tour="notifications"]',
+      title: 'Stay Updated',
+      description: 'See recent activity, likes, comments, and follower notifications here.',
+      placement: 'top',
+    },
+  ]
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -79,6 +108,7 @@ export function DashboardView({
         userName={user?.profile?.display_name || user?.profile?.username || undefined}
         userEmail={user?.email}
       />
+      <OnboardingTour steps={tourSteps} tourKey="dashboard-tour" autoStart={true} />
 
       <div className="container mx-auto px-4 py-6 sm:py-8">
         <div className="max-w-7xl mx-auto">
@@ -94,7 +124,7 @@ export function DashboardView({
           </div>
 
           {/* Quick Actions */}
-          <div className="mb-8">
+          <div className="mb-8" data-tour="quick-actions">
             <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
               <Button
@@ -144,7 +174,7 @@ export function DashboardView({
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-6">
               {/* Quick Stats */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4" data-tour="stats">
                 <Card className="card-bg border-literary-border">
                   <CardContent className="p-3 sm:p-4 text-center">
                     <BookOpen className="h-5 w-5 text-primary mx-auto mb-2" />
@@ -186,7 +216,7 @@ export function DashboardView({
               </div>
 
               {/* Recent Works Carousel */}
-              <Card className="card-bg card-shadow border-literary-border">
+              <Card className="card-bg card-shadow border-literary-border" data-tour="recent-works">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center space-x-2">
@@ -325,7 +355,10 @@ export function DashboardView({
             {/* Sidebar */}
             <div className="space-y-6">
               {/* Notifications Center */}
-              <Card className="card-bg card-shadow border-literary-border">
+              <Card
+                className="card-bg card-shadow border-literary-border"
+                data-tour="notifications"
+              >
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center space-x-2 text-lg">

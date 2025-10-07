@@ -32,6 +32,8 @@ import {
   CheckCircle2,
   Crown,
   Shield,
+  UserPlus,
+  Target,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
@@ -75,6 +77,8 @@ function AuthorsContent() {
   const [spotlightAuthor, setSpotlightAuthor] = useState<
     (User & { works: number; followers: number }) | null
   >(null)
+  const [collaborationNeed, setCollaborationNeed] = useState<string>('')
+  const [showCollaborationFinder, setShowCollaborationFinder] = useState(false)
 
   // Load authors on mount
   useEffect(() => {
@@ -858,6 +862,157 @@ function AuthorsContent() {
               </Card>
             </div>
           )}
+
+          {/* Collaboration Finder */}
+          <div className="mb-8">
+            <Card className="card-bg card-shadow border-border">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h2 className="text-xl font-serif font-bold flex items-center gap-2 mb-2">
+                      <UserPlus className="h-5 w-5 text-primary" />
+                      Find Collaborators
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Looking for specific skills or collaborators? Tell us what you need.
+                    </p>
+                  </div>
+                  <Button
+                    variant={showCollaborationFinder ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setShowCollaborationFinder(!showCollaborationFinder)}
+                  >
+                    {showCollaborationFinder ? 'Hide' : 'Show'} Finder
+                  </Button>
+                </div>
+
+                {showCollaborationFinder && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Quick Filters */}
+                      <Card
+                        className="p-4 cursor-pointer hover:border-primary transition-colors"
+                        onClick={() => {
+                          setFilters(prev => ({
+                            ...prev,
+                            openForCollaboration: true,
+                          }))
+                          setShowCollaborationFinder(false)
+                        }}
+                      >
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <UserPlus className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold">Open for Collaboration</h3>
+                            <p className="text-xs text-muted-foreground">
+                              {displayAuthors.filter(a => a.open_for_collaboration === true).length}{' '}
+                              writers
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Writers actively seeking collaboration opportunities
+                        </p>
+                      </Card>
+
+                      <Card
+                        className="p-4 cursor-pointer hover:border-primary transition-colors"
+                        onClick={() => {
+                          setFilters(prev => ({
+                            ...prev,
+                            acceptingBetaReaders: true,
+                          }))
+                          setShowCollaborationFinder(false)
+                        }}
+                      >
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                            <BookOpen className="h-5 w-5 text-blue-500" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold">Beta Readers</h3>
+                            <p className="text-xs text-muted-foreground">
+                              {displayAuthors.filter(a => a.accepting_beta_readers === true).length}{' '}
+                              writers
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Writers looking for feedback on their work
+                        </p>
+                      </Card>
+
+                      <Card
+                        className="p-4 cursor-pointer hover:border-primary transition-colors"
+                        onClick={() => {
+                          setFilters(prev => ({
+                            ...prev,
+                            accountTypes: ['platform_agent', 'external_agent', 'producer'],
+                          }))
+                          setShowCollaborationFinder(false)
+                        }}
+                      >
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center">
+                            <Shield className="h-5 w-5 text-purple-500" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold">Industry Professionals</h3>
+                            <p className="text-xs text-muted-foreground">
+                              {
+                                displayAuthors.filter(a =>
+                                  ['platform_agent', 'external_agent', 'producer'].includes(
+                                    a.account_type
+                                  )
+                                ).length
+                              }{' '}
+                              professionals
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Agents, producers, and industry experts
+                        </p>
+                      </Card>
+                    </div>
+
+                    {/* Custom Search */}
+                    <div className="border-t pt-4">
+                      <Label className="text-sm font-medium mb-2 flex items-center gap-2">
+                        <Target className="h-4 w-4" />
+                        What are you looking for?
+                      </Label>
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="e.g., co-writer for sci-fi screenplay, editor for novel, illustrator..."
+                          value={collaborationNeed}
+                          onChange={e => setCollaborationNeed(e.target.value)}
+                          className="flex-1"
+                        />
+                        <Button
+                          onClick={() => {
+                            if (collaborationNeed.trim()) {
+                              setSearchQuery(collaborationNeed)
+                              setShowCollaborationFinder(false)
+                              toast.success('Searching for: ' + collaborationNeed)
+                            }
+                          }}
+                        >
+                          Search
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Describe the type of collaborator you&apos;re looking for, and we&apos;ll
+                        help you find them.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Author Tabs with Icons */}
           <Tabs defaultValue="rising" className="space-y-6">
