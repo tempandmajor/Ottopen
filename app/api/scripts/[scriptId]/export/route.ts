@@ -3,6 +3,9 @@ import { getServerUser } from '@/lib/server/auth'
 import { ScriptService, ElementService } from '@/src/lib/script-service'
 import { ExportService, type ExportFormat } from '@/src/lib/export-service'
 
+// Force Node.js runtime for file system operations (epub-gen)
+export const runtime = 'nodejs'
+
 // GET /api/scripts/[scriptId]/export?format=pdf - Export script to various formats
 export async function GET(request: NextRequest, { params }: { params: { scriptId: string } }) {
   try {

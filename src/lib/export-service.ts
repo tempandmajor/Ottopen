@@ -68,6 +68,7 @@ export class ExportService {
 
   /**
    * Export to EPUB (ebook format for books)
+   * Note: This requires server-side execution due to Node.js dependencies
    */
   static async exportToEPUB(
     script: Script,
@@ -78,9 +79,17 @@ export class ExportService {
       throw new Error('EPUB export is only available for books')
     }
 
+    // Ensure we're running server-side
+    if (typeof window !== 'undefined') {
+      throw new Error('EPUB export is only available server-side')
+    }
+
     // Generate EPUB structure
     const chapters = this.splitIntoChapters(elements)
-    const buffer = await this.generateEPUB(script, chapters, options)
+
+    // Import server-only EPUB generator
+    const { generateEPUB } = await import('./epub-export.server')
+    const buffer = await generateEPUB(script, chapters, options)
 
     return new Blob([buffer], { type: 'application/epub+zip' })
   }
@@ -224,84 +233,6 @@ export class ExportService {
     }
 
     return chapters
-  }
-
-  /**
-   * Generate EPUB content
-   */
-  private static async generateEPUB(
-    script: Script,
-    chapters: ScriptElement[][],
-    options: ExportOptions
-  ): Promise<Buffer> {
-    // Use epub-gen library for proper EPUB generation
-    const Epub = (await import('epub-gen')).default
-    const fs = await import('fs')
-    const path = await import('path')
-    const os = await import('os')
-
-    // Create a temporary file path
-    const tmpDir = os.tmpdir()
-    const outputPath = path.join(tmpDir, `${script.id || 'book'}_${Date.now()}.epub`)
-
-    const epubOptions = {
-      title: script.title,
-      author: options.metadata?.author || 'Unknown Author',
-      publisher: options.metadata?.copyright || 'Self-Published',
-      lang: 'en',
-      output: outputPath,
-      content: chapters.map((chapterElements, index) => {
-        const chapterTitle =
-          chapterElements.find(el => el.element_type === 'chapter_title')?.content ||
-          `Chapter ${index + 1}`
-        const chapterContent = chapterElements
-          .filter(el => el.element_type !== 'chapter_title')
-          .map(el => {
-            switch (el.element_type) {
-              case 'chapter_subtitle':
-                return `<h2>${this.escapeHTML(el.content)}</h2>`
-              case 'heading_1':
-                return `<h3>${this.escapeHTML(el.content)}</h3>`
-              case 'heading_2':
-                return `<h4>${this.escapeHTML(el.content)}</h4>`
-              case 'heading_3':
-                return `<h5>${this.escapeHTML(el.content)}</h5>`
-              case 'block_quote':
-                return `<blockquote>${this.escapeHTML(el.content)}</blockquote>`
-              case 'bullet_list':
-                return `<ul><li>${this.escapeHTML(el.content)}</li></ul>`
-              case 'numbered_list':
-                return `<ol><li>${this.escapeHTML(el.content)}</li></ol>`
-              case 'footnote':
-                return `<aside>${this.escapeHTML(el.content)}</aside>`
-              case 'paragraph':
-              default:
-                return `<p>${this.escapeHTML(el.content)}</p>`
-            }
-          })
-          .join('\n')
-
-        return {
-          title: chapterTitle,
-          data: chapterContent,
-        }
-      }),
-    }
-
-    // Generate EPUB - epub-gen writes to file and returns Promise<void>
-    await new Epub(epubOptions, outputPath).promise
-
-    // Read the generated file
-    const buffer = fs.readFileSync(outputPath)
-
-    // Clean up temporary file
-    try {
-      fs.unlinkSync(outputPath)
-    } catch (err) {
-      // Ignore cleanup errors
-    }
-
-    return buffer
   }
 
   /**

@@ -2,6 +2,24 @@ const { withSentryConfig } = require('@sentry/nextjs')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Don't bundle epub-gen in client-side code - replace with empty module
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        'epub-gen': false,
+        'epub-gen/lib/index.js': false,
+        ejs: false,
+      }
+      // Ignore epub-gen and its dependencies in client bundles
+      config.plugins.push(
+        new (require('webpack').IgnorePlugin)({
+          resourceRegExp: /^epub-gen$/,
+        })
+      )
+    }
+    return config
+  },
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'react-hook-form'],
     serverActions: {
@@ -11,7 +29,7 @@ const nextConfig = {
           : ['localhost:3000'],
       bodySizeLimit: '2mb',
     },
-    serverComponentsExternalPackages: ['@supabase/supabase-js'],
+    serverComponentsExternalPackages: ['@supabase/supabase-js', 'epub-gen'],
   },
   images: {
     remotePatterns: [

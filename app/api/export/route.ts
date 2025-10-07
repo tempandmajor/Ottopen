@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, PageBreak } from 'docx'
 import { jsPDF } from 'jspdf'
-import Epub from 'epub-gen'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs' // Force Node.js runtime for epub-gen
 
 interface ExportRequest {
   manuscriptId: string
@@ -241,6 +241,9 @@ async function exportToPdf(manuscript: any, chapters: any[], metadata: any): Pro
 }
 
 async function exportToEpub(manuscript: any, chapters: any[], metadata: any): Promise<Buffer> {
+  // Dynamic import to prevent epub-gen from being bundled in client code
+  const Epub = (await import('epub-gen')).default
+
   const content = chapters.map(chapter => ({
     title: chapter.title,
     data: `<h2>${chapter.title}</h2>${chapter.content || '<p>No content</p>'}`,
