@@ -1,5 +1,36 @@
 import Anthropic from '@anthropic-ai/sdk'
 import OpenAI from 'openai'
+import { GoogleGenerativeAI } from '@google/generative-ai'
+
+// Export stateful AI modules
+export * from './ai-conversation-manager'
+export * from './ai-responses-api'
+export * from './claude-memory-tool'
+
+// Subscription tier type
+export type SubscriptionTier = 'free' | 'pro' | 'studio'
+
+// Tier limits configuration
+export const TIER_LIMITS = {
+  free: {
+    maxTokensPerRequest: 500, // ~375 words output
+    maxRequestsPerMonth: 10,
+    provider: 'gemini', // Use free Gemini Flash
+    features: ['basic'], // Limited features
+  },
+  pro: {
+    maxTokensPerRequest: 2000, // ~1500 words output
+    maxRequestsPerMonth: 100,
+    provider: 'deepseek', // Cost-effective DeepSeek
+    features: ['basic', 'advanced'], // Most features
+  },
+  studio: {
+    maxTokensPerRequest: 4000, // ~3000 words output
+    maxRequestsPerMonth: Infinity, // Unlimited
+    provider: 'anthropic', // Premium Claude
+    features: ['basic', 'advanced', 'premium'], // All features
+  },
+} as const
 
 // Initialize AI clients
 const anthropic = process.env.ANTHROPIC_API_KEY
@@ -10,7 +41,20 @@ const openai = process.env.OPENAI_API_KEY
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   : null
 
-const AI_PROVIDER = process.env.AI_PROVIDER || 'anthropic'
+// DeepSeek client (OpenAI-compatible)
+const deepseek = process.env.DEEPSEEK_API_KEY
+  ? new OpenAI({
+      apiKey: process.env.DEEPSEEK_API_KEY,
+      baseURL: 'https://api.deepseek.com',
+    })
+  : null
+
+// Google Gemini client
+const gemini = process.env.GOOGLE_AI_API_KEY
+  ? new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY)
+  : null
+
+const AI_PROVIDER = process.env.AI_PROVIDER || 'auto' // 'auto' uses tier-based routing
 
 export interface AIRequest {
   prompt: string
@@ -18,6 +62,8 @@ export interface AIRequest {
   maxTokens?: number
   temperature?: number
   stream?: boolean
+  userTier?: SubscriptionTier // New: tier-based limits
+  userId?: string // For usage tracking
 }
 
 export interface AIResponse {
@@ -33,20 +79,81 @@ export interface AIResponse {
 export type AIStreamResponse = AsyncIterable<string>
 
 /**
- * Main AI generation function with streaming support
+ * Get provider based on tier and availability
+ */
+function getProviderForTier(tier: SubscriptionTier = 'free'): string {
+  if (AI_PROVIDER !== 'auto') {
+    return AI_PROVIDER
+  }
+
+  const tierConfig = TIER_LIMITS[tier]
+  const preferredProvider = tierConfig.provider
+
+  // Check if preferred provider is available, otherwise fallback
+  if (preferredProvider === 'gemini' && gemini) return 'gemini'
+  if (preferredProvider === 'deepseek' && deepseek) return 'deepseek'
+  if (preferredProvider === 'anthropic' && anthropic) return 'anthropic'
+
+  // Fallback chain
+  if (deepseek) return 'deepseek' // Cheapest paid option
+  if (anthropic) return 'anthropic'
+  if (openai) return 'openai'
+  if (gemini) return 'gemini'
+
+  throw new Error(
+    'No AI provider configured. Please set at least one: DEEPSEEK_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, or GOOGLE_AI_API_KEY'
+  )
+}
+
+/**
+ * Apply tier limits to token count
+ */
+function applyTierLimits(maxTokens: number, tier: SubscriptionTier = 'free'): number {
+  const tierLimit = TIER_LIMITS[tier].maxTokensPerRequest
+  return Math.min(maxTokens, tierLimit)
+}
+
+/**
+ * Main AI generation function with streaming support and tier-based routing
  */
 export async function generateAI(request: AIRequest): Promise<AIResponse | AIStreamResponse> {
-  const { prompt, context, maxTokens = 2000, temperature = 0.7, stream = false } = request
+  const {
+    prompt,
+    context,
+    maxTokens = 2000,
+    temperature = 0.7,
+    stream = false,
+    userTier = 'free',
+    userId,
+  } = request
 
   const fullPrompt = context ? `${context}\n\n${prompt}` : prompt
 
-  if (AI_PROVIDER === 'anthropic' && anthropic) {
-    return generateWithAnthropic(fullPrompt, maxTokens, temperature, stream)
-  } else if (AI_PROVIDER === 'openai' && openai) {
-    return generateWithOpenAI(fullPrompt, maxTokens, temperature, stream)
+  // Apply tier limits
+  const limitedMaxTokens = applyTierLimits(maxTokens, userTier)
+
+  // Log usage for tracking (optional - could save to database)
+  if (userId && process.env.NODE_ENV === 'production') {
+    console.log(`AI request: user=${userId}, tier=${userTier}, tokens=${limitedMaxTokens}`)
   }
 
-  throw new Error('No AI provider configured. Please set OPENAI_API_KEY or ANTHROPIC_API_KEY.')
+  // Get provider based on tier
+  const provider = getProviderForTier(userTier)
+
+  // Route to appropriate provider
+  if (provider === 'anthropic' && anthropic) {
+    return generateWithAnthropic(fullPrompt, limitedMaxTokens, temperature, stream)
+  } else if (provider === 'openai' && openai) {
+    return generateWithOpenAI(fullPrompt, limitedMaxTokens, temperature, stream)
+  } else if (provider === 'deepseek' && deepseek) {
+    return generateWithDeepSeek(fullPrompt, limitedMaxTokens, temperature, stream)
+  } else if (provider === 'gemini' && gemini) {
+    return generateWithGemini(fullPrompt, limitedMaxTokens, temperature, stream)
+  }
+
+  throw new Error(
+    `Provider ${provider} is not available. Please configure the appropriate API key.`
+  )
 }
 
 /**
@@ -65,7 +172,7 @@ async function generateWithAnthropic(
   }
 
   const response = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-20241022',
+    model: 'claude-sonnet-4-5', // Claude Sonnet 4.5 (Sept 29, 2025) - Best coding model
     max_tokens: maxTokens,
     temperature,
     messages: [{ role: 'user', content: prompt }],
@@ -91,7 +198,7 @@ async function* generateAnthropicStream(
   if (!anthropic) throw new Error('Anthropic client not initialized')
 
   const stream = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-20241022',
+    model: 'claude-sonnet-4-5', // Claude Sonnet 4.5 (Sept 29, 2025) - Best coding model
     max_tokens: maxTokens,
     temperature,
     messages: [{ role: 'user', content: prompt }],
@@ -121,7 +228,7 @@ async function generateWithOpenAI(
   }
 
   const response = await openai.chat.completions.create({
-    model: 'gpt-4-turbo-preview',
+    model: 'gpt-5', // GPT-5 (Aug 7, 2025) - 45% fewer factual errors, SOTA coding
     max_tokens: maxTokens,
     temperature,
     messages: [{ role: 'user', content: prompt }],
@@ -147,7 +254,7 @@ async function* generateOpenAIStream(
   if (!openai) throw new Error('OpenAI client not initialized')
 
   const stream = await openai.chat.completions.create({
-    model: 'gpt-4-turbo-preview',
+    model: 'gpt-5', // GPT-5 (Aug 7, 2025) - 45% fewer factual errors, SOTA coding
     max_tokens: maxTokens,
     temperature,
     messages: [{ role: 'user', content: prompt }],
@@ -158,6 +265,134 @@ async function* generateOpenAIStream(
     const content = chunk.choices[0]?.delta?.content
     if (content) {
       yield content
+    }
+  }
+}
+
+/**
+ * DeepSeek implementation (OpenAI-compatible API)
+ *
+ * CONTEXT CACHING: Enabled by default (no code changes needed)
+ * - Automatically caches common prefixes (64-token chunks)
+ * - 90% cost reduction on repeated prompts
+ * - 13s → 500ms latency improvement
+ * - Usage tracking: prompt_cache_hit_tokens, prompt_cache_miss_tokens
+ */
+async function generateWithDeepSeek(
+  prompt: string,
+  maxTokens: number,
+  temperature: number,
+  stream: boolean
+): Promise<AIResponse | AIStreamResponse> {
+  if (!deepseek) throw new Error('DeepSeek client not initialized')
+
+  if (stream) {
+    return generateDeepSeekStream(prompt, maxTokens, temperature)
+  }
+
+  const response = await deepseek.chat.completions.create({
+    model: 'deepseek-chat', // DeepSeek V3.2-Exp (auto-updates to latest, Oct 2025)
+    max_tokens: maxTokens,
+    temperature,
+    messages: [{ role: 'user', content: prompt }],
+  })
+
+  const content = response.choices[0]?.message?.content || ''
+
+  // Log cache performance (if available)
+  const cacheHits = (response.usage as any)?.prompt_cache_hit_tokens || 0
+  const cacheMisses = (response.usage as any)?.prompt_cache_miss_tokens || 0
+  if (cacheHits > 0) {
+    console.log(`[DeepSeek Cache] Hit: ${cacheHits} tokens, Miss: ${cacheMisses} tokens`)
+  }
+
+  return {
+    content,
+    usage: {
+      promptTokens: response.usage?.prompt_tokens || 0,
+      completionTokens: response.usage?.completion_tokens || 0,
+      totalTokens: response.usage?.total_tokens || 0,
+    },
+  }
+}
+
+async function* generateDeepSeekStream(
+  prompt: string,
+  maxTokens: number,
+  temperature: number
+): AIStreamResponse {
+  if (!deepseek) throw new Error('DeepSeek client not initialized')
+
+  const stream = await deepseek.chat.completions.create({
+    model: 'deepseek-chat', // DeepSeek V3.2-Exp (auto-updates to latest, Oct 2025)
+    max_tokens: maxTokens,
+    temperature,
+    messages: [{ role: 'user', content: prompt }],
+    stream: true,
+  })
+
+  for await (const chunk of stream) {
+    const content = chunk.choices[0]?.delta?.content
+    if (content) {
+      yield content
+    }
+  }
+}
+
+/**
+ * Google Gemini implementation
+ *
+ * IMPLICIT CACHING: Enabled by default for Gemini 2.5 models
+ * - Automatic cost savings passed to you
+ * - Minimum tokens: 1024 (Flash), 2048 (Pro)
+ * - No code changes needed
+ * - FREE tier still available with caching benefits
+ */
+async function generateWithGemini(
+  prompt: string,
+  maxTokens: number,
+  temperature: number,
+  stream: boolean
+): Promise<AIResponse | AIStreamResponse> {
+  if (!gemini) throw new Error('Gemini client not initialized')
+
+  const model = gemini.getGenerativeModel({
+    model: 'gemini-2.5-flash', // Gemini 2.5 Flash (Sept 25, 2025) - FREE tier, improved agentic tool use
+    generationConfig: {
+      maxOutputTokens: maxTokens,
+      temperature,
+    },
+  })
+
+  if (stream) {
+    return generateGeminiStream(model, prompt)
+  }
+
+  const result = await model.generateContent(prompt)
+  const response = result.response
+  const content = response.text()
+
+  // Gemini 2.5 has implicit caching - cost savings automatic
+  console.log('[Gemini] Implicit caching enabled (automatic cost savings)')
+
+  // Gemini doesn't provide token usage in free tier
+  return {
+    content,
+    usage: {
+      promptTokens: 0,
+      completionTokens: 0,
+      totalTokens: 0,
+    },
+  }
+}
+
+async function* generateGeminiStream(model: any, prompt: string): AIStreamResponse {
+  const result = await model.generateContentStream(prompt)
+
+  for await (const chunk of result.stream) {
+    const text = chunk.text()
+    if (text) {
+      yield text
     }
   }
 }
