@@ -17,6 +17,16 @@ The app has **extensive features** and is **functionally complete**. **3 of 4 cr
 ✅ **Redis rate limiting implementation** - Updated to support Upstash Redis REST API
 ⚠️ **Redis environment variables** - Need to be added to production (see REDIS_SETUP_GUIDE.md)
 
+### AI Cost Optimization (NEW)
+
+✅ **DeepSeek API support** - 93% cheaper than Claude ($0.27 vs $3.00 per 1M input tokens)
+✅ **Google Gemini support** - Free tier (1,500 requests/day) for development/testing
+✅ **Tiered AI strategy** - Free→Gemini, Pro→DeepSeek, Studio→Claude
+✅ **Token limits per tier** - Free: 500 tokens, Pro: 2000 tokens, Studio: 4000 tokens
+✅ **@google/generative-ai installed** - Ready for Gemini integration
+
+**Estimated savings**: $100-1,000/month depending on scale (see AI_COST_COMPARISON.md)
+
 ---
 
 ## 1. Database Migrations 🗄️
@@ -133,9 +143,14 @@ function createRedisClient(): RedisClient | null {
 
 ### AI Services (at least one required)
 
-- ⚠️ `ANTHROPIC_API_KEY` - Primary AI provider
-- ⚠️ `OPENAI_API_KEY` - Fallback AI provider
+**NEW: Tiered AI Strategy (Recommended)**:
+
+- ⚠️ `DEEPSEEK_API_KEY` - **RECOMMENDED** for Pro tier (93% cost savings vs Claude)
+- ⚠️ `GOOGLE_AI_API_KEY` - **FREE TIER** for Free users (1,500 requests/day)
+- ⚠️ `ANTHROPIC_API_KEY` - Premium AI for Studio tier
+- ⚠️ `OPENAI_API_KEY` - Fallback AI provider (optional)
 - ⚠️ `PERPLEXITY_API_KEY` - Research features (optional)
+- ⚠️ `AI_PROVIDER` - Set to 'auto' for tier-based routing (default)
 
 ### Payment Processing
 
@@ -364,7 +379,8 @@ npm run build
 - [ ] `NEXT_PUBLIC_SUPABASE_URL`
 - [ ] `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - [ ] `SUPABASE_SERVICE_ROLE_KEY`
-- [ ] `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`
+- [ ] `DEEPSEEK_API_KEY` and/or `GOOGLE_AI_API_KEY` (recommended for cost savings)
+- [ ] `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` (fallback)
 - [ ] `STRIPE_SECRET_KEY`
 - [ ] `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
 - [ ] `STRIPE_WEBHOOK_SECRET`
@@ -372,6 +388,7 @@ npm run build
 - [ ] `UPSTASH_REDIS_REST_TOKEN` ⚠️ **CRITICAL**
 - [ ] `NEXTAUTH_SECRET`
 - [ ] `NEXTAUTH_URL` (set to production domain)
+- [ ] `AI_PROVIDER=auto` (for tier-based AI routing)
 
 **Recommended**:
 
