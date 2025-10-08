@@ -1,6 +1,7 @@
 // Collaborators List Component
 'use client'
 
+import Image from 'next/image'
 import { Users } from 'lucide-react'
 import type { CollaboratorPresence } from '@/src/lib/collaboration/types'
 
@@ -33,9 +34,11 @@ export function CollaboratorsList({ collaborators, isConnected }: CollaboratorsL
             {collaborators.map(collab => (
               <div key={collab.userId} className="relative group" title={collab.name}>
                 {collab.avatarUrl ? (
-                  <img
+                  <Image
                     src={collab.avatarUrl}
                     alt={collab.name}
+                    width={32}
+                    height={32}
                     className="h-8 w-8 rounded-full ring-2 ring-white"
                   />
                 ) : (

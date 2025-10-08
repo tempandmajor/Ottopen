@@ -18,6 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/src/components/ui/dropdown-menu'
+import Image from 'next/image'
 import {
   PenTool,
   Image as ImageIcon,
@@ -680,9 +681,11 @@ export default function EnhancedFeedView() {
 
                     {imagePreview && (
                       <div className="rounded-md border border-literary-border overflow-hidden relative">
-                        <img
+                        <Image
                           src={imagePreview}
                           alt="Preview"
+                          width={800}
+                          height={256}
                           className="max-h-64 w-full object-cover"
                         />
                         <Button
