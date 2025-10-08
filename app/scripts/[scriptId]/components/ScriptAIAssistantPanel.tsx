@@ -6,6 +6,7 @@ import { Textarea } from '@/src/components/ui/textarea'
 import { ScrollArea } from '@/src/components/ui/scroll-area'
 import { Sparkles, Send, Loader2, Wand2, FileText, Users, TrendingUp } from 'lucide-react'
 import type { ScriptType, ScriptElement, ScriptCharacter } from '@/src/types/script-editor'
+import { AIDisclaimer } from '@/src/components/AIDisclaimer'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -122,6 +123,11 @@ export function ScriptAIAssistantPanel({
         <p className="text-xs text-muted-foreground mt-1">
           {context.genre.join(', ')} • Page {context.currentPage}/{context.totalPages}
         </p>
+      </div>
+
+      {/* AI Disclaimer */}
+      <div className="px-4 pt-4">
+        <AIDisclaimer variant="compact" />
       </div>
 
       {/* Quick Actions */}

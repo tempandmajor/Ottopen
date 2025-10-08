@@ -332,6 +332,86 @@ export default function DMCAPage() {
               </CardContent>
             </Card>
 
+            {/* AI-Generated Content and Copyright */}
+            <Card>
+              <CardHeader>
+                <CardTitle>AI-Generated Content and Copyright</CardTitle>
+                <CardDescription>
+                  Important information about copyright concerns with AI-assisted content
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <h3 className="font-semibold mb-2">Copyright Concerns with AI</h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    AI-generated content may inadvertently reproduce copyrighted material from its
+                    training data:
+                  </p>
+                  <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                    <li>Copyrighted text from training data</li>
+                    <li>Distinctive phrases or passages</li>
+                    <li>Plot structures or character archetypes</li>
+                    <li>Stylistic patterns from copyrighted works</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">Your Responsibilities with AI Content</h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    If you use AI-generated content on Ottopen:
+                  </p>
+                  <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
+                    <li>
+                      <strong>Review for originality</strong> - Check that AI hasn&apos;t reproduced
+                      copyrighted material
+                    </li>
+                    <li>
+                      <strong>Edit substantially</strong> - Transform AI suggestions into your
+                      unique voice
+                    </li>
+                    <li>
+                      <strong>Fact-check</strong> - Verify AI hasn&apos;t copied factual content
+                      verbatim
+                    </li>
+                    <li>
+                      <strong>Run plagiarism checks</strong> - Use tools like Turnitin or Copyscape
+                      before publishing
+                    </li>
+                  </ol>
+                </div>
+
+                <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 p-4 rounded-lg">
+                  <h3 className="font-semibold mb-2">Copyright Liability</h3>
+                  <ul className="text-sm space-y-1">
+                    <li>
+                      • <strong>You are responsible</strong> for ensuring your final work
+                      doesn&apos;t infringe copyright
+                    </li>
+                    <li>
+                      • We are not liable for copyright issues arising from AI-generated content
+                    </li>
+                    <li>• AI-assisted content is your responsibility to verify and edit</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">DMCA Takedown for AI Content</h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    If you believe AI-generated content on our platform infringes your copyright:
+                  </p>
+                  <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
+                    <li>Follow the standard DMCA takedown process above</li>
+                    <li>Note in your infringement description that the content is AI-generated</li>
+                    <li>
+                      Provide evidence of substantial similarity between your work and the
+                      AI-generated content
+                    </li>
+                    <li>Include specific examples of copyrighted elements that were reproduced</li>
+                  </ol>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Notices List */}
             <Card>
               <CardHeader>

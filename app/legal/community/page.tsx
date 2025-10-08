@@ -38,7 +38,7 @@ export default function CommunityGuidelines() {
                 <h1 className="font-serif text-3xl sm:text-4xl font-bold">Community Guidelines</h1>
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground mt-2">
                   <Calendar className="h-4 w-4" />
-                  <span>Last updated: September 23, 2024</span>
+                  <span>Last updated: January 2025</span>
                 </div>
               </div>
             </div>
@@ -228,6 +228,72 @@ export default function CommunityGuidelines() {
                     <li>Excerpts and samples are encouraged; avoid posting complete works</li>
                     <li>Respect copyright when quoting or referencing other works</li>
                     <li>Use trigger warnings for sensitive topics (violence, trauma, etc.)</li>
+                  </ul>
+
+                  <h3 className="font-semibold text-lg mb-3">AI-Generated Content Disclosure</h3>
+                  <p className="text-muted-foreground leading-relaxed mb-3">
+                    If you share content in the community feed, book clubs, or forums:
+                  </p>
+                  <ul className="list-disc list-inside text-muted-foreground space-y-2 mb-4">
+                    <li>
+                      <strong>Encouraged:</strong> Disclose when content is primarily AI-generated
+                    </li>
+                    <li>
+                      <strong>Required:</strong> Mark entirely AI-generated content with [AI
+                      Generated] tag
+                    </li>
+                    <li>
+                      <strong>Prohibited:</strong> Passing off AI-generated content as entirely
+                      human-written in contests or paid submissions
+                    </li>
+                    <li>
+                      <strong>Best Practice:</strong> Describe your creative process when sharing
+                      AI-assisted work
+                    </li>
+                  </ul>
+
+                  <div className="bg-muted/50 p-4 rounded-lg mb-4">
+                    <h4 className="font-semibold mb-2">Understanding AI Content Levels</h4>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <strong className="text-green-700 dark:text-green-400">
+                          ✅ AI-Assisted:
+                        </strong>{' '}
+                        <span className="text-muted-foreground">
+                          You wrote most content, used AI for suggestions/editing (Full sharing
+                          allowed)
+                        </span>
+                      </div>
+                      <div>
+                        <strong className="text-amber-700 dark:text-amber-400">
+                          ⚠️ AI-Generated:
+                        </strong>{' '}
+                        <span className="text-muted-foreground">
+                          AI wrote most content, you edited/curated (Disclosure recommended)
+                        </span>
+                      </div>
+                      <div>
+                        <strong className="text-red-700 dark:text-red-400">🚫 AI-Created:</strong>{' '}
+                        <span className="text-muted-foreground">
+                          Entirely AI-generated with minimal human input (Must be clearly marked)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <h3 className="font-semibold text-lg mb-3">
+                    Professional Submissions & AI Usage
+                  </h3>
+                  <p className="text-muted-foreground leading-relaxed mb-3">
+                    For marketplace listings and paid opportunities:
+                  </p>
+                  <ul className="list-disc list-inside text-muted-foreground space-y-2 mb-4">
+                    <li>Disclose AI usage in submission guidelines</li>
+                    <li>Clients have the right to know if work is AI-assisted</li>
+                    <li>Some opportunities may prohibit AI-generated content</li>
+                    <li>
+                      Misrepresenting AI content as human-written may result in account suspension
+                    </li>
                   </ul>
 
                   <h3 className="font-semibold text-lg mb-3">Feedback & Critique</h3>

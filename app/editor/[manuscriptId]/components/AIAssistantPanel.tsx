@@ -29,6 +29,7 @@ import {
 } from '@/src/components/ui/select'
 import { cn } from '@/src/lib/utils'
 import { Skeleton } from '@/src/components/ui/skeleton'
+import { AIDisclaimer } from '@/src/components/AIDisclaimer'
 
 interface AIAssistantPanelProps {
   manuscriptId: string
@@ -191,6 +192,11 @@ export function AIAssistantPanel({
           <Sparkles className="h-5 w-5 text-primary" />
           <h2 className="font-semibold">AI Assistant</h2>
         </div>
+      </div>
+
+      {/* AI Disclaimer */}
+      <div className="p-4 border-b">
+        <AIDisclaimer variant="compact" />
       </div>
 
       {/* Tabs */}
