@@ -27,7 +27,7 @@ import type {
   SceneComment,
 } from '@/src/types/ai-editor'
 
-// Helper to ensure supabase client is available
+// Helper to ensure supabase client is available (lazy getter)
 function getSupabase() {
   if (!supabaseClient) {
     throw new Error('Supabase client not configured')
@@ -35,8 +35,12 @@ function getSupabase() {
   return supabaseClient
 }
 
-// Get client for use in service methods
-const supabase = getSupabase()
+// Lazy getter for supabase client - only throws when actually used, not at import time
+const supabase = new Proxy({} as typeof supabaseClient, {
+  get(_target, prop) {
+    return getSupabase()[prop as keyof typeof supabaseClient]
+  },
+})
 
 // ============================================================================
 // MANUSCRIPT OPERATIONS
