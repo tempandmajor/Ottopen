@@ -4,7 +4,9 @@ import { EditorTabs } from '@/src/components/editor-tabs/editor-tabs'
 import { useEditorTabs } from '@/src/hooks/useEditorTabs'
 import { ManuscriptNavigator } from '@/src/components/ai-editor/manuscript-navigator'
 import { SaveStatus } from '@/src/components/editor-tabs/save-status'
+import { EditorSkeleton } from '@/src/components/editor-tabs/editor-skeleton'
 import { useAutoSave } from '@/src/hooks/useAutoSave'
+import { useKeyboardShortcuts } from '@/src/hooks/useKeyboardShortcuts'
 import { useEffect, useState } from 'react'
 import type { ChapterWithScenes } from '@/src/types/navigation'
 import { Button } from '@/src/components/ui/button'
@@ -60,6 +62,45 @@ export default function ManuscriptWorkspacePage() {
     window.addEventListener('beforeunload', handleBeforeUnload)
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [contentChanged])
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    shortcuts: [
+      {
+        key: 's',
+        metaKey: true,
+        handler: e => {
+          e.preventDefault()
+          if (activeTab && contentChanged && !isSaving) {
+            // Trigger manual save
+            setContentChanged(false)
+          }
+        },
+        description: 'Save current manuscript',
+      },
+      {
+        key: 'w',
+        metaKey: true,
+        handler: e => {
+          e.preventDefault()
+          if (activeTab) {
+            closeTab(activeTab.id)
+          }
+        },
+        description: 'Close current tab',
+      },
+      {
+        key: 't',
+        metaKey: true,
+        handler: e => {
+          e.preventDefault()
+          createNewTab()
+        },
+        description: 'Create new tab',
+      },
+    ],
+    enabled: !!activeTab,
+  })
 
   const loadManuscriptData = async (manuscriptId: string) => {
     try {
@@ -216,30 +257,28 @@ export default function ManuscriptWorkspacePage() {
       )}
 
       {/* Editor content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Navigator sidebar */}
-        {activeTab && (
-          <ManuscriptNavigator
-            manuscriptId={activeTab.fileId}
-            manuscriptTitle={manuscriptTitle || activeTab.title}
-            chapters={chapters}
-            totalWordCount={totalWordCount}
-            onChapterClick={handleChapterClick}
-            onSceneClick={handleSceneClick}
-            onAddChapter={handleAddChapter}
-            onAddScene={handleAddScene}
-            onDeleteChapter={handleDeleteChapter}
-            onDeleteScene={handleDeleteScene}
-          />
-        )}
+      {loading ? (
+        <EditorSkeleton />
+      ) : (
+        <div className="flex flex-1 overflow-hidden">
+          {/* Navigator sidebar */}
+          {activeTab && (
+            <ManuscriptNavigator
+              manuscriptId={activeTab.fileId}
+              manuscriptTitle={manuscriptTitle || activeTab.title}
+              chapters={chapters}
+              totalWordCount={totalWordCount}
+              onChapterClick={handleChapterClick}
+              onSceneClick={handleSceneClick}
+              onAddChapter={handleAddChapter}
+              onAddScene={handleAddScene}
+              onDeleteChapter={handleDeleteChapter}
+              onDeleteScene={handleDeleteScene}
+            />
+          )}
 
-        {/* Main editor area */}
-        <div className="flex-1 overflow-auto bg-background">
-          {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            </div>
-          ) : (
+          {/* Main editor area */}
+          <div className="flex-1 overflow-auto bg-background">
             <div className="max-w-4xl mx-auto py-8 px-4">
               <div className="prose prose-lg dark:prose-invert">
                 <h1>{manuscriptTitle}</h1>
@@ -252,12 +291,14 @@ export default function ManuscriptWorkspacePage() {
                   <li>Chapter and scene navigation in the sidebar</li>
                   <li>Adding/deleting chapters and scenes</li>
                   <li>Tab persistence across sessions</li>
+                  <li>Auto-save every 30 seconds</li>
+                  <li>Keyboard shortcuts (Cmd+S, Cmd+W, Cmd+T)</li>
                 </ul>
               </div>
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

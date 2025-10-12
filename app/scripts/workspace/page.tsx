@@ -4,7 +4,9 @@ import { EditorTabs } from '@/src/components/editor-tabs/editor-tabs'
 import { useEditorTabs } from '@/src/hooks/useEditorTabs'
 import { ScriptNavigator } from '@/src/components/script-editor/script-navigator'
 import { SaveStatus } from '@/src/components/editor-tabs/save-status'
+import { EditorSkeleton } from '@/src/components/editor-tabs/editor-skeleton'
 import { useAutoSave } from '@/src/hooks/useAutoSave'
+import { useKeyboardShortcuts } from '@/src/hooks/useKeyboardShortcuts'
 import { useEffect, useState } from 'react'
 import type { ScriptElement } from '@/src/types/script-editor'
 import { Button } from '@/src/components/ui/button'
@@ -61,6 +63,45 @@ export default function ScriptWorkspacePage() {
     window.addEventListener('beforeunload', handleBeforeUnload)
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [contentChanged])
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    shortcuts: [
+      {
+        key: 's',
+        metaKey: true,
+        handler: e => {
+          e.preventDefault()
+          if (activeTab && contentChanged && !isSaving) {
+            // Trigger manual save
+            setContentChanged(false)
+          }
+        },
+        description: 'Save current script',
+      },
+      {
+        key: 'w',
+        metaKey: true,
+        handler: e => {
+          e.preventDefault()
+          if (activeTab) {
+            closeTab(activeTab.id)
+          }
+        },
+        description: 'Close current tab',
+      },
+      {
+        key: 't',
+        metaKey: true,
+        handler: e => {
+          e.preventDefault()
+          createNewTab()
+        },
+        description: 'Create new tab',
+      },
+    ],
+    enabled: !!activeTab,
+  })
 
   const loadScriptData = async (scriptId: string) => {
     try {
@@ -145,27 +186,25 @@ export default function ScriptWorkspacePage() {
       )}
 
       {/* Editor content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Navigator sidebar */}
-        {activeTab && (
-          <ScriptNavigator
-            scriptId={activeTab.fileId}
-            scriptTitle={scriptTitle || activeTab.title}
-            scriptType={scriptType}
-            elements={elements}
-            pageCount={pageCount}
-            onSceneClick={handleSceneClick}
-            onAddScene={handleAddScene}
-          />
-        )}
+      {loading ? (
+        <EditorSkeleton />
+      ) : (
+        <div className="flex flex-1 overflow-hidden">
+          {/* Navigator sidebar */}
+          {activeTab && (
+            <ScriptNavigator
+              scriptId={activeTab.fileId}
+              scriptTitle={scriptTitle || activeTab.title}
+              scriptType={scriptType}
+              elements={elements}
+              pageCount={pageCount}
+              onSceneClick={handleSceneClick}
+              onAddScene={handleAddScene}
+            />
+          )}
 
-        {/* Main editor area */}
-        <div className="flex-1 overflow-auto bg-white">
-          {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            </div>
-          ) : (
+          {/* Main editor area */}
+          <div className="flex-1 overflow-auto bg-white">
             <div className="max-w-4xl mx-auto py-8 px-4">
               <div className="text-center mb-12 space-y-4">
                 <h1 className="text-3xl font-bold uppercase">{scriptTitle}</h1>
@@ -182,12 +221,14 @@ export default function ScriptWorkspacePage() {
                   <li>Act and scene navigation in the sidebar</li>
                   <li>Industry-standard script formatting</li>
                   <li>Tab persistence across sessions</li>
+                  <li>Auto-save every 30 seconds</li>
+                  <li>Keyboard shortcuts (Cmd+S, Cmd+W, Cmd+T)</li>
                 </ul>
               </div>
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
