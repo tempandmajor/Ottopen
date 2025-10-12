@@ -30,6 +30,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
 import { dbService } from '@/src/lib/database'
 import { GoogleOAuthButton } from '@/src/components/auth/google-oauth-button'
+import * as Sentry from '@sentry/nextjs'
 
 // Password strength calculator
 function calculatePasswordStrength(password: string): {
@@ -163,8 +164,9 @@ export default function SignUp() {
     setLoading(true)
 
     try {
+      const normalizedEmail = formData.email.trim().toLowerCase()
       const result = await signUp({
-        email: formData.email,
+        email: normalizedEmail,
         password: formData.password,
         displayName: formData.displayName,
         username: formData.username,
@@ -190,6 +192,7 @@ export default function SignUp() {
         router.push('/auth/signin?message=confirm-email')
       }, 3000)
     } catch (error) {
+      Sentry.captureException(error)
       toast.error('An unexpected error occurred')
     } finally {
       setLoading(false)

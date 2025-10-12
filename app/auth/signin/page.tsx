@@ -12,6 +12,7 @@ import { useNavigate } from '@/src/hooks/use-navigate'
 import { useRateLimit } from '@/src/hooks/use-rate-limit'
 import { toast } from 'react-hot-toast'
 import { GoogleOAuthButton } from '@/src/components/auth/google-oauth-button'
+import * as Sentry from '@sentry/nextjs'
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false)
@@ -60,7 +61,8 @@ export default function SignIn() {
     setSubmitting(true)
 
     try {
-      const result = await signIn(email, password)
+      const normalizedEmail = email.trim().toLowerCase()
+      const result = await signIn(normalizedEmail, password)
       console.log('SignIn result:', result)
 
       if (result.success) {
@@ -81,6 +83,7 @@ export default function SignIn() {
       }
     } catch (error) {
       console.error('SignIn form error:', error)
+      Sentry.captureException(error)
       toast.error('An unexpected error occurred')
 
       // Record failed attempt

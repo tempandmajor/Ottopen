@@ -38,6 +38,7 @@ import type { User, Post } from '@/src/lib/supabase'
 import { supabase } from '@/src/lib/supabase'
 import { toast } from 'react-hot-toast'
 import Link from 'next/link'
+import * as Sentry from '@sentry/nextjs'
 
 type FeedView = 'following' | 'discover' | 'trending'
 
@@ -109,37 +110,44 @@ export default function EnhancedFeedView() {
 
   // Real-time subscription for new posts
   useEffect(() => {
-    if (!user || feedView !== 'following') return
+    if (!user || feedView !== 'following' || !supabase) return
 
-    const loadFollowing = async () => {
-      const following = await dbService.getFollowing(user.id)
-      const followedIds = following.map(f => f.id)
+    let channel: ReturnType<typeof supabase.channel> | null = null
+    let isMounted = true
 
-      if (followedIds.length === 0 || !supabase) return
+    ;(async () => {
+      try {
+        const following = await dbService.getFollowing(user.id)
+        if (!isMounted) return
+        const followedIds = following.map(f => f.id)
+        if (followedIds.length === 0) return
 
-      const channel = supabase
-        .channel('feed_updates')
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'posts',
-            filter: `user_id=in.(${followedIds.join(',')})`,
-          },
-          () => {
-            setNewPostsAvailable(true)
-          }
-        )
-        .subscribe()
-
-      return () => {
-        channel.unsubscribe()
+        channel = supabase
+          .channel('feed_updates')
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'posts',
+              filter: `user_id=in.(${followedIds.join(',')})`,
+            },
+            () => {
+              setNewPostsAvailable(true)
+            }
+          )
+          .subscribe()
+      } catch (e) {
+        console.error('Failed to subscribe to feed updates', e)
+        Sentry.captureException(e)
       }
-    }
+    })()
 
-    loadFollowing()
-  }, [user, feedView])
+    return () => {
+      isMounted = false
+      channel?.unsubscribe()
+    }
+  }, [user?.id, feedView, supabase])
 
   const loadLikedPosts = async () => {
     if (!user) return
@@ -172,9 +180,23 @@ export default function EnhancedFeedView() {
   }
 
   const checkAdmin = async () => {
-    if (user && supabase) {
-      const { data } = await supabase.from('users').select('is_admin').eq('id', user.id).single()
+    if (!user || !supabase) return
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('is_admin')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (error) {
+        console.warn('Admin check failed; defaulting to non-admin:', error)
+        setIsAdmin(false)
+        return
+      }
       setIsAdmin(data?.is_admin === true)
+    } catch (e) {
+      console.warn('Admin check threw; defaulting to non-admin:', e)
+      setIsAdmin(false)
     }
   }
 
@@ -262,7 +284,6 @@ export default function EnhancedFeedView() {
       .select('*')
       .not('user_id', 'in', `(${followingIds.join(',')})`)
       .eq('published', true)
-      .order('engagement_score', { ascending: false })
       .range(pageNum * 10, (pageNum + 1) * 10 - 1)
 
     if (error) throw error
@@ -289,7 +310,6 @@ export default function EnhancedFeedView() {
       .select('*')
       .eq('published', true)
       .gte('created_at', yesterday)
-      .order('engagement_score', { ascending: false })
       .range(pageNum * 10, (pageNum + 1) * 10 - 1)
 
     if (error) throw error
@@ -378,6 +398,7 @@ export default function EnhancedFeedView() {
       }
     } catch (error) {
       console.error('Failed to create post:', error)
+      Sentry.captureException(error)
       toast.error('Failed to create post')
     } finally {
       setCreatingPost(false)
@@ -416,6 +437,7 @@ export default function EnhancedFeedView() {
       return newLikedState
     } catch (error) {
       console.error('Failed to toggle like:', error)
+      Sentry.captureException(error)
       toast.error('Failed to update like')
       return currentlyLiked
     }
@@ -464,6 +486,7 @@ export default function EnhancedFeedView() {
       }
     } catch (error) {
       console.error('Failed to toggle reshare:', error)
+      Sentry.captureException(error)
       toast.error('Failed to reshare post')
       return false
     }
@@ -498,6 +521,7 @@ export default function EnhancedFeedView() {
       }
     } catch (error) {
       console.error('Failed to toggle bookmark:', error)
+      Sentry.captureException(error)
       toast.error('Failed to bookmark post')
       return false
     }
@@ -521,6 +545,7 @@ export default function EnhancedFeedView() {
       }
     } catch (error) {
       console.error('Failed to share post:', error)
+      Sentry.captureException(error)
     }
   }
 

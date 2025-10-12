@@ -35,7 +35,7 @@ import { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
 import { CommentSection } from '@/src/components/comment-section'
 import { Separator } from '@/src/components/ui/separator'
-import { sanitizeText } from '@/src/lib/sanitize'
+import { sanitizeText, sanitizeUrl } from '@/src/lib/sanitize'
 
 interface PostCardProps {
   postId?: string
@@ -320,7 +320,7 @@ export function PostCard({
                 <div className="mt-3">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={imageUrl}
+                    src={sanitizeUrl(imageUrl)}
                     alt="Post image"
                     className="rounded-md border border-literary-border max-h-[420px] w-full object-cover"
                     loading="lazy"

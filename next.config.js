@@ -84,11 +84,11 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://cdn.vercel-insights.com",
+              "script-src 'self' 'unsafe-inline' https://js.stripe.com https://cdn.vercel-insights.com",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
-              "connect-src 'self' https://*.supabase.co https://api.stripe.com https://api.openai.com https://api.anthropic.com https://vitals.vercel-insights.com",
+              "connect-src 'self' https://*.supabase.co https://api.stripe.com https://api.openai.com https://api.anthropic.com https://vitals.vercel-insights.com https://o*.ingest.sentry.io",
               'frame-src https://js.stripe.com',
               "base-uri 'self'",
               "form-action 'self'",

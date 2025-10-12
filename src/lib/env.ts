@@ -95,7 +95,9 @@ let env: Env
 
 try {
   env = validateEnv()
-  console.log('✅ Environment variables validated successfully')
+  if (process.env.NODE_ENV === 'development') {
+    console.log('✅ Environment variables validated successfully')
+  }
 } catch (error) {
   // In development, show warning but don't crash
   if (process.env.NODE_ENV === 'development') {

@@ -93,6 +93,7 @@ export async function middleware(request: NextRequest) {
       '/referrals',
       '/submissions',
       '/opportunities',
+      '/admin',
     ]
 
     // Public-only routes (redirect to dashboard if authenticated)

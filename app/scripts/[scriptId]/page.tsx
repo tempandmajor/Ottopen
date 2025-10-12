@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { ScriptToolbar } from '@/src/components/script-editor/script-toolbar'
 import { ScriptElementComponent } from '@/src/components/script-editor/script-element'
 import { BeatBoard } from '@/src/components/script-editor/beat-board'
+import { ScriptNavigator } from '@/src/components/script-editor/script-navigator'
 import { ScriptFormatter } from '@/src/lib/script-formatter'
 import { ScriptPDFExporter } from '@/src/lib/script-pdf-export'
 import { ScriptAIAssistantPanel } from './components/ScriptAIAssistantPanel'
@@ -28,9 +29,11 @@ export default function ScriptEditorPage() {
   const [characters, setCharacters] = useState<ScriptCharacter[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
   const [showBeatBoard, setShowBeatBoard] = useState(false)
+  const [showNavigator, setShowNavigator] = useState(true)
   const [sidePanel, setSidePanel] = useState<'none' | 'ai' | 'research'>('none')
   const [showDialogueModal, setShowDialogueModal] = useState(false)
   const [selectedElement, setSelectedElement] = useState<ScriptElement | null>(null)
+  const [activeElementId, setActiveElementId] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -231,9 +234,24 @@ export default function ScriptEditorPage() {
     }
   }
 
+  const handleSceneClick = (elementId: string) => {
+    setActiveElementId(elementId)
+    // Scroll to the element
+    const element = document.getElementById(`element-${elementId}`)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }
+
+  const handleAddScene = () => {
+    // In a real implementation, this would create a new scene heading element
+    console.log('Add scene')
+  }
+
   const handleElementClick = (elementId: string) => {
     if (!script?.is_locked) {
       setEditingId(elementId)
+      setActiveElementId(elementId)
       // Set selected element for AI features
       const element = elements.find(el => el.id === elementId)
       if (element) {
@@ -354,6 +372,20 @@ export default function ScriptEditorPage() {
       />
 
       <div className="flex flex-1 overflow-hidden">
+        {/* Left Navigator */}
+        {showNavigator && (
+          <ScriptNavigator
+            scriptId={scriptId}
+            scriptTitle={script.title}
+            scriptType={script.script_type}
+            elements={elements}
+            activeElementId={activeElementId}
+            pageCount={script.page_count || 1}
+            onSceneClick={handleSceneClick}
+            onAddScene={handleAddScene}
+          />
+        )}
+
         <div className="flex-1 overflow-y-auto bg-white">
           <div className="max-w-4xl mx-auto py-8 px-4">
             {/* Title Page */}
@@ -380,7 +412,11 @@ export default function ScriptEditorPage() {
                 </div>
               ) : (
                 elements.map((element, index) => (
-                  <div key={element.id} onClick={() => handleElementClick(element.id)}>
+                  <div
+                    key={element.id}
+                    id={`element-${element.id}`}
+                    onClick={() => handleElementClick(element.id)}
+                  >
                     <ScriptElementComponent
                       element={element}
                       isEditing={editingId === element.id}
