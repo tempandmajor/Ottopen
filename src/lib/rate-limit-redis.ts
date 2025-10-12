@@ -27,8 +27,8 @@ interface RedisClient {
 function createRedisClient(): RedisClient | null {
   // Try Upstash Redis REST API first
   if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-    const url = process.env.UPSTASH_REDIS_REST_URL
-    const token = process.env.UPSTASH_REDIS_REST_TOKEN
+    const url = process.env.UPSTASH_REDIS_REST_URL.trim()
+    const token = process.env.UPSTASH_REDIS_REST_TOKEN.trim()
 
     return {
       async zadd(key: string, options: { score: number; member: string }) {
