@@ -1,5 +1,5 @@
 // AI Editor Service - Complete AI integration layer
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '@/src/lib/supabase'
 import type {
   Manuscript,
   Chapter,
@@ -27,10 +27,10 @@ import type {
   SceneComment,
 } from '@/src/types/ai-editor'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Ensure supabase client is available
+if (!supabase) {
+  throw new Error('Supabase client not configured')
+}
 
 // ============================================================================
 // MANUSCRIPT OPERATIONS
@@ -43,9 +43,12 @@ export class ManuscriptService {
       .insert({
         user_id: userId,
         title: data.title || 'Untitled Manuscript',
-        genre: data.genre,
+        logline: data.logline || 'A new story waiting to be told',
+        synopsis: data.synopsis || 'Synopsis to be written...',
+        genre: data.genre || 'fiction',
+        type: (data.type as any) || 'book',
+        page_count: data.page_count || 0,
         target_word_count: data.target_word_count || 80000,
-        structure_type: data.structure_type || 'three-act',
         ...data,
       })
       .select()
