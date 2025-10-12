@@ -1,6 +1,5 @@
 'use client'
 
-import { Navigation } from '@/src/components/navigation'
 import { ProtectedRoute } from '@/src/components/auth/protected-route'
 import { Button } from '@/src/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/src/components/ui/card'
@@ -296,8 +295,6 @@ function MessagesContent() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-background">
-        <Navigation />
-
         <div className="container mx-auto px-4 py-6 sm:py-8">
           <div className="max-w-7xl mx-auto">
             <div className="grid lg:grid-cols-4 gap-4 h-[calc(100vh-200px)]">

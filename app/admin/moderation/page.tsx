@@ -1,6 +1,5 @@
 'use client'
 
-import { Navigation } from '@/src/components/navigation'
 import { ProtectedRoute } from '@/src/components/auth/protected-route'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
 import { Button } from '@/src/components/ui/button'
@@ -201,8 +200,6 @@ export default function ModerationDashboard() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-background">
-        <Navigation />
-
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-7xl mx-auto space-y-6">
             <div className="flex items-center justify-between">

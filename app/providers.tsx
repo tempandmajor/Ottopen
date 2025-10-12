@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { AuthProvider } from '@/src/contexts/auth-context'
 import { Toaster as HotToaster } from 'react-hot-toast'
 import { ErrorBoundary } from '@/src/components/error-boundary'
+import { AppLayout } from '@/src/components/app-layout'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient())
@@ -17,7 +18,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <AuthProvider>
             <TooltipProvider>
-              {children}
+              <AppLayout>{children}</AppLayout>
               <HotToaster
                 position="top-center"
                 toastOptions={{

@@ -1,4 +1,3 @@
-import { Navigation } from '@/src/components/navigation'
 import { Button } from '@/src/components/ui/button'
 import { Card, CardContent } from '@/src/components/ui/card'
 import { Home, ArrowLeft, Search } from 'lucide-react'
@@ -7,8 +6,6 @@ import Link from 'next/link'
 export default function NotFound() {
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-
       <div className="container mx-auto px-4 py-12 sm:py-16">
         <div className="max-w-2xl mx-auto text-center">
           <Card className="card-bg card-shadow border-literary-border">

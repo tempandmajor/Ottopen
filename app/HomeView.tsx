@@ -1,6 +1,5 @@
 'use client'
 
-import { Navigation } from '@/src/components/navigation'
 import { Footer } from '@/src/components/footer'
 import { AuthorCard } from '@/src/components/author-card'
 import { PostCard } from '@/src/components/post-card'
@@ -87,8 +86,6 @@ export function HomeView({ initialPosts, initialAuthors, initialStats }: HomeVie
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-
       {/* Hero Section */}
       <section className="hero-bg py-20 px-4">
         <div className="container mx-auto">

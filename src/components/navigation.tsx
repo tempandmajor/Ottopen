@@ -10,41 +10,15 @@ import {
   DropdownMenuTrigger,
 } from '@/src/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/src/components/ui/avatar'
-import {
-  PenTool,
-  Users,
-  BookOpen,
-  MessageSquare,
-  Home,
-  Rss,
-  User,
-  Mail,
-  Settings as SettingsIcon,
-  LogOut,
-  ChevronDown,
-  HelpCircle,
-  Shield,
-  FileText,
-  Search,
-  Upload,
-  Briefcase,
-  Gift,
-  Clapperboard,
-  DollarSign,
-} from 'lucide-react'
+import { Bell, LogOut, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/src/contexts/auth-context'
+import { Badge } from '@/src/components/ui/badge'
 
 export function Navigation() {
-  const currentPath = usePathname()
   const router = useRouter()
   const { user, loading, signOut } = useAuth()
-
-  // Debug logging to help diagnose auth state issues
-  console.log('Navigation - user:', !!user, 'loading:', loading)
-
-  const isActive = (path: string) => currentPath === path
 
   const handleSignOut = async () => {
     await signOut()
@@ -52,211 +26,93 @@ export function Navigation() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-literary-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4">
-        <div className="flex h-14 sm:h-16 items-center justify-between">
-          <div className="flex items-center space-x-4 sm:space-x-8">
-            <Link
-              href="/"
-              className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
-            >
-              <PenTool className="h-5 w-5 sm:h-6 sm:w-6" />
-              <h1 className="font-serif text-lg sm:text-xl font-semibold">Ottopen</h1>
-            </Link>
+    <nav className="sticky top-0 z-40 border-b border-literary-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 lg:ml-64">
+      <div className="container mx-auto px-4 lg:px-6">
+        <div className="flex h-14 items-center justify-between lg:h-16">
+          {/* Left side - empty on desktop (sidebar handles branding), spacer on mobile */}
+          <div className="lg:hidden w-10" />
 
-            {/* Public navigation - always visible */}
-            <div className="hidden md:flex items-center space-x-1">
-              <Button
-                variant={isActive('/works') ? 'default' : 'ghost'}
-                size="sm"
-                asChild
-                className="flex items-center space-x-2"
-              >
-                <Link href="/works">
-                  <BookOpen className="h-4 w-4" />
-                  <span>Discover</span>
-                </Link>
-              </Button>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-2 sm:space-x-4">
+          {/* Right side - actions */}
+          <div className="flex items-center space-x-2 sm:space-x-4 ml-auto">
             <ThemeToggle />
 
-            {user && (
-              <Button
-                variant="ghost"
-                size="sm"
-                asChild
-                className="relative flex items-center space-x-2"
-                title="Earn cash rewards by referring friends"
-              >
-                <Link href="/referrals">
-                  <DollarSign className="h-4 w-4" />
-                  <span className="hidden sm:inline">Earn</span>
-                  <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                </Link>
-              </Button>
-            )}
-
             {loading ? (
-              /* Loading state - show sign in buttons to prevent empty header */
-              <div className="hidden sm:flex items-center space-x-2">
-                <Button variant="outline" size="sm" disabled>
-                  <span className="opacity-50">Sign In</span>
-                </Button>
-                <Button size="sm" className="font-medium" disabled>
-                  <span className="opacity-50">Join Network</span>
-                </Button>
+              /* Loading state */
+              <div className="flex items-center space-x-2">
+                <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
               </div>
             ) : user ? (
-              /* Authenticated user menu */
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="flex items-center space-x-2 p-2"
-                    data-testid="user-avatar-button"
-                  >
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage
-                        src={user.profile?.avatar_url}
-                        alt={user.profile?.display_name || user.email}
-                      />
-                      <AvatarFallback>
-                        {(user.profile?.display_name || user.email)?.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  {/* Discover Section */}
-                  <DropdownMenuItem asChild>
-                    <Link href="/feed" className="flex items-center">
-                      <Rss className="mr-2 h-4 w-4" />
-                      <span>Feed</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/search" className="flex items-center">
-                      <Search className="mr-2 h-4 w-4" />
-                      <span>Search</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/authors" className="flex items-center">
-                      <Users className="mr-2 h-4 w-4" />
-                      <span>Authors</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/works" className="flex items-center">
-                      <BookOpen className="mr-2 h-4 w-4" />
-                      <span>Works</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/clubs" className="flex items-center">
-                      <Users className="mr-2 h-4 w-4" />
-                      <span>Book Clubs</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/messages" className="flex items-center">
-                      <Mail className="mr-2 h-4 w-4" />
-                      <span>Messages</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/submissions" className="flex items-center">
-                      <Upload className="mr-2 h-4 w-4" />
-                      <span>Submissions</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/opportunities" className="flex items-center">
-                      <Briefcase className="mr-2 h-4 w-4" />
-                      <span>Opportunities</span>
-                    </Link>
-                  </DropdownMenuItem>
+              /* Authenticated user - notification bell + avatar menu */
+              <>
+                {/* Notification bell */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  asChild
+                  className="relative"
+                  title="Notifications"
+                >
+                  <Link href="/notifications">
+                    <Bell className="h-5 w-5" />
+                    {/* Badge for unread notifications - will be dynamic later */}
+                    {/* Uncomment when you have actual notification count */}
+                    {/* <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center">
+                      3
+                    </Badge> */}
+                  </Link>
+                </Button>
 
-                  <DropdownMenuSeparator />
-
-                  {/* Writing Tools Section */}
-                  <DropdownMenuItem asChild>
-                    <Link href="/editor" className="flex items-center">
-                      <PenTool className="mr-2 h-4 w-4" />
-                      <span>AI Editor</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/scripts" className="flex items-center">
-                      <Clapperboard className="mr-2 h-4 w-4" />
-                      <span>Script Editor</span>
-                    </Link>
-                  </DropdownMenuItem>
-
-                  <DropdownMenuSeparator />
-
-                  {/* Earnings Section */}
-                  <DropdownMenuItem asChild>
-                    <Link href="/referrals" className="flex items-center">
-                      <DollarSign className="mr-2 h-4 w-4 text-green-600" />
-                      <span className="font-medium text-green-600">Earn Cash Rewards</span>
-                    </Link>
-                  </DropdownMenuItem>
-
-                  <DropdownMenuSeparator />
-
-                  {/* Account Section */}
-                  <DropdownMenuItem asChild>
-                    <Link
-                      href={`/profile/${user.profile?.username || user.id}`}
-                      className="flex items-center"
+                {/* User avatar dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="flex items-center space-x-2 p-2"
+                      data-testid="user-avatar-button"
                     >
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings" className="flex items-center">
-                      <SettingsIcon className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
-                    </Link>
-                  </DropdownMenuItem>
-
-                  <DropdownMenuSeparator />
-
-                  {/* Help & Support Section */}
-                  <DropdownMenuItem asChild>
-                    <Link href="/legal/support" className="flex items-center">
-                      <HelpCircle className="mr-2 h-4 w-4" />
-                      <span>Help & Support</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/legal/community" className="flex items-center">
-                      <Shield className="mr-2 h-4 w-4" />
-                      <span>Community Guidelines</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/legal/terms" className="flex items-center">
-                      <FileText className="mr-2 h-4 w-4" />
-                      <span>Terms & Privacy</span>
-                    </Link>
-                  </DropdownMenuItem>
-
-                  <DropdownMenuSeparator />
-
-                  {/* Sign Out */}
-                  <DropdownMenuItem onClick={handleSignOut} className="flex items-center">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Sign Out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage
+                          src={user.profile?.avatar_url}
+                          alt={user.profile?.display_name || user.email}
+                        />
+                        <AvatarFallback>
+                          {(user.profile?.display_name || user.email)?.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <ChevronDown className="h-4 w-4 hidden sm:block" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <div className="flex items-center justify-start gap-2 p-2">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {user.profile?.display_name || user.email}
+                        </p>
+                        <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                      </div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={`/profile/${user.profile?.username || user.id}`}
+                        className="cursor-pointer"
+                      >
+                        View Profile
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings" className="cursor-pointer">
+                        Settings
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Sign Out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
             ) : (
               /* Unauthenticated user buttons */
               <>

@@ -1,6 +1,5 @@
 'use client'
 
-import { Navigation } from '@/src/components/navigation'
 import { Footer } from '@/src/components/footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card'
 import { AlertTriangle, Shield, FileText, Users } from 'lucide-react'
@@ -8,8 +7,6 @@ import { AlertTriangle, Shield, FileText, Users } from 'lucide-react'
 export default function AgencyTerms() {
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">

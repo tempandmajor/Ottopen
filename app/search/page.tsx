@@ -1,6 +1,5 @@
 'use client'
 
-import { Navigation } from '@/src/components/navigation'
 import { ProtectedRoute } from '@/src/components/auth/protected-route'
 import { Suspense } from 'react'
 import EnhancedSearchView from './EnhancedSearchView'
@@ -15,7 +14,6 @@ export default function SearchPage() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-background">
-        <Navigation />
         <Suspense
           fallback={
             <div className="container mx-auto px-4 py-6">

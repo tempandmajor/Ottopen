@@ -1,4 +1,3 @@
-import { Navigation } from '@/src/components/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card'
 import { Separator } from '@/src/components/ui/separator'
 import { Button } from '@/src/components/ui/button'
@@ -19,8 +18,6 @@ import Link from 'next/link'
 export default function CommunityGuidelines() {
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-
       <div className="container mx-auto px-4 py-6 sm:py-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
