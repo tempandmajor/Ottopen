@@ -6,6 +6,7 @@ import { Button } from '@/src/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/src/components/ui/avatar'
 import { MapPin, Book, Users, CheckCircle, Crown, Sparkles, Shield } from 'lucide-react'
 import Link from 'next/link'
+import { sanitizeText } from '@/src/lib/sanitize'
 
 // Helper function to check if author joined within days
 function isWithinDays(dateString: string, days: number): boolean {
@@ -158,7 +159,7 @@ export function AuthorCard({
             </div>
 
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-4 line-clamp-2">
-              {bio}
+              {sanitizeText(bio)}
             </p>
 
             <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground mb-4">

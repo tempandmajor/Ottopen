@@ -58,6 +58,7 @@ import { dbService } from '@/src/lib/database'
 import type { User, Post } from '@/src/lib/supabase'
 import { toast } from 'react-hot-toast'
 import Link from 'next/link'
+import { sanitizeText, sanitizeUrl } from '@/src/lib/sanitize'
 
 interface Review {
   id: string
@@ -504,7 +505,7 @@ export default function EnhancedProfileView() {
                       <p
                         className={`text-foreground leading-relaxed ${!expandedBio && (profile.bio || '').length > 200 ? 'line-clamp-3' : ''}`}
                       >
-                        {profile.bio}
+                        {sanitizeText(profile.bio)}
                       </p>
                       {(profile.bio || '').length > 200 && (
                         <Button
@@ -551,7 +552,7 @@ export default function EnhancedProfileView() {
                     <div className="flex flex-wrap gap-2">
                       {profile.website_url && (
                         <Button variant="ghost" size="sm" asChild>
-                          <a href={profile.website_url} target="_blank" rel="noopener noreferrer">
+                          <a href={sanitizeUrl(profile.website_url)} target="_blank" rel="noopener noreferrer">
                             <Globe className="h-4 w-4 mr-2" />
                             Website
                           </a>
@@ -571,7 +572,7 @@ export default function EnhancedProfileView() {
                       )}
                       {profile.linkedin_url && (
                         <Button variant="ghost" size="sm" asChild>
-                          <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer">
+                          <a href={sanitizeUrl(profile.linkedin_url)} target="_blank" rel="noopener noreferrer">
                             <Linkedin className="h-4 w-4 mr-2" />
                             LinkedIn
                           </a>
