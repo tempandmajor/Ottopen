@@ -93,18 +93,23 @@ function validateEnv(): Env {
 // Validate on module load (build time and runtime)
 let env: Env
 
+// Check if we're in build mode (NEXT_PHASE is set by Next.js during build)
+const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build'
+
 try {
   env = validateEnv()
   if (process.env.NODE_ENV === 'development') {
     console.log('✅ Environment variables validated successfully')
   }
 } catch (error) {
-  // In development, show warning but don't crash
-  if (process.env.NODE_ENV === 'development') {
-    console.warn('⚠️  Environment validation failed (development mode):', error)
+  // In development or build time, show warning but don't crash
+  if (process.env.NODE_ENV === 'development' || isBuildTime) {
+    if (!isBuildTime) {
+      console.warn('⚠️  Environment validation failed (development mode):', error)
+    }
     env = process.env as unknown as Env
   } else {
-    // In production, crash immediately
+    // In production runtime, crash immediately
     throw error
   }
 }
