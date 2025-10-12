@@ -10,9 +10,15 @@ export async function GET(request: NextRequest) {
   const error = requestUrl.searchParams.get('error')
   const errorDescription = requestUrl.searchParams.get('error_description')
 
+  console.log('[OAuth Callback] Starting callback handler', {
+    hasCode: !!code,
+    hasError: !!error,
+    url: requestUrl.href,
+  })
+
   // Handle OAuth errors
   if (error) {
-    console.error('OAuth error:', error, errorDescription)
+    console.error('[OAuth Callback] OAuth error:', error, errorDescription)
     return NextResponse.redirect(
       `${requestUrl.origin}/auth/signin?error=${encodeURIComponent(errorDescription || error)}`
     )
@@ -23,8 +29,15 @@ export async function GET(request: NextRequest) {
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
 
     try {
+      console.log('[OAuth Callback] Exchanging code for session...')
       // Exchange code for session
       const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+
+      console.log('[OAuth Callback] Exchange result:', {
+        hasSession: !!data?.session,
+        hasUser: !!data?.user,
+        error: exchangeError?.message,
+      })
 
       if (exchangeError) {
         console.error('Code exchange error:', exchangeError)
@@ -34,12 +47,22 @@ export async function GET(request: NextRequest) {
       }
 
       if (data.session) {
+        console.log('[OAuth Callback] Session created successfully:', {
+          userId: data.user.id,
+          email: data.user.email,
+        })
+
         // Check if user profile exists in our database
         const { data: profile, error: profileError } = await supabase
           .from('users')
           .select('*')
           .eq('id', data.user.id)
           .single()
+
+        console.log('[OAuth Callback] Profile check:', {
+          profileExists: !!profile,
+          profileError: profileError?.message,
+        })
 
         // If no profile exists, create one from OAuth data
         if (profileError || !profile) {
@@ -50,6 +73,13 @@ export async function GET(request: NextRequest) {
             .split('@')[0]
             .toLowerCase()
             .replace(/[^a-z0-9_]/g, '_')
+
+          console.log('[OAuth Callback] Creating new profile:', {
+            userId: data.user.id,
+            email,
+            displayName,
+            username,
+          })
 
           // Create user profile
           const { error: insertError } = await supabase.from('users').insert({
@@ -66,14 +96,19 @@ export async function GET(request: NextRequest) {
           })
 
           if (insertError) {
-            console.error('Profile creation error:', insertError)
+            console.error('[OAuth Callback] Profile creation error:', insertError)
             // Don't fail the auth flow if profile creation fails
             // User can complete profile later
+          } else {
+            console.log('[OAuth Callback] Profile created successfully')
           }
         }
 
         // Redirect to feed on successful authentication
+        console.log('[OAuth Callback] Redirecting to /feed')
         return NextResponse.redirect(`${requestUrl.origin}/feed`)
+      } else {
+        console.error('[OAuth Callback] No session in exchange data')
       }
     } catch (error) {
       console.error('OAuth callback error:', error)
