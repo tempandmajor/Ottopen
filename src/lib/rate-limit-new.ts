@@ -2,62 +2,125 @@ import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
+import { getValidatedEnvVar } from '@/src/lib/env-validation'
 
-// Initialize Redis client
-const redis = process.env.UPSTASH_REDIS_REST_URL
-  ? new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL!.trim(),
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!.trim(),
+// Lazy initialization for Redis and rate limiters
+let _redis: Redis | null | undefined = undefined
+let _rateLimiters:
+  | {
+      ai: Ratelimit | null
+      referral: Ratelimit | null
+      auth: Ratelimit | null
+      api: Ratelimit | null
+      payout: Ratelimit | null
+    }
+  | undefined = undefined
+
+function initializeRateLimiters(): {
+  ai: Ratelimit | null
+  referral: Ratelimit | null
+  auth: Ratelimit | null
+  api: Ratelimit | null
+  payout: Ratelimit | null
+} {
+  // Return cached instance if already initialized
+  if (_rateLimiters !== undefined) {
+    return _rateLimiters
+  }
+
+  try {
+    // Validate environment variables with proper sanitization
+    const url = getValidatedEnvVar('UPSTASH_REDIS_REST_URL', 'url', {
+      required: false,
+      protocol: 'https',
     })
-  : null
+    const token = getValidatedEnvVar('UPSTASH_REDIS_REST_TOKEN', 'token', {
+      required: false,
+      minLength: 10,
+    })
 
-// Create rate limiters for different use cases
-export const rateLimiters = {
-  // AI endpoints - expensive API calls
-  ai: redis
-    ? new Ratelimit({
-        redis,
-        limiter: Ratelimit.slidingWindow(10, '60 s'),
-        analytics: true,
-      })
-    : null,
+    if (url && token) {
+      console.log('[RATE_LIMIT] Initializing Upstash Redis rate limiters')
+      _redis = new Redis({ url, token })
 
-  // Referral endpoints - prevent fraud
-  referral: redis
-    ? new Ratelimit({
-        redis,
-        limiter: Ratelimit.slidingWindow(20, '300 s'), // 20 per 5 minutes
-        analytics: true,
-      })
-    : null,
+      _rateLimiters = {
+        // AI endpoints - expensive API calls
+        ai: new Ratelimit({
+          redis: _redis,
+          limiter: Ratelimit.slidingWindow(10, '60 s'),
+          analytics: true,
+        }),
 
-  // Auth endpoints - prevent brute force
-  auth: redis
-    ? new Ratelimit({
-        redis,
-        limiter: Ratelimit.slidingWindow(5, '60 s'), // 5 per minute
-        analytics: true,
-      })
-    : null,
+        // Referral endpoints - prevent fraud
+        referral: new Ratelimit({
+          redis: _redis,
+          limiter: Ratelimit.slidingWindow(20, '300 s'), // 20 per 5 minutes
+          analytics: true,
+        }),
 
-  // General API - standard protection
-  api: redis
-    ? new Ratelimit({
-        redis,
-        limiter: Ratelimit.slidingWindow(100, '60 s'), // 100 per minute
-        analytics: true,
-      })
-    : null,
+        // Auth endpoints - prevent brute force
+        auth: new Ratelimit({
+          redis: _redis,
+          limiter: Ratelimit.slidingWindow(5, '60 s'), // 5 per minute
+          analytics: true,
+        }),
 
-  // Payout endpoints - critical financial operations
-  payout: redis
-    ? new Ratelimit({
-        redis,
-        limiter: Ratelimit.slidingWindow(5, '300 s'), // 5 per 5 minutes
-        analytics: true,
-      })
-    : null,
+        // General API - standard protection
+        api: new Ratelimit({
+          redis: _redis,
+          limiter: Ratelimit.slidingWindow(100, '60 s'), // 100 per minute
+          analytics: true,
+        }),
+
+        // Payout endpoints - critical financial operations
+        payout: new Ratelimit({
+          redis: _redis,
+          limiter: Ratelimit.slidingWindow(5, '300 s'), // 5 per 5 minutes
+          analytics: true,
+        }),
+      }
+    } else {
+      console.log('[RATE_LIMIT] Upstash Redis not configured, rate limiting will be disabled')
+      _redis = null
+      _rateLimiters = {
+        ai: null,
+        referral: null,
+        auth: null,
+        api: null,
+        payout: null,
+      }
+    }
+  } catch (error) {
+    console.error('[RATE_LIMIT] Error initializing Upstash Redis:', error)
+    _redis = null
+    _rateLimiters = {
+      ai: null,
+      referral: null,
+      auth: null,
+      api: null,
+      payout: null,
+    }
+  }
+
+  return _rateLimiters
 }
+
+// Export lazy getters
+export const rateLimiters = new Proxy(
+  {} as {
+    ai: Ratelimit | null
+    referral: Ratelimit | null
+    auth: Ratelimit | null
+    api: Ratelimit | null
+    payout: Ratelimit | null
+  },
+  {
+    get(_target, prop) {
+      const limiters = initializeRateLimiters()
+      return limiters[prop as keyof typeof limiters]
+    },
+  }
+)
 
 export type RateLimiter = keyof typeof rateLimiters
 

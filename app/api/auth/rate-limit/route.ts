@@ -2,17 +2,64 @@ import { NextRequest, NextResponse } from 'next/server'
 import { RateLimiter } from '@/src/lib/rate-limit'
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
+import { getValidatedEnvVar } from '@/src/lib/env-validation'
 
-// If Upstash is configured, use it. Otherwise, fallback to in-memory limiter.
-const hasUpstash =
-  !!process.env.UPSTASH_REDIS_REST_URL && !!process.env.UPSTASH_REDIS_REST_TOKEN
+// Lazy initialization for Upstash Redis
+let _redis: Redis | null | undefined = undefined
+let _upstashSignin: Ratelimit | null | undefined = undefined
+let _upstashSignup: Ratelimit | null | undefined = undefined
 
-const redis = hasUpstash
-  ? new Redis({ url: process.env.UPSTASH_REDIS_REST_URL!, token: process.env.UPSTASH_REDIS_REST_TOKEN! })
-  : null
+function getUpstashRateLimiters(): {
+  redis: Redis | null
+  signin: Ratelimit | null
+  signup: Ratelimit | null
+} {
+  // Return cached instances if already initialized
+  if (_redis !== undefined) {
+    return {
+      redis: _redis,
+      signin: _upstashSignin || null,
+      signup: _upstashSignup || null,
+    }
+  }
 
-const upstashSignin = hasUpstash ? new Ratelimit({ redis: redis!, limiter: Ratelimit.slidingWindow(5, '5 m') }) : null
-const upstashSignup = hasUpstash ? new Ratelimit({ redis: redis!, limiter: Ratelimit.slidingWindow(3, '5 m') }) : null
+  try {
+    // Validate environment variables with proper sanitization
+    const url = getValidatedEnvVar('UPSTASH_REDIS_REST_URL', 'url', {
+      required: false,
+      protocol: 'https',
+    })
+    const token = getValidatedEnvVar('UPSTASH_REDIS_REST_TOKEN', 'token', {
+      required: false,
+      minLength: 10,
+    })
+
+    if (url && token) {
+      console.log('[RATE_LIMIT] Initializing Upstash Redis rate limiters')
+      _redis = new Redis({ url, token })
+      _upstashSignin = new Ratelimit({ redis: _redis, limiter: Ratelimit.slidingWindow(5, '5 m') })
+      _upstashSignup = new Ratelimit({ redis: _redis, limiter: Ratelimit.slidingWindow(3, '5 m') })
+    } else {
+      console.log(
+        '[RATE_LIMIT] Upstash Redis not configured, using in-memory rate limiting fallback'
+      )
+      _redis = null
+      _upstashSignin = null
+      _upstashSignup = null
+    }
+  } catch (error) {
+    console.error('[RATE_LIMIT] Error initializing Upstash Redis:', error)
+    _redis = null
+    _upstashSignin = null
+    _upstashSignup = null
+  }
+
+  return {
+    redis: _redis,
+    signin: _upstashSignin,
+    signup: _upstashSignup,
+  }
+}
 
 // Fallback in-memory (single-instance) limiters
 const signinLimiter = new RateLimiter({ windowMs: 5 * 60 * 1000, maxRequests: 5 })
@@ -20,7 +67,7 @@ const signupLimiter = new RateLimiter({ windowMs: 5 * 60 * 1000, maxRequests: 3 
 
 function getClientIp(req: NextRequest) {
   const forwarded = req.headers.get('x-forwarded-for')
-  return forwarded ? forwarded.split(',')[0].trim() : (req.ip || 'unknown')
+  return forwarded ? forwarded.split(',')[0].trim() : req.ip || 'unknown'
 }
 
 function buildKey(req: NextRequest, email: string | undefined, op: 'signin' | 'signup') {
@@ -42,8 +89,18 @@ export async function POST(req: NextRequest) {
 
     const key = buildKey(req, email, operation)
 
+    // Get Upstash rate limiters lazily
+    const { signin: upstashSignin, signup: upstashSignup } = getUpstashRateLimiters()
+    const hasUpstash = upstashSignin !== null && upstashSignup !== null
+
     // Use Upstash if available
-    let result: { success: boolean; limit: number; remaining: number; resetTime: number; retryAfter?: number }
+    let result: {
+      success: boolean
+      limit: number
+      remaining: number
+      resetTime: number
+      retryAfter?: number
+    }
     if (hasUpstash) {
       const rate = operation === 'signin' ? upstashSignin! : upstashSignup!
       const rl = await rate.limit(key)
