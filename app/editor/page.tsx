@@ -1,5 +1,5 @@
 import { requireAuth } from '@/lib/server/auth'
-import { EditorDashboard } from './EditorDashboard'
+import { ManuscriptsBrowser } from '@/src/components/files-browser/manuscripts-browser'
 import { redirect } from 'next/navigation'
 import { EditorErrorBoundary } from '@/src/components/EditorErrorBoundary'
 
@@ -19,7 +19,7 @@ export default async function EditorPage() {
 
   return (
     <EditorErrorBoundary>
-      <EditorDashboard user={user} />
+      <ManuscriptsBrowser />
     </EditorErrorBoundary>
   )
 }
