@@ -236,7 +236,28 @@ If you see this instead, Redis is not configured:
 
 - `src/lib/env-validation.ts` - Environment variable validation utility (NEW)
 - `src/lib/rate-limit-redis.ts` - Redis rate limiter with lazy initialization (UPDATED)
+- `app/api/auth/rate-limit/route.ts` - Auth rate limiting with lazy Upstash initialization (UPDATED)
+- `src/lib/rate-limit-new.ts` - Upstash rate limiters with lazy initialization via Proxy (UPDATED)
 - All API routes using rate limiting automatically benefit from these fixes
+
+## Files Fixed
+
+The following files were updated to use lazy initialization:
+
+1. **src/lib/rate-limit-redis.ts** - Custom Redis implementation
+   - Changed from module-level `createRedisClient()` to lazy `getRedisClient()`
+   - RedisRateLimiter class no longer stores Redis instance in constructor
+   - Validation utility used for all environment variable access
+
+2. **app/api/auth/rate-limit/route.ts** - Upstash @upstash/redis implementation
+   - Changed from module-level `new Redis()` to lazy `getUpstashRateLimiters()`
+   - Wrapped all Ratelimit instances in lazy function
+   - Only initializes when route is actually called
+
+3. **src/lib/rate-limit-new.ts** - Upstash rate limiters for different endpoints
+   - Changed from module-level exports to lazy `initializeRateLimiters()`
+   - Used Proxy pattern for lazy property access
+   - All limiters (ai, referral, auth, api, payout) initialize on first access
 
 ## Impact
 
