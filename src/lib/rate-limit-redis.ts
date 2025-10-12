@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { getValidatedEnvVar } from './env-validation'
 
 interface RateLimitOptions {
   windowMs: number // Time window in milliseconds
@@ -23,61 +24,92 @@ interface RedisClient {
   expire: (key: string, seconds: number) => Promise<number>
 }
 
+// Lazy Redis client singleton
+let _redisClient: RedisClient | null | undefined = undefined
+
 // Create Redis client (supports Upstash REST or Vercel KV)
-function createRedisClient(): RedisClient | null {
-  // Try Upstash Redis REST API first
-  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-    const url = process.env.UPSTASH_REDIS_REST_URL.trim()
-    const token = process.env.UPSTASH_REDIS_REST_TOKEN.trim()
-
-    return {
-      async zadd(key: string, options: { score: number; member: string }) {
-        const res = await fetch(`${url}/zadd/${key}/${options.score}/${options.member}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        const data = await res.json()
-        return data.result
-      },
-      async zremrangebyscore(key: string, min: number, max: number) {
-        const res = await fetch(`${url}/zremrangebyscore/${key}/${min}/${max}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        const data = await res.json()
-        return data.result
-      },
-      async zcard(key: string) {
-        const res = await fetch(`${url}/zcard/${key}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        const data = await res.json()
-        return data.result
-      },
-      async expire(key: string, seconds: number) {
-        const res = await fetch(`${url}/expire/${key}/${seconds}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        const data = await res.json()
-        return data.result
-      },
-    }
+// Uses lazy initialization to prevent build-time errors
+function getRedisClient(): RedisClient | null {
+  // Return cached instance if already initialized
+  if (_redisClient !== undefined) {
+    return _redisClient
   }
 
-  // Try Vercel KV as fallback
-  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
-    try {
-      // Dynamic import to avoid errors if @vercel/kv is not installed
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { kv } = require('@vercel/kv')
-      return kv
-    } catch (error) {
-      console.warn('Vercel KV not available:', error)
-    }
-  }
+  try {
+    // Try Upstash Redis REST API first with validation
+    const upstashUrl = getValidatedEnvVar('UPSTASH_REDIS_REST_URL', 'url', {
+      required: false,
+      protocol: 'https',
+    })
+    const upstashToken = getValidatedEnvVar('UPSTASH_REDIS_REST_TOKEN', 'token', {
+      required: false,
+      minLength: 10,
+    })
 
-  console.warn(
-    'No Redis configuration found. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN for production rate limiting.'
-  )
-  return null
+    if (upstashUrl && upstashToken) {
+      console.log('[REDIS] Using Upstash Redis for rate limiting')
+      _redisClient = {
+        async zadd(key: string, options: { score: number; member: string }) {
+          const res = await fetch(`${upstashUrl}/zadd/${key}/${options.score}/${options.member}`, {
+            headers: { Authorization: `Bearer ${upstashToken}` },
+          })
+          const data = await res.json()
+          return data.result
+        },
+        async zremrangebyscore(key: string, min: number, max: number) {
+          const res = await fetch(`${upstashUrl}/zremrangebyscore/${key}/${min}/${max}`, {
+            headers: { Authorization: `Bearer ${upstashToken}` },
+          })
+          const data = await res.json()
+          return data.result
+        },
+        async zcard(key: string) {
+          const res = await fetch(`${upstashUrl}/zcard/${key}`, {
+            headers: { Authorization: `Bearer ${upstashToken}` },
+          })
+          const data = await res.json()
+          return data.result
+        },
+        async expire(key: string, seconds: number) {
+          const res = await fetch(`${upstashUrl}/expire/${key}/${seconds}`, {
+            headers: { Authorization: `Bearer ${upstashToken}` },
+          })
+          const data = await res.json()
+          return data.result
+        },
+      }
+      return _redisClient
+    }
+
+    // Try Vercel KV as fallback
+    const kvUrl = getValidatedEnvVar('KV_REST_API_URL', 'url', { required: false })
+    const kvToken = getValidatedEnvVar('KV_REST_API_TOKEN', 'token', { required: false })
+
+    if (kvUrl && kvToken) {
+      try {
+        // Dynamic import to avoid errors if @vercel/kv is not installed
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { kv } = require('@vercel/kv')
+        console.log('[REDIS] Using Vercel KV for rate limiting')
+        _redisClient = kv
+        return _redisClient
+      } catch (error) {
+        console.warn('[REDIS] Vercel KV package not available:', error)
+      }
+    }
+
+    // No Redis available
+    console.warn(
+      '[REDIS] No Redis configuration found. Rate limiting will use in-memory fallback. ' +
+        'For production, set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN.'
+    )
+    _redisClient = null
+    return _redisClient
+  } catch (error) {
+    console.error('[REDIS] Error initializing Redis client:', error)
+    _redisClient = null
+    return _redisClient
+  }
 }
 
 export class RedisRateLimiter {
@@ -85,14 +117,13 @@ export class RedisRateLimiter {
   private maxRequests: number
   private keyGenerator: (request: NextRequest) => string
   private prefix: string
-  private redis: RedisClient | null
 
   constructor(options: RateLimitOptions) {
     this.windowMs = options.windowMs
     this.maxRequests = options.maxRequests
     this.keyGenerator = options.keyGenerator || this.defaultKeyGenerator
     this.prefix = options.prefix || 'api'
-    this.redis = createRedisClient()
+    // Don't create Redis client at construction time - use lazy initialization
   }
 
   private defaultKeyGenerator(request: NextRequest): string {
@@ -103,11 +134,15 @@ export class RedisRateLimiter {
   }
 
   async checkRateLimit(request: NextRequest): Promise<RateLimitResult> {
+    // Get Redis client lazily - only when needed
+    const redis = getRedisClient()
+
     // If Redis is not configured, allow the request but warn
-    if (!this.redis) {
+    if (!redis) {
       if (process.env.NODE_ENV === 'production') {
         console.error(
-          'CRITICAL: Redis not configured for rate limiting in production! Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN.'
+          '[RATE_LIMIT] CRITICAL: Redis not configured for rate limiting in production! ' +
+            'Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN.'
         )
       }
       return {
@@ -128,16 +163,16 @@ export class RedisRateLimiter {
       const requestId = `${now}-${Math.random()}`
 
       // Add current request
-      await this.redis.zadd(key, { score: now, member: requestId })
+      await redis.zadd(key, { score: now, member: requestId })
 
       // Remove old requests outside the window
-      await this.redis.zremrangebyscore(key, 0, windowStart)
+      await redis.zremrangebyscore(key, 0, windowStart)
 
       // Set expiration on the key
-      await this.redis.expire(key, Math.ceil(this.windowMs / 1000))
+      await redis.expire(key, Math.ceil(this.windowMs / 1000))
 
       // Count requests in current window
-      const count = await this.redis.zcard(key)
+      const count = await redis.zcard(key)
 
       const resetTime = now + this.windowMs
       const remaining = Math.max(0, this.maxRequests - count)
@@ -160,7 +195,7 @@ export class RedisRateLimiter {
       }
     } catch (error) {
       // Fallback to allowing request if Redis fails
-      console.error('Rate limiting error:', error)
+      console.error('[RATE_LIMIT] Redis error, allowing request:', error)
       return {
         success: true,
         limit: this.maxRequests,
