@@ -27,20 +27,38 @@ function getSupabaseConfig() {
   return { url: '', anonKey: '' }
 }
 
-const { url: supabaseUrl, anonKey: supabaseAnonKey } = getSupabaseConfig()
+// Lazy getter for Supabase client - only creates when accessed, not at module import time
+// This prevents build-time errors when env vars aren't available
+let _supabaseClient: ReturnType<typeof createClient> | null = null
+function getSupabaseClient() {
+  if (_supabaseClient) return _supabaseClient
 
-// Client-side Supabase client - only create if config is valid
-export const supabase =
-  supabaseUrl && supabaseAnonKey
-    ? createClient(supabaseUrl, supabaseAnonKey, {
-        auth: {
-          persistSession: true,
-          autoRefreshToken: true,
-          detectSessionInUrl: true,
-          flowType: 'pkce',
-        },
-      })
-    : null
+  const { url: supabaseUrl, anonKey: supabaseAnonKey } = getSupabaseConfig()
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return null
+  }
+
+  _supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      flowType: 'pkce',
+    },
+  })
+
+  return _supabaseClient
+}
+
+// Export a proxy that lazily initializes the client
+export const supabase = new Proxy({} as ReturnType<typeof createClient>, {
+  get(_target, prop) {
+    const client = getSupabaseClient()
+    if (!client) return undefined
+    return client[prop as keyof typeof client]
+  },
+})
 
 // Check if Supabase is properly configured
 export const isSupabaseConfigured = () => {
@@ -49,8 +67,8 @@ export const isSupabaseConfigured = () => {
     return false
   }
 
-  // Check if supabase client was successfully created
-  return supabase !== null
+  // Check if supabase client can be successfully created
+  return getSupabaseClient() !== null
 }
 
 // Database types
