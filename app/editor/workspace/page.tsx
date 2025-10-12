@@ -3,6 +3,8 @@
 import { EditorTabs } from '@/src/components/editor-tabs/editor-tabs'
 import { useEditorTabs } from '@/src/hooks/useEditorTabs'
 import { ManuscriptNavigator } from '@/src/components/ai-editor/manuscript-navigator'
+import { SaveStatus } from '@/src/components/editor-tabs/save-status'
+import { useAutoSave } from '@/src/hooks/useAutoSave'
 import { useEffect, useState } from 'react'
 import type { ChapterWithScenes } from '@/src/types/navigation'
 import { Button } from '@/src/components/ui/button'
@@ -19,6 +21,24 @@ export default function ManuscriptWorkspacePage() {
   const [manuscriptTitle, setManuscriptTitle] = useState('')
   const [totalWordCount, setTotalWordCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [contentChanged, setContentChanged] = useState(false)
+
+  // Auto-save functionality
+  const {
+    isSaving,
+    lastSaved,
+    error: saveError,
+  } = useAutoSave({
+    onSave: async () => {
+      if (!activeTab || !contentChanged) return
+
+      // TODO: Implement actual save logic when editor is integrated
+      // For now, just simulate a save
+      await new Promise(resolve => setTimeout(resolve, 500))
+      setContentChanged(false)
+    },
+    enabled: !!activeTab && contentChanged,
+  })
 
   // Load manuscript data when active tab changes
   useEffect(() => {
@@ -27,6 +47,19 @@ export default function ManuscriptWorkspacePage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab?.fileId])
+
+  // Warn before closing browser if there are unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (contentChanged) {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [contentChanged])
 
   const loadManuscriptData = async (manuscriptId: string) => {
     try {
@@ -169,6 +202,18 @@ export default function ManuscriptWorkspacePage() {
         onTabClose={closeTab}
         onTabAdd={createNewTab}
       />
+
+      {/* Save status bar */}
+      {activeTab && (
+        <div className="border-b px-4 py-2 bg-muted/30">
+          <SaveStatus
+            isSaving={isSaving}
+            lastSaved={lastSaved}
+            error={saveError}
+            isDirty={contentChanged}
+          />
+        </div>
+      )}
 
       {/* Editor content */}
       <div className="flex flex-1 overflow-hidden">

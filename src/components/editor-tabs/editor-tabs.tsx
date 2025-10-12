@@ -35,7 +35,8 @@ export function EditorTabs({
     const tab = tabs.find(t => t.id === tabId)
 
     if (tab?.isDirty) {
-      if (!confirm(`"${tab.title}" has unsaved changes. Close anyway?`)) {
+      const message = `"${tab.title}" has unsaved changes. Your changes will be lost if you close this tab. Close anyway?`
+      if (!confirm(message)) {
         return
       }
     }
