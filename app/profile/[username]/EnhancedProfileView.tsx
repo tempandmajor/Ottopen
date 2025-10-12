@@ -1,4 +1,5 @@
 'use client'
+import { Navigation } from '@/src/components/navigation'
 
 import { PostCard } from '@/src/components/post-card'
 import { Button } from '@/src/components/ui/button'

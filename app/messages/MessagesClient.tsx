@@ -1,4 +1,5 @@
 'use client'
+import { Navigation } from '@/src/components/navigation'
 
 import { ProtectedRoute } from '@/src/components/auth/protected-route'
 import { Button } from '@/src/components/ui/button'
@@ -295,6 +296,7 @@ function MessagesContent() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-background">
+        <Navigation />
         <div className="container mx-auto px-4 py-6 sm:py-8">
           <div className="max-w-7xl mx-auto">
             <div className="grid lg:grid-cols-4 gap-4 h-[calc(100vh-200px)]">
@@ -340,6 +342,7 @@ function MessagesContent() {
 
                           return (
                             <div key={conv.id} className="relative group">
+                              <Navigation />
                               <button
                                 onClick={() => setSelectedConversationId(conv.id)}
                                 className={`w-full p-3 rounded-lg text-left transition-colors hover:bg-literary-subtle ${
@@ -519,6 +522,7 @@ function MessagesContent() {
 
                               return (
                                 <div key={message.id}>
+                                  <Navigation />
                                   {showDateDivider && (
                                     <div className="flex items-center justify-center my-4">
                                       <div className="px-3 py-1 bg-muted rounded-full">

@@ -1,4 +1,5 @@
 'use client'
+import { Navigation } from '@/src/components/navigation'
 
 import { useState, useEffect } from 'react'
 import { Plus, Search, Users, BookOpen, TrendingUp, Filter } from 'lucide-react'
@@ -62,6 +63,7 @@ export function ClubsView() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Navigation />
       {/* Header */}
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-16">

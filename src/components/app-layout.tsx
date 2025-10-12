@@ -1,20 +1,20 @@
 'use client'
 
 import { Sidebar } from '@/src/components/sidebar'
-import { Navigation } from '@/src/components/navigation'
+import { useAuth } from '@/src/contexts/auth-context'
 
 interface AppLayoutProps {
   children: React.ReactNode
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
+  const { user } = useAuth()
+
   return (
     <div className="relative min-h-screen">
-      <Sidebar />
-      <div className="lg:ml-64">
-        <Navigation />
-        <main className="min-h-[calc(100vh-3.5rem)] lg:min-h-[calc(100vh-4rem)]">{children}</main>
-      </div>
+      {/* Only show sidebar for authenticated users */}
+      {user && <Sidebar />}
+      {children}
     </div>
   )
 }

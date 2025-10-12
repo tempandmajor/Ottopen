@@ -1,4 +1,5 @@
 'use client'
+import { Navigation } from '@/src/components/navigation'
 
 import { Button } from '@/src/components/ui/button'
 import { Input } from '@/src/components/ui/input'
@@ -467,6 +468,7 @@ export default function Works() {
       >
         <CardContent className="p-6">
           <div className="flex space-x-4">
+            <Navigation />
             <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-lg bg-muted flex-shrink-0 flex items-center justify-center font-bold text-lg shadow-md">
               <BookOpen className="h-8 w-8" />
             </div>
@@ -655,6 +657,7 @@ export default function Works() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Navigation />
       <div className="container mx-auto px-4 py-6 sm:py-8">
         <div className="max-w-7xl mx-auto">
           {/* Header */}

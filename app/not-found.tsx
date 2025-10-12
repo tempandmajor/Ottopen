@@ -1,3 +1,5 @@
+import { Navigation } from '@/src/components/navigation'
+
 import { Button } from '@/src/components/ui/button'
 import { Card, CardContent } from '@/src/components/ui/card'
 import { Home, ArrowLeft, Search } from 'lucide-react'

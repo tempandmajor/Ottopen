@@ -1,3 +1,5 @@
+import { Navigation } from '@/src/components/navigation'
+
 import { requireAuth } from '@/lib/server/auth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card'
 import { Bell, CheckCircle, AlertCircle, Info, Mail } from 'lucide-react'

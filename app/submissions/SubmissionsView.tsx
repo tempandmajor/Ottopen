@@ -1,4 +1,5 @@
 'use client'
+import { Navigation } from '@/src/components/navigation'
 
 import { Footer } from '@/src/components/footer'
 import { Button } from '@/src/components/ui/button'
@@ -369,6 +370,7 @@ export function SubmissionsView({
 
   return (
     <div className="min-h-screen bg-background">
+      <Navigation />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           <div className="mb-8">

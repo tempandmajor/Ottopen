@@ -123,16 +123,8 @@ export function Sidebar() {
 
   const SidebarContent = () => (
     <div className="flex h-full flex-col">
-      {/* Logo */}
-      <div className="flex h-14 items-center border-b px-4 lg:h-16 lg:px-6">
-        <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
-          <PenTool className="h-6 w-6" />
-          <span className="font-serif text-xl font-semibold">Ottopen</span>
-        </Link>
-      </div>
-
       {/* Navigation */}
-      <ScrollArea className="flex-1 px-3 py-4">
+      <ScrollArea className="flex-1 px-3 py-4 mt-14 lg:mt-16">
         <nav className="space-y-6">
           {navigationSections.map((section, sectionIndex) => {
             const visibleItems = section.items.filter(shouldShowItem)
@@ -180,20 +172,6 @@ export function Sidebar() {
           })}
         </nav>
       </ScrollArea>
-
-      {/* Auth CTA */}
-      {!user && (
-        <div className="border-t p-4">
-          <div className="space-y-2">
-            <Button className="w-full font-medium" asChild>
-              <Link href="/auth/signup">Join Network</Link>
-            </Button>
-            <Button variant="outline" className="w-full" asChild>
-              <Link href="/auth/signin">Sign In</Link>
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   )
 
