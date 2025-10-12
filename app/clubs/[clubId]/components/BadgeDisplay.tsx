@@ -82,9 +82,7 @@ export function BadgeDisplay({ clubId, userId, compact = false }: BadgeDisplayPr
             </div>
           )
         })}
-        {badges.length > 3 && (
-          <Badge variant="secondary">+{badges.length - 3} more</Badge>
-        )}
+        {badges.length > 3 && <Badge variant="secondary">+{badges.length - 3} more</Badge>}
       </div>
     )
   }
@@ -123,7 +121,8 @@ export function BadgeDisplay({ clubId, userId, compact = false }: BadgeDisplayPr
                           <div className="font-semibold text-purple-900">{badge.badge_name}</div>
                           <div className="text-sm text-purple-700">{badge.badge_description}</div>
                           <div className="text-xs text-purple-600 mt-1">
-                            Earned {formatDistanceToNow(new Date(badge.earned_at), { addSuffix: true })}
+                            Earned{' '}
+                            {formatDistanceToNow(new Date(badge.earned_at), { addSuffix: true })}
                           </div>
                         </div>
                       </div>

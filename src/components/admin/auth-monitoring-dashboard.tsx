@@ -4,7 +4,12 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card'
 import { Button } from '@/src/components/ui/button'
 import { Badge } from '@/src/components/ui/badge'
-import { getAuthMetrics, getSecurityAlerts, getAuthEvents, exportAuthData } from '@/src/lib/auth-monitoring'
+import {
+  getAuthMetrics,
+  getSecurityAlerts,
+  getAuthEvents,
+  exportAuthData,
+} from '@/src/lib/auth-monitoring'
 import { AlertTriangle, Shield, Users, Activity } from 'lucide-react'
 
 export function AuthMonitoringDashboard() {
@@ -39,16 +44,21 @@ export function AuthMonitoringDashboard() {
 
   const getSeverityColor = (severity: 'low' | 'medium' | 'high') => {
     switch (severity) {
-      case 'high': return 'destructive'
-      case 'medium': return 'secondary'
-      case 'low': return 'outline'
-      default: return 'outline'
+      case 'high':
+        return 'destructive'
+      case 'medium':
+        return 'secondary'
+      case 'low':
+        return 'outline'
+      default:
+        return 'outline'
     }
   }
 
-  const successRate = metrics.signInAttempts > 0
-    ? ((metrics.signInSuccesses / metrics.signInAttempts) * 100).toFixed(1)
-    : '0'
+  const successRate =
+    metrics.signInAttempts > 0
+      ? ((metrics.signInSuccesses / metrics.signInAttempts) * 100).toFixed(1)
+      : '0'
 
   return (
     <div className="p-6 space-y-6">
@@ -73,9 +83,7 @@ export function AuthMonitoringDashboard() {
               {alerts.map((alert, index) => (
                 <div key={index} className="flex items-center justify-between">
                   <span className="text-sm">{alert.message}</span>
-                  <Badge variant={getSeverityColor(alert.severity)}>
-                    {alert.severity}
-                  </Badge>
+                  <Badge variant={getSeverityColor(alert.severity)}>{alert.severity}</Badge>
                 </div>
               ))}
             </div>
@@ -105,9 +113,7 @@ export function AuthMonitoringDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics.signUpAttempts}</div>
-            <p className="text-xs text-muted-foreground">
-              {metrics.signUpSuccesses} successful
-            </p>
+            <p className="text-xs text-muted-foreground">{metrics.signUpSuccesses} successful</p>
           </CardContent>
         </Card>
 
@@ -118,9 +124,7 @@ export function AuthMonitoringDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics.rateLimitHits}</div>
-            <p className="text-xs text-muted-foreground">
-              Security protection active
-            </p>
+            <p className="text-xs text-muted-foreground">Security protection active</p>
           </CardContent>
         </Card>
 
@@ -131,9 +135,7 @@ export function AuthMonitoringDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics.sessionTimeouts}</div>
-            <p className="text-xs text-muted-foreground">
-              Idle session management
-            </p>
+            <p className="text-xs text-muted-foreground">Idle session management</p>
           </CardContent>
         </Card>
       </div>
@@ -149,11 +151,15 @@ export function AuthMonitoringDashboard() {
               <p className="text-sm text-muted-foreground">No recent events</p>
             ) : (
               recentEvents.map((event, index) => (
-                <div key={index} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                <div
+                  key={index}
+                  className="flex items-center justify-between py-2 border-b last:border-b-0"
+                >
                   <div className="flex flex-col">
                     <span className="text-sm font-medium">{event.type}</span>
                     <span className="text-xs text-muted-foreground">
-                      {event.email && `${event.email} • `}{formatTimestamp(event.timestamp)}
+                      {event.email && `${event.email} • `}
+                      {formatTimestamp(event.timestamp)}
                     </span>
                   </div>
                   {event.metadata?.error && (

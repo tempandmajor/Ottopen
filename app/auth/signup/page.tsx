@@ -29,6 +29,7 @@ import { useAuth } from '@/src/contexts/auth-context'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
 import { dbService } from '@/src/lib/database'
+import { GoogleOAuthButton } from '@/src/components/auth/google-oauth-button'
 
 // Password strength calculator
 function calculatePasswordStrength(password: string): {
@@ -274,6 +275,23 @@ export default function SignUp() {
             </p>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Google OAuth Button - Only show on first step */}
+            {currentStep === 1 && (
+              <>
+                <GoogleOAuthButton mode="signup" />
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-literary-border" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">
+                      Or continue with email
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
+
             <form onSubmit={handleSignUp} className="space-y-4">
               {/* Step 1: Email & Password */}
               {currentStep === 1 && (

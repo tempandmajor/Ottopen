@@ -58,7 +58,11 @@ export function Leaderboard({ clubId }: LeaderboardProps) {
       case 3:
         return <Trophy className="h-5 w-5 text-orange-600" />
       default:
-        return <div className="h-5 w-5 flex items-center justify-center text-sm font-bold text-gray-400">#{rank}</div>
+        return (
+          <div className="h-5 w-5 flex items-center justify-center text-sm font-bold text-gray-400">
+            #{rank}
+          </div>
+        )
     }
   }
 
@@ -87,7 +91,7 @@ export function Leaderboard({ clubId }: LeaderboardProps) {
         <CardDescription>Top contributors in this club</CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs value={timeframe} onValueChange={(v) => setTimeframe(v as any)} className="space-y-4">
+        <Tabs value={timeframe} onValueChange={v => setTimeframe(v as any)} className="space-y-4">
           <TabsList className="w-full">
             <TabsTrigger value="weekly" className="flex-1">
               This Week
@@ -119,7 +123,9 @@ export function Leaderboard({ clubId }: LeaderboardProps) {
                   >
                     <div
                       className={`flex items-center gap-3 p-3 rounded-lg transition-all hover:shadow-md ${
-                        entry.rank <= 3 ? getRankBadge(entry.rank) : 'bg-white border hover:border-gray-300'
+                        entry.rank <= 3
+                          ? getRankBadge(entry.rank)
+                          : 'bg-white border hover:border-gray-300'
                       }`}
                     >
                       <div className="flex items-center gap-3 flex-1">
@@ -131,18 +137,22 @@ export function Leaderboard({ clubId }: LeaderboardProps) {
                           <div className={`font-semibold ${entry.rank <= 3 ? 'text-white' : ''}`}>
                             {entry.name}
                           </div>
-                          <div className={`text-sm ${entry.rank <= 3 ? 'text-white/80' : 'text-muted-foreground'}`}>
+                          <div
+                            className={`text-sm ${entry.rank <= 3 ? 'text-white/80' : 'text-muted-foreground'}`}
+                          >
                             {entry.score} points
                           </div>
                         </div>
                       </div>
 
                       {entry.change !== undefined && entry.change !== 0 && (
-                        <Badge variant={entry.change > 0 ? 'default' : 'secondary'} className="gap-1">
+                        <Badge
+                          variant={entry.change > 0 ? 'default' : 'secondary'}
+                          className="gap-1"
+                        >
                           {entry.change > 0 ? (
                             <>
-                              <TrendingUp className="h-3 w-3" />
-                              +{entry.change}
+                              <TrendingUp className="h-3 w-3" />+{entry.change}
                             </>
                           ) : (
                             <>
@@ -181,7 +191,9 @@ export function Leaderboard({ clubId }: LeaderboardProps) {
                   >
                     <div
                       className={`flex items-center gap-3 p-3 rounded-lg transition-all hover:shadow-md ${
-                        entry.rank <= 3 ? getRankBadge(entry.rank) : 'bg-white border hover:border-gray-300'
+                        entry.rank <= 3
+                          ? getRankBadge(entry.rank)
+                          : 'bg-white border hover:border-gray-300'
                       }`}
                     >
                       <div className="flex items-center gap-3 flex-1">
@@ -193,7 +205,9 @@ export function Leaderboard({ clubId }: LeaderboardProps) {
                           <div className={`font-semibold ${entry.rank <= 3 ? 'text-white' : ''}`}>
                             {entry.name}
                           </div>
-                          <div className={`text-sm ${entry.rank <= 3 ? 'text-white/80' : 'text-muted-foreground'}`}>
+                          <div
+                            className={`text-sm ${entry.rank <= 3 ? 'text-white/80' : 'text-muted-foreground'}`}
+                          >
                             {entry.score} points
                           </div>
                         </div>

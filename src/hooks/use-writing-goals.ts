@@ -50,11 +50,7 @@ export function useWritingGoals(userId: string | undefined) {
     try {
       const updatedGoal = await dbService.updateWritingGoal(goalId, updates)
       if (updatedGoal) {
-        setGoals(prev =>
-          prev.map(goal =>
-            goal.id === goalId ? updatedGoal : goal
-          )
-        )
+        setGoals(prev => prev.map(goal => (goal.id === goalId ? updatedGoal : goal)))
         toast.success('Goal updated successfully!')
         return updatedGoal
       } else {
@@ -78,6 +74,6 @@ export function useWritingGoals(userId: string | undefined) {
     loadGoals,
     createGoal,
     updateGoal,
-    updateGoalProgress
+    updateGoalProgress,
   }
 }

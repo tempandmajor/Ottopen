@@ -47,8 +47,8 @@ export function useRateLimit(options: UseRateLimitOptions) {
               metadata: {
                 storageKey,
                 attemptCount: data.attemptCount,
-                remainingTime
-              }
+                remainingTime,
+              },
             })
 
             // Set timer to unblock when window expires
@@ -69,74 +69,77 @@ export function useRateLimit(options: UseRateLimitOptions) {
     }
   }, [storageKey, maxAttempts, windowMs])
 
-  const recordAttempt = useCallback((success: boolean = false) => {
-    if (typeof window === 'undefined') return
+  const recordAttempt = useCallback(
+    (success: boolean = false) => {
+      if (typeof window === 'undefined') return
 
-    const now = Date.now()
-    const resetTime = now + windowMs
+      const now = Date.now()
+      const resetTime = now + windowMs
 
-    try {
-      const stored = localStorage.getItem(storageKey)
-      let currentCount = 0
+      try {
+        const stored = localStorage.getItem(storageKey)
+        let currentCount = 0
 
-      if (stored) {
-        const data = JSON.parse(stored)
-        if (data.resetTime > now) {
-          currentCount = data.attemptCount
-        }
-      }
-
-      if (success) {
-        // Reset on success
-        localStorage.removeItem(storageKey)
-        setState({
-          isBlocked: false,
-          remainingTime: 0,
-          attemptCount: 0,
-        })
-        return
-      }
-
-      const newCount = currentCount + 1
-      const newData = {
-        attemptCount: newCount,
-        resetTime,
-      }
-
-      localStorage.setItem(storageKey, JSON.stringify(newData))
-
-      const isBlocked = newCount >= maxAttempts
-      const remainingTime = isBlocked ? Math.ceil(windowMs / 1000) : 0
-
-      setState({
-        isBlocked,
-        remainingTime,
-        attemptCount: newCount,
-      })
-
-      if (isBlocked) {
-        // Log new rate limit hit for monitoring
-        logAuthEvent('rate_limit_hit', {
-          metadata: {
-            storageKey,
-            attemptCount: newCount,
-            remainingTime
+        if (stored) {
+          const data = JSON.parse(stored)
+          if (data.resetTime > now) {
+            currentCount = data.attemptCount
           }
+        }
+
+        if (success) {
+          // Reset on success
+          localStorage.removeItem(storageKey)
+          setState({
+            isBlocked: false,
+            remainingTime: 0,
+            attemptCount: 0,
+          })
+          return
+        }
+
+        const newCount = currentCount + 1
+        const newData = {
+          attemptCount: newCount,
+          resetTime,
+        }
+
+        localStorage.setItem(storageKey, JSON.stringify(newData))
+
+        const isBlocked = newCount >= maxAttempts
+        const remainingTime = isBlocked ? Math.ceil(windowMs / 1000) : 0
+
+        setState({
+          isBlocked,
+          remainingTime,
+          attemptCount: newCount,
         })
 
-        // Set timer to unblock
-        const timer = setTimeout(() => {
-          setState(prev => ({ ...prev, isBlocked: false, remainingTime: 0 }))
-          localStorage.removeItem(storageKey)
-        }, windowMs)
+        if (isBlocked) {
+          // Log new rate limit hit for monitoring
+          logAuthEvent('rate_limit_hit', {
+            metadata: {
+              storageKey,
+              attemptCount: newCount,
+              remainingTime,
+            },
+          })
 
-        // Store timer cleanup
-        return () => clearTimeout(timer)
+          // Set timer to unblock
+          const timer = setTimeout(() => {
+            setState(prev => ({ ...prev, isBlocked: false, remainingTime: 0 }))
+            localStorage.removeItem(storageKey)
+          }, windowMs)
+
+          // Store timer cleanup
+          return () => clearTimeout(timer)
+        }
+      } catch (error) {
+        console.warn('Rate limit record error:', error)
       }
-    } catch (error) {
-      console.warn('Rate limit record error:', error)
-    }
-  }, [storageKey, maxAttempts, windowMs])
+    },
+    [storageKey, maxAttempts, windowMs]
+  )
 
   const reset = useCallback(() => {
     if (typeof window === 'undefined') return

@@ -113,7 +113,11 @@ export function Navigation() {
               /* Authenticated user menu */
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center space-x-2 p-2">
+                  <Button
+                    variant="ghost"
+                    className="flex items-center space-x-2 p-2"
+                    data-testid="user-avatar-button"
+                  >
                     <Avatar className="h-8 w-8">
                       <AvatarImage
                         src={user.profile?.avatar_url}

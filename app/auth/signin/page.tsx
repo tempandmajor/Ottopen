@@ -11,6 +11,7 @@ import { useAuth } from '@/src/contexts/auth-context'
 import { useNavigate } from '@/src/hooks/use-navigate'
 import { useRateLimit } from '@/src/hooks/use-rate-limit'
 import { toast } from 'react-hot-toast'
+import { GoogleOAuthButton } from '@/src/components/auth/google-oauth-button'
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false)
@@ -119,6 +120,18 @@ export default function SignIn() {
             <CardTitle className="text-center">Sign In</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Google OAuth Button */}
+            <GoogleOAuthButton mode="signin" />
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-literary-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">Or continue with email</span>
+              </div>
+            </div>
+
             <form onSubmit={handleSignIn} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -129,6 +142,7 @@ export default function SignIn() {
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   className="border-literary-border"
+                  data-testid="email-input"
                   required
                   disabled={submitting}
                 />
@@ -144,6 +158,7 @@ export default function SignIn() {
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     className="border-literary-border pr-10"
+                    data-testid="password-input"
                     required
                     disabled={submitting}
                   />
@@ -169,6 +184,7 @@ export default function SignIn() {
               <Button
                 type="submit"
                 className="w-full"
+                data-testid="signin-button"
                 disabled={submitting || !rateLimiter.canAttempt}
               >
                 {submitting

@@ -119,9 +119,7 @@ class AuthMonitor {
   }
 
   getEventsByType(type: string, limit = 50): AuthEvent[] {
-    return this.events
-      .filter(event => event.type === type)
-      .slice(-limit)
+    return this.events.filter(event => event.type === type).slice(-limit)
   }
 
   getFailureRate(): number {
@@ -130,7 +128,11 @@ class AuthMonitor {
     return (this.metrics.signInFailures / totalAttempts) * 100
   }
 
-  getSecurityAlerts(): Array<{ type: string; message: string; severity: 'low' | 'medium' | 'high' }> {
+  getSecurityAlerts(): Array<{
+    type: string
+    message: string
+    severity: 'low' | 'medium' | 'high'
+  }> {
     const alerts = []
 
     // High failure rate
@@ -139,7 +141,7 @@ class AuthMonitor {
       alerts.push({
         type: 'high_failure_rate',
         message: `High sign-in failure rate: ${failureRate.toFixed(1)}%`,
-        severity: 'high' as const
+        severity: 'high' as const,
       })
     }
 
@@ -148,7 +150,7 @@ class AuthMonitor {
       alerts.push({
         type: 'frequent_rate_limiting',
         message: `Frequent rate limit hits: ${this.metrics.rateLimitHits}`,
-        severity: 'medium' as const
+        severity: 'medium' as const,
       })
     }
 
@@ -157,7 +159,7 @@ class AuthMonitor {
       alerts.push({
         type: 'frequent_timeouts',
         message: `Multiple session timeouts: ${this.metrics.sessionTimeouts}`,
-        severity: 'low' as const
+        severity: 'low' as const,
       })
     }
 
@@ -177,9 +179,7 @@ class AuthMonitor {
   // Clear sensitive data (useful for user privacy)
   clearUserData(userId: string) {
     this.events = this.events.map(event =>
-      event.userId === userId
-        ? { ...event, email: undefined, userId: undefined }
-        : event
+      event.userId === userId ? { ...event, email: undefined, userId: undefined } : event
     )
   }
 
@@ -189,7 +189,7 @@ class AuthMonitor {
       metrics: this.getMetrics(),
       recentEvents: this.getRecentEvents(100),
       securityAlerts: this.getSecurityAlerts(),
-      timestamp: Date.now()
+      timestamp: Date.now(),
     }
   }
 }

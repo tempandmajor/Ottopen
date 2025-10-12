@@ -1,6 +1,8 @@
 import { Inter, Playfair_Display } from 'next/font/google'
 import { Providers } from './providers'
 import { ScreenReaderAnnouncer } from '@/src/components/ScreenReaderAnnouncer'
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import '@/src/index.css'
 
 const inter = Inter({
@@ -54,6 +56,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <main id="main-content">{children}</main>
         </Providers>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
