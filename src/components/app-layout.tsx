@@ -14,7 +14,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     <div className="relative min-h-screen">
       {/* Only show sidebar for authenticated users */}
       {user && <Sidebar />}
-      {children}
+      <div className={user ? 'lg:ml-64' : ''}>{children}</div>
     </div>
   )
 }
