@@ -1,21 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Stripe from 'stripe'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import { getStripe, assertStripeEnv } from '@/src/lib/stripe'
+import * as Sentry from '@sentry/nextjs'
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic'
 
-function getStripe() {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error('STRIPE_SECRET_KEY is not configured')
-  }
-  return new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-08-27.basil',
-  })
-}
+// DEPRECATED: This endpoint is deprecated in favor of /api/stripe/create-checkout-session
+// It remains for backward compatibility but will be removed in a future version
 
 export async function POST(request: NextRequest) {
   try {
+    assertStripeEnv()
     const stripe = getStripe()
     const supabase = createServerSupabaseClient()
     const {
@@ -33,26 +29,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Price ID is required' }, { status: 400 })
     }
 
-    // Get or create Stripe customer
-    const { data: profile } = await supabase
-      .from('profiles')
+    // Get or create Stripe customer (UPDATED: using users table instead of profiles)
+    const { data: userData } = await supabase
+      .from('users')
       .select('stripe_customer_id, email')
       .eq('id', user.id)
       .single()
 
-    let customerId = profile?.stripe_customer_id
+    let customerId = userData?.stripe_customer_id
 
     if (!customerId) {
       const customer = await stripe.customers.create({
-        email: user.email || profile?.email,
+        email: user.email || userData?.email,
         metadata: {
           supabase_user_id: user.id,
         },
       })
       customerId = customer.id
 
-      // Update profile with customer ID
-      await supabase.from('profiles').update({ stripe_customer_id: customerId }).eq('id', user.id)
+      // Update users table with customer ID
+      await supabase.from('users').update({ stripe_customer_id: customerId }).eq('id', user.id)
     }
 
     // Store referral code in metadata if provided
@@ -89,6 +85,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('Checkout error:', error)
+    Sentry.captureException(error)
     return NextResponse.json(
       { error: error.message || 'Failed to create checkout session' },
       { status: 500 }

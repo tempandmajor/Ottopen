@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* TipTap Editor Styles */
+@import './styles/tiptap.css';
+
 /* ============================================
    ACCESSIBILITY & MOBILE UTILITIES
    ============================================ */

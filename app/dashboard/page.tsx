@@ -9,10 +9,21 @@ import {
   getServerUsers,
 } from '@/lib/server/data'
 import { DashboardView } from './DashboardView'
+import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 
 export default async function DashboardPage() {
   const user = await requireAuth()
   const userId = user.profile?.id || user.id
+
+  // Fetch Stripe data
+  const supabase = createServerSupabaseClient()
+  const { data: stripeData } = await supabase
+    .from('users')
+    .select(
+      'stripe_customer_id, stripe_connect_account_id, stripe_connect_onboarded, stripe_connect_charges_enabled, stripe_connect_payouts_enabled, subscription_status, subscription_tier, subscription_current_period_end'
+    )
+    .eq('id', userId)
+    .single()
 
   // Fetch all dashboard data in parallel on the server
   const [
@@ -59,6 +70,7 @@ export default async function DashboardPage() {
       suggestedAuthors={suggestedAuthors}
       writingGoals={writingGoals}
       userStatistics={userStatistics}
+      stripeData={stripeData}
     />
   )
 }

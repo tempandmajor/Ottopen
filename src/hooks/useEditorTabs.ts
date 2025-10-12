@@ -242,6 +242,10 @@ export function useEditorTabs({ type, basePath, maxTabs = 10 }: UseEditorTabsOpt
     )
   }, [])
 
+  const reorderTabs = useCallback((newTabs: EditorTab[]) => {
+    setTabs(newTabs)
+  }, [])
+
   return {
     tabs,
     activeTabId,
@@ -253,5 +257,6 @@ export function useEditorTabs({ type, basePath, maxTabs = 10 }: UseEditorTabsOpt
     markTabDirty,
     updateTabTitle,
     markTabSaved,
+    reorderTabs,
   }
 }

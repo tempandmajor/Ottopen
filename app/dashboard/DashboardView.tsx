@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/ca
 import { Progress } from '@/src/components/ui/progress'
 import { WelcomeModal } from '@/src/components/WelcomeModal'
 import { OnboardingTour, type TourStep } from '@/src/components/onboarding-tour'
+import { StripeEarningsCard } from '@/src/components/dashboard/stripe-earnings-card'
 import {
   BookOpen,
   Users,
@@ -58,6 +59,16 @@ interface DashboardViewProps {
   suggestedAuthors: UserWithStats[]
   writingGoals: WritingGoal[]
   userStatistics: UserStatistics | null
+  stripeData?: {
+    stripe_customer_id?: string | null
+    stripe_connect_account_id?: string | null
+    stripe_connect_onboarded?: boolean | null
+    stripe_connect_charges_enabled?: boolean | null
+    stripe_connect_payouts_enabled?: boolean | null
+    subscription_status?: string | null
+    subscription_tier?: string | null
+    subscription_current_period_end?: string | null
+  } | null
 }
 
 export function DashboardView({
@@ -67,6 +78,7 @@ export function DashboardView({
   suggestedAuthors,
   writingGoals,
   userStatistics,
+  stripeData,
 }: DashboardViewProps) {
   const weeklyGoal = writingGoals.find(g => g.goal_type === 'weekly_words')
   const progressPercentage = weeklyGoal
@@ -169,6 +181,23 @@ export function DashboardView({
               </Button>
             </div>
           </div>
+
+          {/* Stripe Earnings & Subscription */}
+          {stripeData && (
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold mb-4">Billing & Earnings</h2>
+              <StripeEarningsCard
+                stripeCustomerId={stripeData.stripe_customer_id}
+                stripeConnectAccountId={stripeData.stripe_connect_account_id}
+                subscriptionStatus={stripeData.subscription_status}
+                subscriptionTier={stripeData.subscription_tier}
+                subscriptionCurrentPeriodEnd={stripeData.subscription_current_period_end}
+                stripeConnectOnboarded={stripeData.stripe_connect_onboarded ?? false}
+                stripeConnectChargesEnabled={stripeData.stripe_connect_charges_enabled ?? false}
+                stripeConnectPayoutsEnabled={stripeData.stripe_connect_payouts_enabled ?? false}
+              />
+            </div>
+          )}
 
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Main Content */}

@@ -1,5 +1,5 @@
 // AI Editor Service - Complete AI integration layer
-import { supabase } from '@/src/lib/supabase'
+import { supabase as supabaseClient } from '@/src/lib/supabase'
 import type {
   Manuscript,
   Chapter,
@@ -27,10 +27,16 @@ import type {
   SceneComment,
 } from '@/src/types/ai-editor'
 
-// Ensure supabase client is available
-if (!supabase) {
-  throw new Error('Supabase client not configured')
+// Helper to ensure supabase client is available
+function getSupabase() {
+  if (!supabaseClient) {
+    throw new Error('Supabase client not configured')
+  }
+  return supabaseClient
 }
+
+// Get client for use in service methods
+const supabase = getSupabase()
 
 // ============================================================================
 // MANUSCRIPT OPERATIONS

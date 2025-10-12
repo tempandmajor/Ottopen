@@ -5,25 +5,28 @@ import { useEditorTabs } from '@/src/hooks/useEditorTabs'
 import { ManuscriptNavigator } from '@/src/components/ai-editor/manuscript-navigator'
 import { SaveStatus } from '@/src/components/editor-tabs/save-status'
 import { EditorSkeleton } from '@/src/components/editor-tabs/editor-skeleton'
+import { RichTextEditor } from '@/src/components/editor-tabs/rich-text-editor'
 import { useAutoSave } from '@/src/hooks/useAutoSave'
 import { useKeyboardShortcuts } from '@/src/hooks/useKeyboardShortcuts'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import type { ChapterWithScenes } from '@/src/types/navigation'
 import { Button } from '@/src/components/ui/button'
 import { FileText, Plus } from 'lucide-react'
 
-export default function ManuscriptWorkspacePage() {
-  const { tabs, activeTabId, activeTab, closeTab, switchTab, createNewTab } = useEditorTabs({
-    type: 'manuscript',
-    basePath: '/editor/workspace',
-    maxTabs: 10,
-  })
+function ManuscriptWorkspaceContent() {
+  const { tabs, activeTabId, activeTab, closeTab, switchTab, createNewTab, reorderTabs } =
+    useEditorTabs({
+      type: 'manuscript',
+      basePath: '/editor/workspace',
+      maxTabs: 10,
+    })
 
   const [chapters, setChapters] = useState<ChapterWithScenes[]>([])
   const [manuscriptTitle, setManuscriptTitle] = useState('')
   const [totalWordCount, setTotalWordCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [contentChanged, setContentChanged] = useState(false)
+  const [editorContent, setEditorContent] = useState('')
 
   // Auto-save functionality
   const {
@@ -242,6 +245,7 @@ export default function ManuscriptWorkspacePage() {
         onTabChange={switchTab}
         onTabClose={closeTab}
         onTabAdd={createNewTab}
+        onTabReorder={reorderTabs}
       />
 
       {/* Save status bar */}
@@ -278,27 +282,28 @@ export default function ManuscriptWorkspacePage() {
           )}
 
           {/* Main editor area */}
-          <div className="flex-1 overflow-auto bg-background">
-            <div className="max-w-4xl mx-auto py-8 px-4">
-              <div className="prose prose-lg dark:prose-invert">
-                <h1>{manuscriptTitle}</h1>
-                <p className="text-muted-foreground">
-                  Editor content will appear here. Full editor integration coming soon!
-                </p>
-                <p className="text-sm text-muted-foreground">This workspace now supports:</p>
-                <ul>
-                  <li>Multiple tabs for working on different manuscripts</li>
-                  <li>Chapter and scene navigation in the sidebar</li>
-                  <li>Adding/deleting chapters and scenes</li>
-                  <li>Tab persistence across sessions</li>
-                  <li>Auto-save every 30 seconds</li>
-                  <li>Keyboard shortcuts (Cmd+S, Cmd+W, Cmd+T)</li>
-                </ul>
-              </div>
-            </div>
+          <div className="flex-1 overflow-hidden bg-background">
+            <RichTextEditor
+              content={editorContent}
+              onChange={content => {
+                setEditorContent(content)
+                setContentChanged(true)
+              }}
+              placeholder={`Start writing your manuscript: ${manuscriptTitle}`}
+              showWordCount={true}
+              className="h-full"
+            />
           </div>
         </div>
       )}
     </div>
+  )
+}
+
+export default function ManuscriptWorkspacePage() {
+  return (
+    <Suspense fallback={<EditorSkeleton />}>
+      <ManuscriptWorkspaceContent />
+    </Suspense>
   )
 }

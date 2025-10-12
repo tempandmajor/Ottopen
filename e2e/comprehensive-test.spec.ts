@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 
 /**
  * Comprehensive feature testing
@@ -12,7 +12,7 @@ test.describe('Comprehensive Feature Tests', () => {
   test.describe.configure({ mode: 'serial' })
 
   // Helper function to sign in
-  async function signIn(page) {
+  async function signIn(page: Page) {
     await page.goto('/auth/signin')
     await page.getByLabel('Email').fill(TEST_EMAIL)
     await page.getByLabel('Password').fill(TEST_PASSWORD)

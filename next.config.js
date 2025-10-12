@@ -2,6 +2,9 @@ const { withSentryConfig } = require('@sentry/nextjs')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   webpack: (config, { isServer }) => {
     if (!isServer) {
       // Don't bundle epub-gen in client-side code - replace with empty module

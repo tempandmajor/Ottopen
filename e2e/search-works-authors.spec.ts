@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 
 /**
  * Search, Works, and Authors Tests
@@ -11,7 +11,7 @@ const TEST_PASSWORD = process.env.TEST_USER_PASSWORD || 'Password1'
 test.describe('Search, Works & Authors', () => {
   test.describe.configure({ mode: 'serial' })
 
-  async function signIn(page) {
+  async function signIn(page: Page) {
     await page.goto('/auth/signin')
     await page.getByLabel('Email').fill(TEST_EMAIL)
     await page.getByLabel('Password').fill(TEST_PASSWORD)

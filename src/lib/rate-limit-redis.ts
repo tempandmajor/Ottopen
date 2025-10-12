@@ -66,6 +66,7 @@ function createRedisClient(): RedisClient | null {
   if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
     try {
       // Dynamic import to avoid errors if @vercel/kv is not installed
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { kv } = require('@vercel/kv')
       return kv
     } catch (error) {

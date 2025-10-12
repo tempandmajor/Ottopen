@@ -5,19 +5,21 @@ import { useEditorTabs } from '@/src/hooks/useEditorTabs'
 import { ScriptNavigator } from '@/src/components/script-editor/script-navigator'
 import { SaveStatus } from '@/src/components/editor-tabs/save-status'
 import { EditorSkeleton } from '@/src/components/editor-tabs/editor-skeleton'
+import { RichTextEditor } from '@/src/components/editor-tabs/rich-text-editor'
 import { useAutoSave } from '@/src/hooks/useAutoSave'
 import { useKeyboardShortcuts } from '@/src/hooks/useKeyboardShortcuts'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import type { ScriptElement } from '@/src/types/script-editor'
 import { Button } from '@/src/components/ui/button'
 import { Film, Plus } from 'lucide-react'
 
-export default function ScriptWorkspacePage() {
-  const { tabs, activeTabId, activeTab, closeTab, switchTab, createNewTab } = useEditorTabs({
-    type: 'script',
-    basePath: '/scripts/workspace',
-    maxTabs: 10,
-  })
+function ScriptWorkspaceContent() {
+  const { tabs, activeTabId, activeTab, closeTab, switchTab, createNewTab, reorderTabs } =
+    useEditorTabs({
+      type: 'script',
+      basePath: '/scripts/workspace',
+      maxTabs: 10,
+    })
 
   const [elements, setElements] = useState<ScriptElement[]>([])
   const [scriptTitle, setScriptTitle] = useState('')
@@ -25,6 +27,7 @@ export default function ScriptWorkspacePage() {
   const [pageCount, setPageCount] = useState(1)
   const [loading, setLoading] = useState(true)
   const [contentChanged, setContentChanged] = useState(false)
+  const [editorContent, setEditorContent] = useState('')
 
   // Auto-save functionality
   const {
@@ -171,6 +174,7 @@ export default function ScriptWorkspacePage() {
         onTabChange={switchTab}
         onTabClose={closeTab}
         onTabAdd={createNewTab}
+        onTabReorder={reorderTabs}
       />
 
       {/* Save status bar */}
@@ -204,31 +208,28 @@ export default function ScriptWorkspacePage() {
           )}
 
           {/* Main editor area */}
-          <div className="flex-1 overflow-auto bg-white">
-            <div className="max-w-4xl mx-auto py-8 px-4">
-              <div className="text-center mb-12 space-y-4">
-                <h1 className="text-3xl font-bold uppercase">{scriptTitle}</h1>
-                <p className="text-gray-600">Written by [Author Name]</p>
-              </div>
-
-              <div className="prose prose-lg">
-                <p className="text-muted-foreground">
-                  Script editor content will appear here. Full editor integration coming soon!
-                </p>
-                <p className="text-sm text-muted-foreground">This workspace now supports:</p>
-                <ul>
-                  <li>Multiple tabs for working on different scripts</li>
-                  <li>Act and scene navigation in the sidebar</li>
-                  <li>Industry-standard script formatting</li>
-                  <li>Tab persistence across sessions</li>
-                  <li>Auto-save every 30 seconds</li>
-                  <li>Keyboard shortcuts (Cmd+S, Cmd+W, Cmd+T)</li>
-                </ul>
-              </div>
-            </div>
+          <div className="flex-1 overflow-hidden bg-white">
+            <RichTextEditor
+              content={editorContent}
+              onChange={content => {
+                setEditorContent(content)
+                setContentChanged(true)
+              }}
+              placeholder={`Start writing your script: ${scriptTitle}`}
+              showWordCount={true}
+              className="h-full"
+            />
           </div>
         </div>
       )}
     </div>
+  )
+}
+
+export default function ScriptWorkspacePage() {
+  return (
+    <Suspense fallback={<EditorSkeleton />}>
+      <ScriptWorkspaceContent />
+    </Suspense>
   )
 }

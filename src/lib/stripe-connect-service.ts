@@ -1,18 +1,9 @@
-import Stripe from 'stripe'
 import { getSupabaseAdmin } from './supabase-admin'
+import { getStripe } from './stripe'
 
 const PLATFORM_FEE_PERCENTAGE = 0.1 // 10%
 const STRIPE_FEE_PERCENTAGE = 0.029 // 2.9%
 const STRIPE_FEE_FIXED = 0.3 // $0.30
-
-function getStripe() {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error('STRIPE_SECRET_KEY is not set')
-  }
-  return new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-08-27.basil',
-  })
-}
 
 /**
  * Calculate platform and Stripe fees

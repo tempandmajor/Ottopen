@@ -37,7 +37,7 @@ export async function POST(request: NextRequest, { params }: { params: { scriptI
       elementType,
       characterName,
       genre: script.genre,
-      sceneContext: this.extractSceneContext(previousLines),
+      sceneContext: extractSceneContext(previousLines),
     }
 
     // Get suggestions

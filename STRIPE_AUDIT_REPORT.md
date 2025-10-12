@@ -419,3 +419,302 @@ STRIPE_PRICE_INDUSTRY_PREMIUM=price_xxx
 **Estimated Fix Time:** 4-6 hours for critical issues
 
 **Risk Level:** HIGH - Do not deploy to production without fixes
+
+---
+
+## 🔴 UPDATED AUDIT (2025-10-12): DUPLICATE IMPLEMENTATIONS FOUND
+
+**Updated By:** Claude Code (Post-Editor Implementation)
+**New Severity:** CRITICAL - Conflicting implementations detected
+
+### NEW CRITICAL FINDING: Two Parallel Stripe Implementations ❌
+
+After implementing the tabbed editor enhancements, I discovered that **TWO SEPARATE STRIPE IMPLEMENTATIONS** exist in the codebase that are not coordinated:
+
+#### Implementation #1: Original (Existing)
+
+- File: `src/lib/stripe-connect-service.ts`
+- Pattern: Service-based, escrow payments
+- Database: Uses `public.profiles` table for `stripe_customer_id`
+- API Routes:
+  - `/api/checkout` (subscriptions)
+  - `/api/create-portal-session`
+  - `/api/stripe/connect/onboard`
+  - `/api/stripe/connect/status`
+  - `/api/stripe/connect/dashboard`
+
+#### Implementation #2: New (Recently Added)
+
+- File: `src/lib/stripe.ts`
+- Pattern: Utility-based, destination charges
+- Database: Uses `public.users` table for `stripe_customer_id`
+- API Routes:
+  - `/api/stripe/create-checkout-session`
+  - `/api/stripe/create-portal-session`
+  - `/api/stripe/connect/create-account`
+  - `/api/stripe/connect/create-account-link`
+  - `/api/stripe/connect/dashboard-link`
+  - `/api/stripe/connect/create-destination-checkout-session`
+
+### ❌ **CONFLICT #1: Three Different getStripe() Functions**
+
+**Location 1** (`src/lib/stripe.ts` - NEW):
+
+```typescript
+let stripeSingleton: Stripe | null = null
+export function getStripe() {
+  if (!stripeSingleton) {
+    stripeSingleton = new Stripe(key, {
+      appInfo: { name: 'Ottopen', version: '1.0.0' },
+    })
+  }
+  return stripeSingleton
+}
+```
+
+**Location 2** (`src/lib/stripe-connect-service.ts` - OLD):
+
+```typescript
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-08-27.basil', // ❌ Different version!
+  })
+}
+```
+
+**Location 3** (`app/api/checkout/route.ts` - OLD):
+
+```typescript
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-08-27.basil',
+  })
+}
+```
+
+**Impact**: Multiple Stripe instances, inconsistent API versions, no singleton enforcement
+
+### ❌ **CONFLICT #2: Database Table Mismatch**
+
+**Old Implementation** stores Stripe data in `profiles`:
+
+```typescript
+// app/api/checkout/route.ts
+const { data: profile } = await supabase.from('profiles').select('stripe_customer_id, email')
+```
+
+**New Implementation** stores Stripe data in `users`:
+
+```sql
+-- Migration: 20251012160000_add_stripe_columns_to_users.sql
+ALTER TABLE public.users
+  ADD COLUMN IF NOT EXISTS stripe_customer_id text,
+```
+
+**Impact**:
+
+- Subscription status updates may go to wrong table
+- Existing customer data fragmented
+- Webhook updates `users` but checkout checks `profiles`
+- **CRITICAL**: Subscriptions will never work correctly!
+
+### ❌ **CONFLICT #3: Duplicate API Endpoints**
+
+| Functionality   | Old Endpoint                  | New Endpoint                              | Conflict Level |
+| --------------- | ----------------------------- | ----------------------------------------- | -------------- |
+| Checkout        | `/api/checkout`               | `/api/stripe/create-checkout-session`     | 🔴 CRITICAL    |
+| Portal          | `/api/create-portal-session`  | `/api/stripe/create-portal-session`       | 🔴 CRITICAL    |
+| Connect Onboard | `/api/stripe/connect/onboard` | `/api/stripe/connect/create-account-link` | 🟡 MEDIUM      |
+
+**Old `/api/checkout`**:
+
+- Uses `profiles` table
+- Supports referral codes
+- No price allowlisting
+- Returns to `/dashboard`
+
+**New `/api/stripe/create-checkout-session`**:
+
+- Uses `users` table
+- No referral support
+- Has price allowlisting
+- Different return URLs
+
+**Impact**:
+
+- Frontend team won't know which to use
+- Different behavior for same operation
+- Testing becomes impossible
+- Will cause production bugs
+
+### ❌ **CONFLICT #4: Incompatible Connect Patterns**
+
+**Old Pattern** (Escrow for contracts):
+
+```typescript
+// src/lib/stripe-connect-service.ts
+createEscrowPayment() // Hold funds
+releaseEscrowPayment() // Release after approval
+```
+
+**New Pattern** (Direct destination charges):
+
+```typescript
+// create-destination-checkout-session
+// Funds transfer immediately with application_fee_amount
+```
+
+**Impact**:
+
+- Old pattern needed for marketplace contracts
+- New pattern simpler but can't do escrow
+- Both valid but for different use cases
+- No documentation on when to use which
+
+### 🔧 **IMMEDIATE FIXES REQUIRED**
+
+#### Fix #1: Consolidate getStripe()
+
+```typescript
+// Use ONLY src/lib/stripe.ts version
+// Update API version to match
+export function getStripe() {
+  if (!stripeSingleton) {
+    stripeSingleton = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2025-08-27.basil', // Match existing
+      appInfo: { name: 'Ottopen', version: '1.0.0' },
+    })
+  }
+  return stripeSingleton
+}
+```
+
+#### Fix #2: Migrate Database Schema
+
+```sql
+-- Create migration: migrate_stripe_data_to_users.sql
+-- Copy stripe_customer_id from profiles to users
+UPDATE public.users u
+SET stripe_customer_id = p.stripe_customer_id
+FROM public.profiles p
+WHERE u.id = p.id AND p.stripe_customer_id IS NOT NULL;
+
+-- Update all code to use users table only
+```
+
+#### Fix #3: Deprecate Duplicate Endpoints
+
+```typescript
+// Mark old endpoints as deprecated
+// app/api/checkout/route.ts
+console.warn('DEPRECATED: Use /api/stripe/create-checkout-session')
+
+// Set sunset date: 30 days
+// Redirect to new endpoint
+```
+
+#### Fix #4: Document Use Cases
+
+```markdown
+# Stripe Patterns
+
+## Direct Charges (Simple Sales)
+
+Use: /api/stripe/connect/create-destination-checkout-session
+When: Immediate transfers, simple purchases
+
+## Escrow Charges (Contracts)
+
+Use: stripe-connect-service.ts functions
+When: Milestone payments, disputes, hold periods
+```
+
+### 📋 **UPDATED ACTION ITEMS** (DO IMMEDIATELY)
+
+**CRITICAL PRIORITY #1**: Choose Single Database Table
+
+- [ ] Decide: `users` table (recommended)
+- [ ] Create migration script
+- [ ] Update all API routes
+- [ ] Test webhook updates
+
+**CRITICAL PRIORITY #2**: Consolidate getStripe()
+
+- [ ] Use `src/lib/stripe.ts` as canonical
+- [ ] Update API version to `2025-08-27.basil`
+- [ ] Remove other implementations
+- [ ] Update all imports
+
+**CRITICAL PRIORITY #3**: Deprecate Old Endpoints
+
+- [ ] Add deprecation warnings
+- [ ] Set 30-day sunset
+- [ ] Update frontend to use new endpoints
+- [ ] Monitor usage
+
+**CRITICAL PRIORITY #4**: Document Both Patterns
+
+- [ ] When to use destination charges
+- [ ] When to use escrow
+- [ ] Migration guide for developers
+
+### ⚠️ **DO NOT PROCEED** Until Conflicts Resolved
+
+**RECOMMENDATION**:
+
+1. **HALT all new Stripe development**
+2. **Schedule 2-3 day consolidation sprint**
+3. **Create comprehensive test suite**
+4. **Document final architecture**
+
+**ESTIMATED EFFORT**: 2-3 days for critical consolidation
+
+---
+
+## Files Requiring Immediate Attention
+
+### 🔴 Must Fix NOW:
+
+1. `src/lib/stripe.ts` - Make canonical, update API version
+2. `src/lib/stripe-connect-service.ts` - Use canonical getStripe()
+3. `app/api/checkout/route.ts` - Migrate to `users` table OR deprecate
+4. `app/api/stripe/create-checkout-session/route.ts` - Add referral support
+5. Database migration - Move stripe\_\* from profiles to users
+6. Webhook - Ensure updates match active table
+
+### 🟡 Fix Soon:
+
+7. All Stripe API routes - Add rate limiting
+8. Fee calculation - Use comprehensive version from old implementation
+9. Documentation - Create Stripe architecture guide
+10. Tests - Integration tests for both patterns
+
+---
+
+## Conclusion: DEPLOYMENT BLOCKED
+
+**Previous Status**: Critical issues but functional
+**Current Status**: CRITICAL CONFLICTS - Multiple implementations fighting each other
+
+**Blockers**:
+
+1. ❌ Database table conflict (profiles vs users)
+2. ❌ Duplicate endpoints with different behavior
+3. ❌ Multiple Stripe client implementations
+4. ❌ No clear documentation on which to use
+
+**Action Required**:
+
+- **DO NOT DEPLOY** current state
+- **CONSOLIDATE** implementations first
+- **TEST** thoroughly after consolidation
+- **DOCUMENT** final architecture
+
+**Timeline**:
+
+- Consolidation: 2-3 days
+- Testing: 1-2 days
+- Documentation: 1 day
+- **Total**: 4-6 days minimum
+
+**Risk**: EXTREME - Will cause production failures if deployed as-is

@@ -1,34 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Stripe from 'stripe'
 import { getServerUser } from '@/lib/server/auth'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 import { logError } from '@/src/lib/errors'
+import { getStripe, assertStripeEnv } from '@/src/lib/stripe'
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic'
 
-// Check if Stripe is configured
-const isStripeConfigured = () => {
-  return !!process.env.STRIPE_SECRET_KEY
-}
-
-const stripe = isStripeConfigured()
-  ? new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      apiVersion: '2025-08-27.basil',
-    })
-  : null
+// DEPRECATED: This endpoint is deprecated in favor of /api/stripe/create-portal-session
+// It remains for backward compatibility but will be removed in a future version
 
 export async function POST(request: NextRequest) {
   try {
+    assertStripeEnv()
+    const stripe = getStripe()
+
     // SEC-FIX: Require authentication
     const { user } = await getServerUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Check if Stripe is properly configured
-    if (!stripe) {
-      return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 503 })
     }
 
     // SEC-FIX: Get customer ID from authenticated user's record, not request body
