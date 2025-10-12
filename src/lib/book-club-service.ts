@@ -1,10 +1,30 @@
 // Book Club Service - Complete backend for community features
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+// Lazy getter for Supabase client - only creates when accessed, not at module import time
+// This prevents build-time errors when env vars aren't available
+let _supabaseClient: ReturnType<typeof createClient> | null = null
+function getSupabaseClient() {
+  if (_supabaseClient) return _supabaseClient
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Supabase client not configured')
+  }
+
+  _supabaseClient = createClient(supabaseUrl, supabaseAnonKey)
+  return _supabaseClient
+}
+
+// Export a proxy that lazily initializes the client
+export const supabase = new Proxy({} as ReturnType<typeof createClient>, {
+  get(_target, prop) {
+    const client = getSupabaseClient()
+    return client[prop as keyof typeof client]
+  },
+})
 
 // ============================================================================
 // TYPES

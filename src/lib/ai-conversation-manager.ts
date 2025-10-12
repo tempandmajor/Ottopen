@@ -13,10 +13,28 @@
 
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Lazy getter for Supabase client
+let _supabaseClient: ReturnType<typeof createClient> | null = null
+function getSupabaseClient() {
+  if (_supabaseClient) return _supabaseClient
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error('Supabase client not configured')
+  }
+
+  _supabaseClient = createClient(supabaseUrl, serviceRoleKey)
+  return _supabaseClient
+}
+
+const supabase = new Proxy({} as ReturnType<typeof createClient>, {
+  get(_target, prop) {
+    const client = getSupabaseClient()
+    return client[prop as keyof typeof client]
+  },
+})
 
 export type AIProvider = 'openai' | 'claude' | 'deepseek' | 'gemini'
 export type ContextType = 'character' | 'plot' | 'research' | 'general' | 'brainstorm'
