@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import type { Database } from '@/src/lib/database.types'
 import logger from './src/lib/logger'
 
 export async function middleware(request: NextRequest) {
@@ -25,7 +26,7 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    const supabase = createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
       cookies: {
         get(name: string) {
           return request.cookies.get(name)?.value

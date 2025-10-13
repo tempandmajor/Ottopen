@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr'
 import { redirect } from 'next/navigation'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import type { User } from '@/src/lib/supabase'
+import type { Database } from '@/src/lib/database.types'
 
 export async function getServerUser(): Promise<{
   user: (SupabaseUser & { profile?: User }) | null
@@ -17,7 +18,7 @@ export async function getServerUser(): Promise<{
 
   const cookieStore = cookies()
 
-  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+  const supabase = createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
     cookies: {
       get(name: string) {
         return cookieStore.get(name)?.value

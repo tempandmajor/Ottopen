@@ -1,7 +1,11 @@
-'use client'
+import { requireAuth } from '@/lib/server/auth'
+import { ScriptsView } from './ScriptsView'
 
-import { ScriptsBrowser } from '@/src/components/files-browser/scripts-browser'
+// Force dynamic rendering to avoid static generation issues
+export const dynamic = 'force-dynamic'
 
-export default function ScriptsPage() {
-  return <ScriptsBrowser />
+export default async function ScriptsPage() {
+  const user = await requireAuth()
+
+  return <ScriptsView />
 }
