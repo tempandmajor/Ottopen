@@ -1058,7 +1058,6 @@ export function OpportunitiesView({
                     >
                       <CardContent className="p-6">
                         <div className="flex justify-between items-start mb-4">
-                          <Navigation />
                           <div className="flex-1">
                             <div className="flex items-center space-x-2 mb-2">
                               {job.is_featured && (
@@ -1256,7 +1255,6 @@ export function OpportunitiesView({
                 <CardContent>
                   {savedJobsData.length === 0 ? (
                     <div className="text-center py-8">
-                      <Navigation />
                       <Bookmark className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                       <h3 className="text-lg font-medium mb-2">No saved jobs yet</h3>
                       <p className="text-muted-foreground mb-4">
@@ -1336,7 +1334,6 @@ export function OpportunitiesView({
                           <Card key={application.id} className="hover:shadow-md transition-all">
                             <CardContent className="p-4">
                               <div className="flex items-start justify-between">
-                                <Navigation />
                                 <div className="flex-1">
                                   <h3 className="font-semibold mb-1">
                                     {job?.title || 'Job Not Found'}
