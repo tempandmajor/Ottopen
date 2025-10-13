@@ -13,5 +13,5 @@ export default async function AdminPage() {
   // Server-side admin authorization check
   const adminUser = await requireAdmin()
 
-  return <AdminDashboardView />
+  return <AdminDashboardView user={adminUser} />
 }
