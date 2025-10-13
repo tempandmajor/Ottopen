@@ -573,7 +573,7 @@ export default function EnhancedFeedView() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-background">
-        <Navigation />
+        <Navigation user={user} />
         <div className="container mx-auto px-4 py-6 sm:py-8">
           <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6">
             {/* Header with Feed Tabs */}

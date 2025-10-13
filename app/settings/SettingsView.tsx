@@ -600,7 +600,7 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation />
+        <Navigation user={user} />
         <div className="container mx-auto px-4 py-6 sm:py-8">
           <div className="max-w-4xl mx-auto">
             <div className="text-center py-12">
@@ -615,7 +615,7 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
 
   return (
     <div>
-      <Navigation />
+      <Navigation user={user} />
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-6 sm:py-8">
           <div className="max-w-4xl mx-auto">

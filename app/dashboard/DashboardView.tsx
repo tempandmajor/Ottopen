@@ -115,7 +115,7 @@ export function DashboardView({
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation serverUser={user} />
+      <Navigation user={user} />
       <WelcomeModal
         userName={user?.profile?.display_name || user?.profile?.username || undefined}
         userEmail={user?.email}

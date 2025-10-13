@@ -97,7 +97,7 @@ export function EditorDashboard({ user }: EditorDashboardProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      <Navigation user={user} />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto">
           {/* Header */}

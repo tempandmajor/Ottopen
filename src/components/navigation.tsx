@@ -12,10 +12,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/src/components/ui/avatar'
 import {
   PenTool,
-  Users,
   BookOpen,
-  Home,
-  Rss,
   User,
   Settings as SettingsIcon,
   LogOut,
@@ -24,28 +21,26 @@ import {
   DollarSign,
 } from 'lucide-react'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import { useAuth } from '@/src/contexts/auth-context'
+import { usePathname } from 'next/navigation'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import type { User as ProfileUser } from '@/src/lib/supabase'
+import { signOutAction } from '@/app/actions/auth'
+import { useTransition } from 'react'
 
 interface NavigationProps {
-  serverUser?: (SupabaseUser & { profile?: ProfileUser }) | null
+  user?: (SupabaseUser & { profile?: ProfileUser }) | null
 }
 
-export function Navigation({ serverUser }: NavigationProps = {}) {
+export function Navigation({ user }: NavigationProps) {
   const currentPath = usePathname()
-  const router = useRouter()
-  const { user: clientUser, loading, signOut } = useAuth()
-
-  // Use server user as fallback if client user isn't loaded yet
-  const user = clientUser || serverUser
+  const [isPending, startTransition] = useTransition()
 
   const isActive = (path: string) => currentPath === path
 
-  const handleSignOut = async () => {
-    await signOut()
-    router.push('/')
+  const handleSignOut = () => {
+    startTransition(async () => {
+      await signOutAction()
+    })
   }
 
   return (
@@ -112,17 +107,7 @@ export function Navigation({ serverUser }: NavigationProps = {}) {
               </>
             )}
 
-            {loading ? (
-              /* Loading state - show sign in buttons to prevent empty header */
-              <div className="hidden sm:flex items-center space-x-2">
-                <Button variant="outline" size="sm" disabled>
-                  <span className="opacity-50">Sign In</span>
-                </Button>
-                <Button size="sm" className="font-medium" disabled>
-                  <span className="opacity-50">Join Network</span>
-                </Button>
-              </div>
-            ) : user ? (
+            {user ? (
               /* Authenticated user menu */
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -130,6 +115,7 @@ export function Navigation({ serverUser }: NavigationProps = {}) {
                     variant="ghost"
                     className="flex items-center space-x-2 p-2"
                     data-testid="user-avatar-button"
+                    disabled={isPending}
                   >
                     <Avatar className="h-8 w-8">
                       <AvatarImage
@@ -169,9 +155,13 @@ export function Navigation({ serverUser }: NavigationProps = {}) {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
+                  <DropdownMenuItem
+                    onClick={handleSignOut}
+                    className="cursor-pointer"
+                    disabled={isPending}
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>Sign Out</span>
+                    <span>{isPending ? 'Signing out...' : 'Sign Out'}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
