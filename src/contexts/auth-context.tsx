@@ -128,7 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.warn('Auth initialization timeout - setting loading to false')
         setLoading(false)
       }
-    }, 10000) // 10 second timeout
+    }, 5000) // 5 second timeout
 
     // Helper to stop loading and clear timeout
     const stopLoading = () => {
@@ -478,7 +478,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Do not keep the app in spinner forever
         if (!cancelled) setLoading(false)
       }
-    }, 6000) // 6s watchdog
+    }, 3000) // 3s watchdog
     return () => {
       cancelled = true
       clearTimeout(t)
