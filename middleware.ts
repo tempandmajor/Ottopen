@@ -94,6 +94,11 @@ export async function middleware(request: NextRequest) {
       '/submissions',
       '/opportunities',
       '/admin',
+      '/editor', // Manuscript editor
+      '/scripts', // Screenwriting
+      '/notifications', // User notifications
+      '/analytics', // Analytics dashboard
+      '/clubs', // Book clubs (some features require auth)
     ]
 
     // Public-only routes (redirect to dashboard if authenticated)
@@ -133,6 +138,11 @@ export async function middleware(request: NextRequest) {
       '/submissions',
       '/opportunities',
       '/admin',
+      '/editor',
+      '/scripts',
+      '/notifications',
+      '/analytics',
+      '/clubs',
     ]
 
     const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
