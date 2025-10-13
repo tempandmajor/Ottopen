@@ -2,7 +2,6 @@
 
 import { Navigation } from '@/src/components/navigation'
 import { PostCard } from '@/src/components/post-card'
-import { ProtectedRoute } from '@/src/components/auth/protected-route'
 import { Button } from '@/src/components/ui/button'
 import { Card, CardContent } from '@/src/components/ui/card'
 import { Textarea } from '@/src/components/ui/textarea'
@@ -31,7 +30,6 @@ import {
   Bookmark,
   Repeat2,
 } from 'lucide-react'
-import { useAuth } from '@/src/contexts/auth-context'
 import { useState, useEffect } from 'react'
 import { dbService } from '@/src/lib/database'
 import type { User, Post } from '@/src/lib/supabase'
@@ -48,8 +46,11 @@ interface FeedFilters {
   sortBy: 'recent' | 'popular'
 }
 
-export default function EnhancedFeedView() {
-  const { user } = useAuth()
+interface EnhancedFeedViewProps {
+  user: (User & { profile?: any }) | null
+}
+
+export default function EnhancedFeedView({ user }: EnhancedFeedViewProps) {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -571,375 +572,373 @@ export default function EnhancedFeedView() {
   }
 
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-background">
-        <Navigation user={user} />
-        <div className="container mx-auto px-4 py-6 sm:py-8">
-          <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6">
-            {/* Header with Feed Tabs */}
-            <div className="space-y-4">
-              <h1 className="font-serif text-2xl sm:text-3xl font-bold text-center">Your Feed</h1>
+    <div className="min-h-screen bg-background">
+      <Navigation user={user} />
+      <div className="container mx-auto px-4 py-6 sm:py-8">
+        <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6">
+          {/* Header with Feed Tabs */}
+          <div className="space-y-4">
+            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-center">Your Feed</h1>
 
-              <Tabs value={feedView} onValueChange={v => setFeedView(v as FeedView)}>
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="following">
-                    <Users className="h-4 w-4 mr-2" />
-                    Following
-                  </TabsTrigger>
-                  <TabsTrigger value="discover">
-                    <Compass className="h-4 w-4 mr-2" />
-                    Discover
-                  </TabsTrigger>
-                  <TabsTrigger value="trending">
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                    Trending
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
+            <Tabs value={feedView} onValueChange={v => setFeedView(v as FeedView)}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="following">
+                  <Users className="h-4 w-4 mr-2" />
+                  Following
+                </TabsTrigger>
+                <TabsTrigger value="discover">
+                  <Compass className="h-4 w-4 mr-2" />
+                  Discover
+                </TabsTrigger>
+                <TabsTrigger value="trending">
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  Trending
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
 
-              {/* Filters */}
-              <div className="flex items-center justify-between">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Filter className="h-4 w-4 mr-2" />
-                      Filters
-                      {filters.genres.length + filters.moods.length > 0 && (
-                        <Badge variant="secondary" className="ml-2">
-                          {filters.genres.length + filters.moods.length}
-                        </Badge>
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56">
-                    <DropdownMenuLabel>Genres</DropdownMenuLabel>
-                    {availableGenres.map(genre => (
-                      <DropdownMenuCheckboxItem
-                        key={genre}
-                        checked={filters.genres.includes(genre)}
-                        onCheckedChange={() => toggleGenreFilter(genre)}
-                      >
-                        {genre}
-                      </DropdownMenuCheckboxItem>
-                    ))}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel>Moods</DropdownMenuLabel>
-                    {availableMoods.map(mood => (
-                      <DropdownMenuCheckboxItem
-                        key={mood}
-                        checked={filters.moods.includes(mood)}
-                        onCheckedChange={() => toggleMoodFilter(mood)}
-                      >
-                        {mood.replace('_', ' ')}
-                      </DropdownMenuCheckboxItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant={filters.sortBy === 'recent' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setFilters(prev => ({ ...prev, sortBy: 'recent' }))}
-                  >
-                    Recent
+            {/* Filters */}
+            <div className="flex items-center justify-between">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Filter className="h-4 w-4 mr-2" />
+                    Filters
+                    {filters.genres.length + filters.moods.length > 0 && (
+                      <Badge variant="secondary" className="ml-2">
+                        {filters.genres.length + filters.moods.length}
+                      </Badge>
+                    )}
                   </Button>
-                  <Button
-                    variant={filters.sortBy === 'popular' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setFilters(prev => ({ ...prev, sortBy: 'popular' }))}
-                  >
-                    Popular
-                  </Button>
-                </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56">
+                  <DropdownMenuLabel>Genres</DropdownMenuLabel>
+                  {availableGenres.map(genre => (
+                    <DropdownMenuCheckboxItem
+                      key={genre}
+                      checked={filters.genres.includes(genre)}
+                      onCheckedChange={() => toggleGenreFilter(genre)}
+                    >
+                      {genre}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>Moods</DropdownMenuLabel>
+                  {availableMoods.map(mood => (
+                    <DropdownMenuCheckboxItem
+                      key={mood}
+                      checked={filters.moods.includes(mood)}
+                      onCheckedChange={() => toggleMoodFilter(mood)}
+                    >
+                      {mood.replace('_', ' ')}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant={filters.sortBy === 'recent' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setFilters(prev => ({ ...prev, sortBy: 'recent' }))}
+                >
+                  Recent
+                </Button>
+                <Button
+                  variant={filters.sortBy === 'popular' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setFilters(prev => ({ ...prev, sortBy: 'popular' }))}
+                >
+                  Popular
+                </Button>
               </div>
             </div>
+          </div>
 
-            {/* New Posts Banner */}
-            {newPostsAvailable && (
-              <Card className="bg-primary/10 border-primary">
-                <CardContent className="p-4 text-center">
-                  <Button onClick={loadNewPosts} variant="default">
-                    ↑ New posts available - Click to refresh
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
+          {/* New Posts Banner */}
+          {newPostsAvailable && (
+            <Card className="bg-primary/10 border-primary">
+              <CardContent className="p-4 text-center">
+                <Button onClick={loadNewPosts} variant="default">
+                  ↑ New posts available - Click to refresh
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
-            {/* Create Post */}
-            <Card className="card-bg card-shadow border-literary-border">
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-start space-x-3 sm:space-x-4">
-                  <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
-                    <AvatarImage
-                      src={user?.profile?.avatar_url}
-                      alt={user?.profile?.display_name || user?.email}
-                    />
-                    <AvatarFallback className="bg-literary-subtle text-foreground font-medium text-xs sm:text-sm">
-                      {(user?.profile?.display_name || user?.email)?.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+          {/* Create Post */}
+          <Card className="card-bg card-shadow border-literary-border">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-start space-x-3 sm:space-x-4">
+                <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
+                  <AvatarImage
+                    src={user?.profile?.avatar_url}
+                    alt={user?.profile?.display_name || user?.email}
+                  />
+                  <AvatarFallback className="bg-literary-subtle text-foreground font-medium text-xs sm:text-sm">
+                    {(user?.profile?.display_name || user?.email)?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
 
-                  <div className="flex-1 space-y-3 sm:space-y-4 min-w-0">
-                    <div className="relative">
-                      <Textarea
-                        value={newPostContent}
-                        onChange={e => setNewPostContent(e.target.value)}
-                        placeholder="Share your writing journey, an excerpt, or start a discussion... (Ctrl+Enter to post)"
-                        className="min-h-[80px] sm:min-h-[100px] resize-none border-literary-border text-sm sm:text-base"
-                        disabled={creatingPost}
-                        maxLength={MAX_CONTENT_LENGTH}
-                      />
-                      <div className="absolute bottom-2 right-2 text-xs text-muted-foreground">
-                        {newPostContent.length}/{MAX_CONTENT_LENGTH}
-                      </div>
-                    </div>
-
+                <div className="flex-1 space-y-3 sm:space-y-4 min-w-0">
+                  <div className="relative">
                     <Textarea
-                      value={newPostExcerpt}
-                      onChange={e => setNewPostExcerpt(e.target.value)}
-                      placeholder="Optional: add an excerpt to highlight (renders as blockquote)"
-                      className="min-h-[60px] resize-none border-literary-border text-xs sm:text-sm"
+                      value={newPostContent}
+                      onChange={e => setNewPostContent(e.target.value)}
+                      placeholder="Share your writing journey, an excerpt, or start a discussion... (Ctrl+Enter to post)"
+                      className="min-h-[80px] sm:min-h-[100px] resize-none border-literary-border text-sm sm:text-base"
                       disabled={creatingPost}
+                      maxLength={MAX_CONTENT_LENGTH}
                     />
-
-                    {imagePreview && (
-                      <div className="rounded-md border border-literary-border overflow-hidden relative">
-                        <Image
-                          src={imagePreview}
-                          alt="Preview"
-                          width={800}
-                          height={256}
-                          className="max-h-64 w-full object-cover"
-                        />
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          className="absolute top-2 right-2"
-                          onClick={() => {
-                            setImageFile(null)
-                            setImagePreview('')
-                            const input = document.getElementById(
-                              'post-image-input'
-                            ) as HTMLInputElement
-                            if (input) input.value = ''
-                          }}
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    )}
-
-                    <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-3">
-                      <div className="flex items-center space-x-2 sm:space-x-3 overflow-x-auto">
-                        <input
-                          id="post-image-input"
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={e => {
-                            const file = e.target.files?.[0] || null
-                            if (!file) {
-                              setImageFile(null)
-                              setImagePreview('')
-                              return
-                            }
-                            const allowed = ['image/jpeg', 'image/png', 'image/webp']
-                            if (!allowed.includes(file.type)) {
-                              toast.error('Unsupported image type. Use JPG, PNG, or WebP')
-                              ;(e.target as HTMLInputElement).value = ''
-                              return
-                            }
-                            if (file.size > 5 * 1024 * 1024) {
-                              toast.error('Image too large. Max size is 5MB')
-                              ;(e.target as HTMLInputElement).value = ''
-                              return
-                            }
-                            setImageFile(file)
-                            setImagePreview(URL.createObjectURL(file))
-                          }}
-                        />
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          disabled={creatingPost || uploadingImage}
-                          onClick={() => document.getElementById('post-image-input')?.click()}
-                        >
-                          <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                          <span>{uploadingImage ? 'Uploading...' : 'Image'}</span>
-                        </Button>
-                        <div className="inline-flex items-center space-x-2">
-                          <Smile className="h-3 w-3 sm:h-4 sm:w-4" />
-                          <select
-                            className="border border-literary-border rounded px-2 py-1 text-xs sm:text-sm bg-background"
-                            value={newPostMood}
-                            onChange={e => setNewPostMood(e.target.value)}
-                            disabled={creatingPost}
-                          >
-                            <option value="">Mood</option>
-                            <option value="inspired">Inspired</option>
-                            <option value="reflective">Reflective</option>
-                            <option value="celebratory">Celebratory</option>
-                            <option value="seeking_feedback">Seeking Feedback</option>
-                            <option value="announcement">Announcement</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <Button
-                        size="sm"
-                        className="font-medium self-end xs:self-auto"
-                        onClick={handleCreatePost}
-                        disabled={!newPostContent.trim() || creatingPost}
-                      >
-                        {creatingPost ? (
-                          <>
-                            <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 animate-spin" />
-                            <span>Sharing...</span>
-                          </>
-                        ) : (
-                          <span>Share</span>
-                        )}
-                      </Button>
+                    <div className="absolute bottom-2 right-2 text-xs text-muted-foreground">
+                      {newPostContent.length}/{MAX_CONTENT_LENGTH}
                     </div>
                   </div>
+
+                  <Textarea
+                    value={newPostExcerpt}
+                    onChange={e => setNewPostExcerpt(e.target.value)}
+                    placeholder="Optional: add an excerpt to highlight (renders as blockquote)"
+                    className="min-h-[60px] resize-none border-literary-border text-xs sm:text-sm"
+                    disabled={creatingPost}
+                  />
+
+                  {imagePreview && (
+                    <div className="rounded-md border border-literary-border overflow-hidden relative">
+                      <Image
+                        src={imagePreview}
+                        alt="Preview"
+                        width={800}
+                        height={256}
+                        className="max-h-64 w-full object-cover"
+                      />
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={() => {
+                          setImageFile(null)
+                          setImagePreview('')
+                          const input = document.getElementById(
+                            'post-image-input'
+                          ) as HTMLInputElement
+                          if (input) input.value = ''
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  )}
+
+                  <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-3">
+                    <div className="flex items-center space-x-2 sm:space-x-3 overflow-x-auto">
+                      <input
+                        id="post-image-input"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={e => {
+                          const file = e.target.files?.[0] || null
+                          if (!file) {
+                            setImageFile(null)
+                            setImagePreview('')
+                            return
+                          }
+                          const allowed = ['image/jpeg', 'image/png', 'image/webp']
+                          if (!allowed.includes(file.type)) {
+                            toast.error('Unsupported image type. Use JPG, PNG, or WebP')
+                            ;(e.target as HTMLInputElement).value = ''
+                            return
+                          }
+                          if (file.size > 5 * 1024 * 1024) {
+                            toast.error('Image too large. Max size is 5MB')
+                            ;(e.target as HTMLInputElement).value = ''
+                            return
+                          }
+                          setImageFile(file)
+                          setImagePreview(URL.createObjectURL(file))
+                        }}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={creatingPost || uploadingImage}
+                        onClick={() => document.getElementById('post-image-input')?.click()}
+                      >
+                        <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                        <span>{uploadingImage ? 'Uploading...' : 'Image'}</span>
+                      </Button>
+                      <div className="inline-flex items-center space-x-2">
+                        <Smile className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <select
+                          className="border border-literary-border rounded px-2 py-1 text-xs sm:text-sm bg-background"
+                          value={newPostMood}
+                          onChange={e => setNewPostMood(e.target.value)}
+                          disabled={creatingPost}
+                        >
+                          <option value="">Mood</option>
+                          <option value="inspired">Inspired</option>
+                          <option value="reflective">Reflective</option>
+                          <option value="celebratory">Celebratory</option>
+                          <option value="seeking_feedback">Seeking Feedback</option>
+                          <option value="announcement">Announcement</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <Button
+                      size="sm"
+                      className="font-medium self-end xs:self-auto"
+                      onClick={handleCreatePost}
+                      disabled={!newPostContent.trim() || creatingPost}
+                    >
+                      {creatingPost ? (
+                        <>
+                          <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 animate-spin" />
+                          <span>Sharing...</span>
+                        </>
+                      ) : (
+                        <span>Share</span>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Error State */}
+          {error && (
+            <Card className="card-bg border-destructive">
+              <CardContent className="p-6 text-center">
+                <div className="space-y-4">
+                  <p className="text-destructive font-medium">{error}</p>
+                  <Button onClick={() => loadFeedData(0)} variant="outline">
+                    <Loader2 className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                    Try Again
+                  </Button>
                 </div>
               </CardContent>
             </Card>
+          )}
 
-            {/* Error State */}
-            {error && (
-              <Card className="card-bg border-destructive">
-                <CardContent className="p-6 text-center">
-                  <div className="space-y-4">
-                    <p className="text-destructive font-medium">{error}</p>
-                    <Button onClick={() => loadFeedData(0)} variant="outline">
-                      <Loader2 className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                      Try Again
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Posts Feed */}
-            <div className="space-y-3 sm:space-y-4">
-              {!error && loading ? (
-                <>
-                  {[1, 2, 3].map(i => (
-                    <Card key={i} className="card-bg card-shadow border-literary-border">
-                      <CardContent className="p-4 sm:p-6">
-                        <div className="flex items-start space-x-3 sm:space-x-4">
-                          <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
-                          <div className="flex-1 space-y-3">
-                            <div className="space-y-2">
-                              <Skeleton className="h-4 w-32" />
-                              <Skeleton className="h-3 w-24" />
-                            </div>
-                            <Skeleton className="h-20 w-full" />
-                            <div className="flex gap-4">
-                              <Skeleton className="h-8 w-16" />
-                              <Skeleton className="h-8 w-16" />
-                              <Skeleton className="h-8 w-16" />
-                            </div>
+          {/* Posts Feed */}
+          <div className="space-y-3 sm:space-y-4">
+            {!error && loading ? (
+              <>
+                {[1, 2, 3].map(i => (
+                  <Card key={i} className="card-bg card-shadow border-literary-border">
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="flex items-start space-x-3 sm:space-x-4">
+                        <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
+                        <div className="flex-1 space-y-3">
+                          <div className="space-y-2">
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-3 w-24" />
+                          </div>
+                          <Skeleton className="h-20 w-full" />
+                          <div className="flex gap-4">
+                            <Skeleton className="h-8 w-16" />
+                            <Skeleton className="h-8 w-16" />
+                            <Skeleton className="h-8 w-16" />
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </>
-              ) : posts.length > 0 ? (
-                posts.map(post => (
-                  <PostCard
-                    key={post.id}
-                    postId={post.id}
-                    author={post.display_name || post.username || 'Unknown Author'}
-                    authorId={post.user_id}
-                    currentUserId={user?.id}
-                    isAdmin={isAdmin}
-                    avatar={post.avatar_url}
-                    time={new Date(post.created_at).toLocaleDateString()}
-                    content={post.content}
-                    excerpt={post.excerpt}
-                    imageUrl={post.image_url}
-                    mood={post.mood}
-                    type="discussion"
-                    likes={post.likes_count || 0}
-                    comments={post.comments_count || 0}
-                    reshares={post.reshares_count || 0}
-                    isLiked={likedPosts.has(post.id)}
-                    isReshared={resharedPosts.has(post.id)}
-                    isBookmarked={bookmarkedPosts.has(post.id)}
-                    onLike={handleLikePost}
-                    onComment={handleCommentPost}
-                    onShare={handleSharePost}
-                    onReshare={handleResharePost}
-                    onBookmark={handleBookmarkPost}
-                    onDelete={postId => setPosts(prev => prev.filter(p => p.id !== postId))}
-                  />
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-4">No posts in your feed yet.</p>
-                  <div className="space-y-2">
-                    {feedView === 'following' ? (
-                      <>
-                        <p className="text-sm text-muted-foreground">
-                          <Link href="/authors" className="text-primary hover:underline">
-                            Follow some writers
-                          </Link>{' '}
-                          to see their posts here.
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Or switch to{' '}
-                          <Button
-                            variant="link"
-                            className="p-0 h-auto"
-                            onClick={() => setFeedView('discover')}
-                          >
-                            Discover
-                          </Button>{' '}
-                          to explore new content.
-                        </p>
-                      </>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        Try adjusting your filters or check back later.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Load More */}
-            {posts.length > 0 && hasMore && (
-              <div className="text-center pt-6 sm:pt-8">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="w-full xs:w-auto"
-                  onClick={() => {
-                    const nextPage = page + 1
-                    setPage(nextPage)
-                    loadFeedData(nextPage)
-                  }}
-                  disabled={loadingMore}
-                >
-                  {loadingMore ? (
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </>
+            ) : posts.length > 0 ? (
+              posts.map(post => (
+                <PostCard
+                  key={post.id}
+                  postId={post.id}
+                  author={post.display_name || post.username || 'Unknown Author'}
+                  authorId={post.user_id}
+                  currentUserId={user?.id}
+                  isAdmin={isAdmin}
+                  avatar={post.avatar_url}
+                  time={new Date(post.created_at).toLocaleDateString()}
+                  content={post.content}
+                  excerpt={post.excerpt}
+                  imageUrl={post.image_url}
+                  mood={post.mood}
+                  type="discussion"
+                  likes={post.likes_count || 0}
+                  comments={post.comments_count || 0}
+                  reshares={post.reshares_count || 0}
+                  isLiked={likedPosts.has(post.id)}
+                  isReshared={resharedPosts.has(post.id)}
+                  isBookmarked={bookmarkedPosts.has(post.id)}
+                  onLike={handleLikePost}
+                  onComment={handleCommentPost}
+                  onShare={handleSharePost}
+                  onReshare={handleResharePost}
+                  onBookmark={handleBookmarkPost}
+                  onDelete={postId => setPosts(prev => prev.filter(p => p.id !== postId))}
+                />
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground mb-4">No posts in your feed yet.</p>
+                <div className="space-y-2">
+                  {feedView === 'following' ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Loading...
+                      <p className="text-sm text-muted-foreground">
+                        <Link href="/authors" className="text-primary hover:underline">
+                          Follow some writers
+                        </Link>{' '}
+                        to see their posts here.
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Or switch to{' '}
+                        <Button
+                          variant="link"
+                          className="p-0 h-auto"
+                          onClick={() => setFeedView('discover')}
+                        >
+                          Discover
+                        </Button>{' '}
+                        to explore new content.
+                      </p>
                     </>
                   ) : (
-                    'Load More Posts'
+                    <p className="text-sm text-muted-foreground">
+                      Try adjusting your filters or check back later.
+                    </p>
                   )}
-                </Button>
+                </div>
               </div>
             )}
           </div>
+
+          {/* Load More */}
+          {posts.length > 0 && hasMore && (
+            <div className="text-center pt-6 sm:pt-8">
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full xs:w-auto"
+                onClick={() => {
+                  const nextPage = page + 1
+                  setPage(nextPage)
+                  loadFeedData(nextPage)
+                }}
+                disabled={loadingMore}
+              >
+                {loadingMore ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  'Load More Posts'
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
-    </ProtectedRoute>
+    </div>
   )
 }

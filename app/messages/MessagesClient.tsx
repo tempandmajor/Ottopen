@@ -1,7 +1,5 @@
 'use client'
 import { Navigation } from '@/src/components/navigation'
-
-import { ProtectedRoute } from '@/src/components/auth/protected-route'
 import { Button } from '@/src/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/src/components/ui/card'
 import { Input } from '@/src/components/ui/input'
@@ -24,7 +22,6 @@ import {
   Pin,
 } from 'lucide-react'
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { useAuth } from '@/src/contexts/auth-context'
 import { dbService } from '@/src/lib/database'
 import type { User, Message, Conversation } from '@/src/lib/supabase'
 import { toast } from 'react-hot-toast'
@@ -33,8 +30,11 @@ import { formatDistanceToNow, isToday, isYesterday, format } from 'date-fns'
 import { ErrorBoundary } from '@/src/components/error-boundary'
 import { sanitizeText } from '@/src/lib/sanitize'
 
-function MessagesContent() {
-  const { user } = useAuth()
+interface MessagesContentProps {
+  user: (User & { profile?: any }) | null
+}
+
+function MessagesContent({ user }: MessagesContentProps) {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState('')
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -294,366 +294,366 @@ function MessagesContent() {
   const selectedOtherUser = selectedConv ? getOtherUser(selectedConv) : null
 
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-background">
-        <Navigation user={user} />
-        <div className="container mx-auto px-4 py-6 sm:py-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid lg:grid-cols-4 gap-4 h-[calc(100vh-200px)]">
-              {/* Conversations List */}
-              <div className="lg:col-span-1">
-                <Card className="h-full card-bg card-shadow border-literary-border">
-                  <CardHeader className="p-4 sm:p-6 border-b border-literary-border">
-                    <div className="flex items-center justify-between">
-                      <h2 className="font-serif text-lg sm:text-xl font-semibold">Messages</h2>
-                      <Button variant="ghost" size="sm" className="p-2" asChild>
-                        <Link href="/authors">
-                          <Plus className="h-4 w-4" />
+    <div className="min-h-screen bg-background">
+      <Navigation user={user} />
+      <div className="container mx-auto px-4 py-6 sm:py-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-4 gap-4 h-[calc(100vh-200px)]">
+            {/* Conversations List */}
+            <div className="lg:col-span-1">
+              <Card className="h-full card-bg card-shadow border-literary-border">
+                <CardHeader className="p-4 sm:p-6 border-b border-literary-border">
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-serif text-lg sm:text-xl font-semibold">Messages</h2>
+                    <Button variant="ghost" size="sm" className="p-2" asChild>
+                      <Link href="/authors">
+                        <Plus className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
+
+                  <div className="relative mt-4">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      placeholder="Search messages..."
+                      className="pl-10 border-literary-border"
+                    />
+                  </div>
+                </CardHeader>
+
+                <ScrollArea className="flex-1">
+                  <div className="p-2">
+                    {loading ? (
+                      <div className="text-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          Loading conversations...
+                        </p>
+                      </div>
+                    ) : filteredConversations.length > 0 ? (
+                      filteredConversations.map((conv, index) => {
+                        const otherUser = getOtherUser(conv)
+                        if (!otherUser) return null
+
+                        const isPinned = pinnedConversations.has(conv.id)
+
+                        return (
+                          <div key={conv.id} className="relative group">
+                            <button
+                              onClick={() => setSelectedConversationId(conv.id)}
+                              className={`w-full p-3 rounded-lg text-left transition-colors hover:bg-literary-subtle ${
+                                selectedConversationId === conv.id ? 'bg-literary-subtle' : ''
+                              }`}
+                            >
+                              <div className="flex items-start space-x-3">
+                                <div className="relative">
+                                  <Avatar className="h-10 w-10">
+                                    <AvatarImage
+                                      src={otherUser.avatar_url}
+                                      alt={otherUser.display_name}
+                                    />
+                                    <AvatarFallback className="bg-muted text-foreground font-medium text-sm">
+                                      {otherUser.display_name
+                                        .split(' ')
+                                        .map(n => n[0])
+                                        .join('')}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  {otherUser.is_online && (
+                                    <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-white" />
+                                  )}
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <div className="flex items-center gap-1 flex-1">
+                                      {isPinned && (
+                                        <Pin className="h-3 w-3 text-primary flex-shrink-0" />
+                                      )}
+                                      <h3 className="font-medium text-sm truncate">
+                                        {otherUser.display_name}
+                                      </h3>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                      <span className="text-xs text-muted-foreground">
+                                        {formatConversationTime(new Date(conv.updated_at))}
+                                      </span>
+                                      {conv.unread_count > 0 && (
+                                        <Badge
+                                          variant="destructive"
+                                          className="h-5 min-w-[20px] flex items-center justify-center p-0 px-1.5 text-xs"
+                                        >
+                                          {conv.unread_count > 9 ? '9+' : conv.unread_count}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground line-clamp-2">
+                                    {conv.last_message?.content
+                                      ? sanitizeText(conv.last_message.content)
+                                      : 'No messages yet'}
+                                  </p>
+                                </div>
+                              </div>
+                            </button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto"
+                              onClick={e => {
+                                e.stopPropagation()
+                                togglePinConversation(conv.id)
+                              }}
+                            >
+                              <Pin
+                                className={`h-3.5 w-3.5 ${isPinned ? 'fill-primary text-primary' : ''}`}
+                              />
+                            </Button>
+                          </div>
+                        )
+                      })
+                    ) : (
+                      <div className="text-center py-8">
+                        <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                        <p className="text-sm text-muted-foreground mb-2">No conversations yet</p>
+                        <Link href="/authors" className="text-primary hover:underline text-sm">
+                          Find writers to connect with
                         </Link>
-                      </Button>
-                    </div>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </Card>
+            </div>
 
-                    <div className="relative mt-4">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
-                        placeholder="Search messages..."
-                        className="pl-10 border-literary-border"
-                      />
-                    </div>
-                  </CardHeader>
+            {/* Chat Interface */}
+            <div className="lg:col-span-3">
+              <Card className="h-full card-bg card-shadow border-literary-border flex flex-col">
+                {selectedOtherUser ? (
+                  <>
+                    {/* Chat Header */}
+                    <CardHeader className="p-4 sm:p-6 border-b border-literary-border">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="relative">
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage
+                                src={selectedOtherUser.avatar_url}
+                                alt={selectedOtherUser.display_name}
+                              />
+                              <AvatarFallback className="bg-muted text-foreground font-medium">
+                                {selectedOtherUser.display_name
+                                  .split(' ')
+                                  .map(n => n[0])
+                                  .join('')}
+                              </AvatarFallback>
+                            </Avatar>
+                            {selectedOtherUser.is_online && (
+                              <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-white" />
+                            )}
+                          </div>
 
-                  <ScrollArea className="flex-1">
-                    <div className="p-2">
-                      {loading ? (
-                        <div className="text-center py-8">
-                          <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                          <p className="mt-2 text-sm text-muted-foreground">
-                            Loading conversations...
-                          </p>
+                          <div>
+                            <h3 className="font-medium">{selectedOtherUser.display_name}</h3>
+                            <p className="text-xs text-muted-foreground">
+                              {selectedOtherUser.is_online ? (
+                                <span className="text-green-600">Online</span>
+                              ) : selectedOtherUser.last_seen ? (
+                                `Last seen ${formatDistanceToNow(new Date(selectedOtherUser.last_seen), { addSuffix: true })}`
+                              ) : (
+                                `@${selectedOtherUser.username}`
+                              )}
+                            </p>
+                          </div>
                         </div>
-                      ) : filteredConversations.length > 0 ? (
-                        filteredConversations.map((conv, index) => {
-                          const otherUser = getOtherUser(conv)
-                          if (!otherUser) return null
 
-                          const isPinned = pinnedConversations.has(conv.id)
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="p-2"
+                            onClick={() => toast('Voice calls are not available yet')}
+                          >
+                            <Phone className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="p-2"
+                            onClick={() => toast('Video calls are not available yet')}
+                          >
+                            <Video className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="p-2" asChild>
+                            <Link href={`/profile/${selectedOtherUser.username}`}>
+                              <Info className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </>
+                ) : (
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center">
+                      <MessageSquare className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-medium mb-2">Select a conversation</h3>
+                      <p className="text-muted-foreground">
+                        Choose a conversation to start messaging
+                      </p>
+                    </div>
+                  </div>
+                )}
 
-                          return (
-                            <div key={conv.id} className="relative group">
-                              <button
-                                onClick={() => setSelectedConversationId(conv.id)}
-                                className={`w-full p-3 rounded-lg text-left transition-colors hover:bg-literary-subtle ${
-                                  selectedConversationId === conv.id ? 'bg-literary-subtle' : ''
-                                }`}
-                              >
-                                <div className="flex items-start space-x-3">
-                                  <div className="relative">
-                                    <Avatar className="h-10 w-10">
+                {selectedOtherUser && (
+                  <>
+                    {/* Messages */}
+                    <ScrollArea className="flex-1 p-4 sm:p-6">
+                      <div className="space-y-4">
+                        {messages.length > 0 ? (
+                          messages.map((message, index) => {
+                            const isOwn = message.sender_id === user?.id
+                            const previousMsg = index > 0 ? messages[index - 1] : undefined
+                            const showDateDivider = shouldShowDateDivider(message, previousMsg)
+
+                            return (
+                              <div key={message.id}>
+                                {showDateDivider && (
+                                  <div className="flex items-center justify-center my-4">
+                                    <div className="px-3 py-1 bg-muted rounded-full">
+                                      <span className="text-xs text-muted-foreground font-medium">
+                                        {getDateDividerText(new Date(message.created_at))}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                                <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                                  <div className={`max-w-[70%] ${isOwn ? 'order-2' : 'order-1'}`}>
+                                    <div
+                                      className={`p-3 rounded-2xl ${
+                                        isOwn
+                                          ? 'bg-primary text-primary-foreground ml-2'
+                                          : 'bg-muted text-foreground mr-2'
+                                      }`}
+                                    >
+                                      <p className="text-sm leading-relaxed">
+                                        {sanitizeText(message.content)}
+                                      </p>
+                                    </div>
+                                    <p
+                                      className={`text-xs text-muted-foreground mt-1 ${
+                                        isOwn ? 'text-right' : 'text-left'
+                                      }`}
+                                    >
+                                      {formatMessageTime(new Date(message.created_at))}
+                                    </p>
+                                  </div>
+
+                                  {!isOwn && (
+                                    <Avatar className="h-6 w-6 order-1 mr-2 mt-auto">
                                       <AvatarImage
-                                        src={otherUser.avatar_url}
-                                        alt={otherUser.display_name}
+                                        src={selectedOtherUser.avatar_url}
+                                        alt={selectedOtherUser.display_name}
                                       />
-                                      <AvatarFallback className="bg-muted text-foreground font-medium text-sm">
-                                        {otherUser.display_name
+                                      <AvatarFallback className="bg-muted text-foreground text-xs">
+                                        {selectedOtherUser.display_name
                                           .split(' ')
                                           .map(n => n[0])
                                           .join('')}
                                       </AvatarFallback>
                                     </Avatar>
-                                    {otherUser.is_online && (
-                                      <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-white" />
-                                    )}
-                                  </div>
-
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between mb-1">
-                                      <div className="flex items-center gap-1 flex-1">
-                                        {isPinned && (
-                                          <Pin className="h-3 w-3 text-primary flex-shrink-0" />
-                                        )}
-                                        <h3 className="font-medium text-sm truncate">
-                                          {otherUser.display_name}
-                                        </h3>
-                                      </div>
-                                      <div className="flex items-center space-x-2">
-                                        <span className="text-xs text-muted-foreground">
-                                          {formatConversationTime(new Date(conv.updated_at))}
-                                        </span>
-                                        {conv.unread_count > 0 && (
-                                          <Badge
-                                            variant="destructive"
-                                            className="h-5 min-w-[20px] flex items-center justify-center p-0 px-1.5 text-xs"
-                                          >
-                                            {conv.unread_count > 9 ? '9+' : conv.unread_count}
-                                          </Badge>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground line-clamp-2">
-                                      {conv.last_message?.content
-                                        ? sanitizeText(conv.last_message.content)
-                                        : 'No messages yet'}
-                                    </p>
-                                  </div>
-                                </div>
-                              </button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto"
-                                onClick={e => {
-                                  e.stopPropagation()
-                                  togglePinConversation(conv.id)
-                                }}
-                              >
-                                <Pin
-                                  className={`h-3.5 w-3.5 ${isPinned ? 'fill-primary text-primary' : ''}`}
-                                />
-                              </Button>
-                            </div>
-                          )
-                        })
-                      ) : (
-                        <div className="text-center py-8">
-                          <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-                          <p className="text-sm text-muted-foreground mb-2">No conversations yet</p>
-                          <Link href="/authors" className="text-primary hover:underline text-sm">
-                            Find writers to connect with
-                          </Link>
-                        </div>
-                      )}
-                    </div>
-                  </ScrollArea>
-                </Card>
-              </div>
-
-              {/* Chat Interface */}
-              <div className="lg:col-span-3">
-                <Card className="h-full card-bg card-shadow border-literary-border flex flex-col">
-                  {selectedOtherUser ? (
-                    <>
-                      {/* Chat Header */}
-                      <CardHeader className="p-4 sm:p-6 border-b border-literary-border">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className="relative">
-                              <Avatar className="h-10 w-10">
-                                <AvatarImage
-                                  src={selectedOtherUser.avatar_url}
-                                  alt={selectedOtherUser.display_name}
-                                />
-                                <AvatarFallback className="bg-muted text-foreground font-medium">
-                                  {selectedOtherUser.display_name
-                                    .split(' ')
-                                    .map(n => n[0])
-                                    .join('')}
-                                </AvatarFallback>
-                              </Avatar>
-                              {selectedOtherUser.is_online && (
-                                <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-white" />
-                              )}
-                            </div>
-
-                            <div>
-                              <h3 className="font-medium">{selectedOtherUser.display_name}</h3>
-                              <p className="text-xs text-muted-foreground">
-                                {selectedOtherUser.is_online ? (
-                                  <span className="text-green-600">Online</span>
-                                ) : selectedOtherUser.last_seen ? (
-                                  `Last seen ${formatDistanceToNow(new Date(selectedOtherUser.last_seen), { addSuffix: true })}`
-                                ) : (
-                                  `@${selectedOtherUser.username}`
-                                )}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="p-2"
-                              onClick={() => toast('Voice calls are not available yet')}
-                            >
-                              <Phone className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="p-2"
-                              onClick={() => toast('Video calls are not available yet')}
-                            >
-                              <Video className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="p-2" asChild>
-                              <Link href={`/profile/${selectedOtherUser.username}`}>
-                                <Info className="h-4 w-4" />
-                              </Link>
-                            </Button>
-                          </div>
-                        </div>
-                      </CardHeader>
-                    </>
-                  ) : (
-                    <div className="flex-1 flex items-center justify-center">
-                      <div className="text-center">
-                        <MessageSquare className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                        <h3 className="text-lg font-medium mb-2">Select a conversation</h3>
-                        <p className="text-muted-foreground">
-                          Choose a conversation to start messaging
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedOtherUser && (
-                    <>
-                      {/* Messages */}
-                      <ScrollArea className="flex-1 p-4 sm:p-6">
-                        <div className="space-y-4">
-                          {messages.length > 0 ? (
-                            messages.map((message, index) => {
-                              const isOwn = message.sender_id === user?.id
-                              const previousMsg = index > 0 ? messages[index - 1] : undefined
-                              const showDateDivider = shouldShowDateDivider(message, previousMsg)
-
-                              return (
-                                <div key={message.id}>
-                                  {showDateDivider && (
-                                    <div className="flex items-center justify-center my-4">
-                                      <div className="px-3 py-1 bg-muted rounded-full">
-                                        <span className="text-xs text-muted-foreground font-medium">
-                                          {getDateDividerText(new Date(message.created_at))}
-                                        </span>
-                                      </div>
-                                    </div>
                                   )}
-                                  <div
-                                    className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
-                                  >
-                                    <div className={`max-w-[70%] ${isOwn ? 'order-2' : 'order-1'}`}>
-                                      <div
-                                        className={`p-3 rounded-2xl ${
-                                          isOwn
-                                            ? 'bg-primary text-primary-foreground ml-2'
-                                            : 'bg-muted text-foreground mr-2'
-                                        }`}
-                                      >
-                                        <p className="text-sm leading-relaxed">
-                                          {sanitizeText(message.content)}
-                                        </p>
-                                      </div>
-                                      <p
-                                        className={`text-xs text-muted-foreground mt-1 ${
-                                          isOwn ? 'text-right' : 'text-left'
-                                        }`}
-                                      >
-                                        {formatMessageTime(new Date(message.created_at))}
-                                      </p>
-                                    </div>
-
-                                    {!isOwn && (
-                                      <Avatar className="h-6 w-6 order-1 mr-2 mt-auto">
-                                        <AvatarImage
-                                          src={selectedOtherUser.avatar_url}
-                                          alt={selectedOtherUser.display_name}
-                                        />
-                                        <AvatarFallback className="bg-muted text-foreground text-xs">
-                                          {selectedOtherUser.display_name
-                                            .split(' ')
-                                            .map(n => n[0])
-                                            .join('')}
-                                        </AvatarFallback>
-                                      </Avatar>
-                                    )}
-                                  </div>
                                 </div>
-                              )
-                            })
-                          ) : (
-                            <div className="text-center py-8">
-                              <p className="text-muted-foreground">
-                                No messages yet. Start the conversation!
-                              </p>
-                            </div>
-                          )}
-                          <div ref={messagesEndRef} />
-                        </div>
-                      </ScrollArea>
-
-                      {/* Message Input */}
-                      <div className="p-4 sm:p-6 border-t border-literary-border">
-                        <div className="flex items-end space-x-2">
-                          <div className="flex space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="p-2"
-                              onClick={() => toast('File attachments will be available soon')}
-                            >
-                              <Paperclip className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="p-2"
-                              onClick={() => toast('Image sharing will be available soon')}
-                            >
-                              <ImageIcon className="h-4 w-4" />
-                            </Button>
+                              </div>
+                            )
+                          })
+                        ) : (
+                          <div className="text-center py-8">
+                            <p className="text-muted-foreground">
+                              No messages yet. Start the conversation!
+                            </p>
                           </div>
+                        )}
+                        <div ref={messagesEndRef} />
+                      </div>
+                    </ScrollArea>
 
-                          <div className="flex-1 relative">
-                            <Input
-                              value={newMessage}
-                              onChange={e => setNewMessage(e.target.value)}
-                              onKeyPress={handleKeyPress}
-                              placeholder="Type a message..."
-                              className="pr-12 border-literary-border min-h-[40px]"
-                              disabled={sendingMessage}
-                            />
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1"
-                              onClick={() => toast('Emoji picker will be available soon')}
-                            >
-                              <Smile className="h-4 w-4" />
-                            </Button>
-                          </div>
-
+                    {/* Message Input */}
+                    <div className="p-4 sm:p-6 border-t border-literary-border">
+                      <div className="flex items-end space-x-2">
+                        <div className="flex space-x-2">
                           <Button
-                            onClick={handleSendMessage}
-                            disabled={!newMessage.trim() || sendingMessage}
+                            variant="ghost"
                             size="sm"
                             className="p-2"
+                            onClick={() => toast('File attachments will be available soon')}
                           >
-                            {sendingMessage ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Send className="h-4 w-4" />
-                            )}
+                            <Paperclip className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="p-2"
+                            onClick={() => toast('Image sharing will be available soon')}
+                          >
+                            <ImageIcon className="h-4 w-4" />
                           </Button>
                         </div>
+
+                        <div className="flex-1 relative">
+                          <Input
+                            value={newMessage}
+                            onChange={e => setNewMessage(e.target.value)}
+                            onKeyPress={handleKeyPress}
+                            placeholder="Type a message..."
+                            className="pr-12 border-literary-border min-h-[40px]"
+                            disabled={sendingMessage}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1"
+                            onClick={() => toast('Emoji picker will be available soon')}
+                          >
+                            <Smile className="h-4 w-4" />
+                          </Button>
+                        </div>
+
+                        <Button
+                          onClick={handleSendMessage}
+                          disabled={!newMessage.trim() || sendingMessage}
+                          size="sm"
+                          className="p-2"
+                        >
+                          {sendingMessage ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Send className="h-4 w-4" />
+                          )}
+                        </Button>
                       </div>
-                    </>
-                  )}
-                </Card>
-              </div>
+                    </div>
+                  </>
+                )}
+              </Card>
             </div>
           </div>
         </div>
       </div>
-    </ProtectedRoute>
+    </div>
   )
 }
 
-export default function Messages() {
+interface MessagesProps {
+  user: (User & { profile?: any }) | null
+}
+
+export default function Messages({ user }: MessagesProps) {
   return (
     <ErrorBoundary>
-      <MessagesContent />
+      <MessagesContent user={user} />
     </ErrorBoundary>
   )
 }
