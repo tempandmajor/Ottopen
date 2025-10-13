@@ -453,12 +453,10 @@ export default function CommunityGuidelines() {
                   </p>
                   <div className="bg-muted/50 p-4 rounded-lg">
                     <p className="font-medium">Community Team</p>
-                    <p className="text-muted-foreground">
-                      General Questions: community@ottopen.com
-                    </p>
-                    <p className="text-muted-foreground">Report Content: report@ottopen.com</p>
-                    <p className="text-muted-foreground">Appeals: appeals@ottopen.com</p>
-                    <p className="text-muted-foreground">Emergency: urgent@ottopen.com</p>
+                    <p className="text-muted-foreground">General Questions: hello@ottopen.app</p>
+                    <p className="text-muted-foreground">Report Content: hello@ottopen.app</p>
+                    <p className="text-muted-foreground">Appeals: hello@ottopen.app</p>
+                    <p className="text-muted-foreground">Emergency: hello@ottopen.app</p>
                   </div>
                 </section>
               </div>

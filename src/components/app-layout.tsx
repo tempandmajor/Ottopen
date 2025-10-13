@@ -28,9 +28,9 @@ export function AppLayout({ children, editorSidebar }: AppLayoutProps) {
   const showEditorSidebar =
     user && (navigationContext === 'ai-editor' || navigationContext === 'script-editor')
 
-  // Always reserve space for sidebar if we're in app context and have hydrated
-  // This prevents content jumping when auth loads
-  const shouldReserveSpace = hasHydrated && (navigationContext === 'app' || showEditorSidebar)
+  // Reserve space only when a sidebar is actually rendered to avoid left gutter when signed out
+  // Still prevents content jumping by waiting for hydration
+  const shouldReserveSpace = hasHydrated && (showGlobalSidebar || showEditorSidebar)
 
   return (
     <div className="relative min-h-screen">

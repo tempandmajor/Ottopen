@@ -84,7 +84,7 @@ export default function SupportPolicy() {
                       <p className="text-sm text-muted-foreground mb-2">
                         For account issues, technical problems, and general inquiries
                       </p>
-                      <p className="text-sm font-medium">support@ottopen.com</p>
+                      <p className="text-sm font-medium">hello@ottopen.app</p>
                     </div>
 
                     <div className="border border-literary-border rounded-lg p-4">
@@ -278,9 +278,7 @@ export default function SupportPolicy() {
                   <ol className="list-decimal list-inside text-muted-foreground space-y-2 mb-4">
                     <li>Reply to the support ticket with additional details</li>
                     <li>Request escalation to a senior support specialist</li>
-                    <li>
-                      For urgent matters, contact our escalation email: escalation@ottopen.com
-                    </li>
+                    <li>For urgent matters, contact our escalation email: hello@ottopen.app</li>
                     <li>As a last resort, contact our support management team</li>
                   </ol>
                 </section>
@@ -332,9 +330,9 @@ export default function SupportPolicy() {
                   </p>
                   <div className="bg-muted/50 p-4 rounded-lg">
                     <p className="font-medium">Ottopen Support Team</p>
-                    <p className="text-muted-foreground">General Support: support@ottopen.com</p>
-                    <p className="text-muted-foreground">Escalations: escalation@ottopen.com</p>
-                    <p className="text-muted-foreground">Premium Support: premium@ottopen.com</p>
+                    <p className="text-muted-foreground">General Support: hello@ottopen.app</p>
+                    <p className="text-muted-foreground">Escalations: hello@ottopen.app</p>
+                    <p className="text-muted-foreground">Premium Support: hello@ottopen.app</p>
                     <p className="text-muted-foreground">Help Center: help.ottopen.com</p>
                   </div>
                 </section>

@@ -415,11 +415,9 @@ export default function AIUsagePolicy() {
                   </p>
                   <div className="bg-muted/50 p-4 rounded-lg">
                     <p className="font-medium mb-2">AI Support Team</p>
-                    <p className="text-muted-foreground">General Questions: support@ottopen.com</p>
-                    <p className="text-muted-foreground">AI Billing: billing@ottopen.com</p>
-                    <p className="text-muted-foreground">
-                      Technical Issues: ai-support@ottopen.com
-                    </p>
+                    <p className="text-muted-foreground">General Questions: hello@ottopen.app</p>
+                    <p className="text-muted-foreground">AI Billing: hello@ottopen.app</p>
+                    <p className="text-muted-foreground">Technical Issues: hello@ottopen.app</p>
                     <p className="text-muted-foreground mt-3">
                       Response time: Within 24 hours for AI-related inquiries
                     </p>

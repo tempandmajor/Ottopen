@@ -240,7 +240,7 @@ export default function TermsOfService() {
                   </p>
                   <div className="bg-muted/50 p-4 rounded-lg">
                     <p className="font-medium">Ottopen Legal Team</p>
-                    <p className="text-muted-foreground">Email: legal@ottopen.com</p>
+                    <p className="text-muted-foreground">Email: legal@ottopen.app</p>
                     <p className="text-muted-foreground">
                       Address: 123 Literary Lane, San Francisco, CA 94103
                     </p>

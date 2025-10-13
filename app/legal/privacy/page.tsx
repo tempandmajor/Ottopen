@@ -384,7 +384,7 @@ export default function PrivacyPolicy() {
                     </ul>
                     <p className="font-medium mb-2">Contact Us:</p>
                     <p className="text-sm">
-                      For assistance with privacy requests: privacy@ottopen.com
+                      For assistance with privacy requests: legal@ottopen.app
                     </p>
                     <p className="text-sm text-muted-foreground mt-1">
                       We will respond to verified requests within 30 days.
@@ -460,7 +460,7 @@ export default function PrivacyPolicy() {
                   </p>
                   <p className="text-muted-foreground leading-relaxed">
                     If you believe we have inadvertently collected information from a child under
-                    13, please contact us at privacy@ottopen.com.
+                    13, please contact us at legal@ottopen.app.
                   </p>
                 </section>
 
@@ -513,12 +513,12 @@ export default function PrivacyPolicy() {
                   </p>
                   <div className="bg-muted/50 p-4 rounded-lg">
                     <p className="font-medium mb-2">Privacy Team</p>
-                    <p className="text-muted-foreground">Email: privacy@ottopen.com</p>
+                    <p className="text-muted-foreground">Email: legal@ottopen.app</p>
                     <p className="text-muted-foreground">
-                      Data Protection Officer: dpo@ottopen.com
+                      Data Protection Officer: legal@ottopen.app
                     </p>
                     <p className="text-muted-foreground">
-                      GDPR Representative (EU): gdpr@ottopen.com
+                      GDPR Representative (EU): legal@ottopen.app
                     </p>
                     <p className="text-muted-foreground mt-3">
                       Response time: Within 30 days for privacy requests

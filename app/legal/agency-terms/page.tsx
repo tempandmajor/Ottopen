@@ -231,8 +231,8 @@ export default function AgencyTerms() {
                   <p>
                     <strong>Ottopen Literary Services</strong>
                   </p>
-                  <p>Email: agents@ottopen.com</p>
-                  <p>For questions about these terms: legal@ottopen.com</p>
+                  <p>Email: partners@ottopen.app</p>
+                  <p>For questions about these terms: legal@ottopen.app</p>
                   <p>Last updated: {new Date().toLocaleDateString()}</p>
                 </div>
               </CardContent>
