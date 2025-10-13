@@ -33,27 +33,41 @@ export function useCollaboration({
     clientRef.current = client
 
     const initializeClient = async () => {
-      const channel = await client.join()
-      setIsConnected(true)
+      try {
+        const channel = await client.join()
 
-      // Listen for presence changes
-      const updateCollaborators = () => {
-        const currentCollaborators = client.getCollaborators()
-        setCollaborators(currentCollaborators)
-      }
+        // If join failed (returned null), don't set connected state
+        if (!channel) {
+          console.warn('Failed to join collaboration session - features will be disabled')
+          setIsConnected(false)
+          return () => {} // Return empty cleanup function
+        }
 
-      // Update collaborators periodically
-      const interval = setInterval(updateCollaborators, 1000)
+        setIsConnected(true)
 
-      // Listen for comments
-      client.onCommentAdded(comment => {
-        setComments(prev => [...prev, comment])
-      })
+        // Listen for presence changes
+        const updateCollaborators = () => {
+          const currentCollaborators = client.getCollaborators()
+          setCollaborators(currentCollaborators)
+        }
 
-      return () => {
-        clearInterval(interval)
-        client.leave()
+        // Update collaborators periodically
+        const interval = setInterval(updateCollaborators, 1000)
+
+        // Listen for comments
+        client.onCommentAdded(comment => {
+          setComments(prev => [...prev, comment])
+        })
+
+        return () => {
+          clearInterval(interval)
+          client.leave()
+          setIsConnected(false)
+        }
+      } catch (error) {
+        console.error('Error initializing collaboration:', error)
         setIsConnected(false)
+        return () => {} // Return empty cleanup function
       }
     }
 

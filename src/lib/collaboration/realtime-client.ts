@@ -44,38 +44,63 @@ export class CollaborationClient {
    * Join a collaboration session
    */
   async join() {
-    this.channel = supabase.channel(`manuscript:${this.manuscriptId}`, {
-      config: {
-        presence: {
-          key: this.userId,
+    try {
+      this.channel = supabase.channel(`manuscript:${this.manuscriptId}`, {
+        config: {
+          presence: {
+            key: this.userId,
+          },
         },
-      },
-    })
-
-    // Track presence
-    await this.channel
-      .on('presence', { event: 'sync' }, () => {
-        const presenceState = this.channel?.presenceState()
-        // Handle presence state changes
-      })
-      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-        console.log('User joined:', key, newPresences)
-      })
-      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-        console.log('User left:', key, leftPresences)
-      })
-      .subscribe(async status => {
-        if (status === 'SUBSCRIBED') {
-          await this.channel?.track({
-            userId: this.userId,
-            name: this.userName,
-            color: this.userColor,
-            lastSeen: new Date().toISOString(),
-          })
-        }
       })
 
-    return this.channel
+      // Track presence
+      await this.channel
+        .on('presence', { event: 'sync' }, () => {
+          const presenceState = this.channel?.presenceState()
+          // Handle presence state changes
+        })
+        .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+          console.log('User joined:', key, newPresences)
+        })
+        .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+          console.log('User left:', key, leftPresences)
+        })
+        .subscribe(async status => {
+          if (status === 'SUBSCRIBED') {
+            await this.channel?.track({
+              userId: this.userId,
+              name: this.userName,
+              color: this.userColor,
+              lastSeen: new Date().toISOString(),
+            })
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('Realtime channel error - will retry')
+            // Attempt to rejoin after a delay
+            setTimeout(() => this.rejoin(), 5000)
+          } else if (status === 'TIMED_OUT') {
+            console.error('Realtime connection timed out - will retry')
+            setTimeout(() => this.rejoin(), 3000)
+          } else if (status === 'CLOSED') {
+            console.warn('Realtime connection closed')
+          }
+        })
+
+      return this.channel
+    } catch (error) {
+      console.error('Failed to join collaboration session:', error)
+      // Return null to indicate failure - caller should handle gracefully
+      return null
+    }
+  }
+
+  /**
+   * Attempt to rejoin after connection issues
+   */
+  private async rejoin() {
+    if (this.channel) {
+      await this.leave()
+    }
+    await this.join()
   }
 
   /**
