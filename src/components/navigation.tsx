@@ -83,32 +83,25 @@ export function Navigation({ user: userProp }: NavigationProps) {
             {user && (
               <>
                 {/* Notification Bell */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  asChild
-                  className="relative"
-                  title="Notifications"
-                >
-                  <Link href="/notifications">
+                <Link href="/notifications" className="inline-block">
+                  <Button variant="ghost" size="sm" className="relative" title="Notifications">
                     <Bell className="h-5 w-5" />
-                  </Link>
-                </Button>
+                  </Button>
+                </Link>
 
                 {/* Referral/Earn Button */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  asChild
-                  className="relative flex items-center space-x-2"
-                  title="Earn cash rewards by referring friends"
-                >
-                  <Link href="/referrals">
+                <Link href="/referrals" className="inline-block">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="relative flex items-center space-x-2"
+                    title="Earn cash rewards by referring friends"
+                  >
                     <Gift className="h-4 w-4" />
                     <span className="hidden sm:inline">Earn</span>
                     <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                  </Link>
-                </Button>
+                  </Button>
+                </Link>
               </>
             )}
 
