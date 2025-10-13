@@ -26,14 +26,19 @@ import type { User as SupabaseUser } from '@supabase/supabase-js'
 import type { User as ProfileUser } from '@/src/lib/supabase'
 import { signOutAction } from '@/app/actions/auth'
 import { useTransition } from 'react'
+import { useAuth } from '@/src/contexts/auth-context'
 
 interface NavigationProps {
   user?: (SupabaseUser & { profile?: ProfileUser }) | null
 }
 
-export function Navigation({ user }: NavigationProps) {
+export function Navigation({ user: userProp }: NavigationProps) {
   const currentPath = usePathname()
   const [isPending, startTransition] = useTransition()
+  const { user: authUser } = useAuth()
+
+  // Use prop if provided, otherwise fall back to auth context
+  const user = userProp ?? authUser
 
   const isActive = (path: string) => currentPath === path
 
