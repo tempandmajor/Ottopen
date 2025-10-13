@@ -38,7 +38,7 @@ export async function sendEmail({
   subject,
   text,
   html,
-  from = process.env.SENDGRID_FROM_EMAIL || 'notifications@ottopen.com',
+  from = process.env.SENDGRID_FROM_EMAIL || 'notifications@ottopen.app',
   replyTo,
 }: {
   to: string | string[]
@@ -85,7 +85,7 @@ export async function sendContactFormNotification({
   subject: string
   message: string
 }) {
-  const adminEmail = process.env.ADMIN_EMAIL || 'hello@ottopen.com'
+  const adminEmail = process.env.ADMIN_EMAIL || 'hello@ottopen.app'
 
   return sendEmail({
     to: adminEmail,
@@ -120,7 +120,7 @@ export async function sendCustomerInquiry({
   inquiryType: string
   message: string
 }) {
-  const supportEmail = process.env.SUPPORT_EMAIL || 'support@ottopen.com'
+  const supportEmail = process.env.SUPPORT_EMAIL || 'support@ottopen.app'
 
   return sendEmail({
     to: supportEmail,

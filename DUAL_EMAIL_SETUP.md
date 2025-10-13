@@ -10,8 +10,8 @@ Your app now uses **two email providers** for better reliability and separation 
 
 | Provider     | Purpose                                             | Sender Address                              |
 | ------------ | --------------------------------------------------- | ------------------------------------------- |
-| **Resend**   | Authentication emails (via Supabase)                | `auth@ottopen.com` or `noreply@ottopen.com` |
-| **SendGrid** | Application emails, notifications, customer support | `notifications@ottopen.com`                 |
+| **Resend**   | Authentication emails (via Supabase)                | `auth@ottopen.app` or `noreply@ottopen.app` |
+| **SendGrid** | Application emails, notifications, customer support | `notifications@ottopen.app`                 |
 
 ---
 
@@ -138,9 +138,9 @@ Add these to both `.env.local` and Vercel Production:
 SENDGRID_API_KEY=<your-sendgrid-api-key>
 
 # Optional: Custom sender addresses
-SENDGRID_FROM_EMAIL=notifications@ottopen.com
-ADMIN_EMAIL=hello@ottopen.com
-SUPPORT_EMAIL=support@ottopen.com
+SENDGRID_FROM_EMAIL=notifications@ottopen.app
+ADMIN_EMAIL=hello@ottopen.app
+SUPPORT_EMAIL=support@ottopen.app
 ```
 
 ---
@@ -152,7 +152,7 @@ SUPPORT_EMAIL=support@ottopen.com
 1. **Verify Sender Email**
    - Go to: https://app.sendgrid.com
    - Settings → Sender Authentication
-   - Verify `notifications@ottopen.com`
+   - Verify `notifications@ottopen.app`
 
 2. **Add to Vercel** (if not already done)
 
@@ -183,13 +183,13 @@ SUPPORT_EMAIL=support@ottopen.com
 1. Go to: https://ottopen.app/auth/signup
 2. Create test account with your email
 3. Check inbox for verification email
-4. Should be from `auth@ottopen.com` or `noreply@ottopen.com`
+4. Should be from `auth@ottopen.app` or `noreply@ottopen.app`
 
 ### Test Application Emails (SendGrid)
 
 1. Use the contact form on your site
 2. Check admin inbox for notification
-3. Should be from `notifications@ottopen.com`
+3. Should be from `notifications@ottopen.app`
 
 ---
 
