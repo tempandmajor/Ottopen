@@ -53,12 +53,9 @@ export function HomeView({ initialPosts, initialAuthors, initialStats }: HomeVie
   const [emailSubmitted, setEmailSubmitted] = useState(false)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
 
-  console.log('Homepage - userExists:', !!user, 'Loading:', loading)
-
   // Redirect authenticated users to feed
   useEffect(() => {
     if (!loading && user) {
-      console.log('Homepage: User is authenticated, redirecting to feed')
       navigate('/feed', { replace: true })
     }
   }, [user, loading, navigate])
@@ -76,7 +73,6 @@ export function HomeView({ initialPosts, initialAuthors, initialStats }: HomeVie
     e.preventDefault()
     if (email.trim()) {
       // TODO: Integrate with email service
-      console.log('Email signup:', email)
       setEmailSubmitted(true)
       setTimeout(() => {
         setEmail('')

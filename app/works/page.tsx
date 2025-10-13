@@ -468,7 +468,6 @@ export default function Works() {
       >
         <CardContent className="p-6">
           <div className="flex space-x-4">
-            <Navigation />
             <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-lg bg-muted flex-shrink-0 flex items-center justify-center font-bold text-lg shadow-md">
               <BookOpen className="h-8 w-8" />
             </div>

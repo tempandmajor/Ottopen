@@ -42,9 +42,7 @@ export const viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-      </head>
+      <head></head>
       <body className="min-h-screen bg-background font-sans antialiased">
         <ScreenReaderAnnouncer />
         <a

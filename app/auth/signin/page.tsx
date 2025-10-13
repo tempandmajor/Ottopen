@@ -34,10 +34,9 @@ export default function SignIn() {
   // Redirect if already authenticated
   useEffect(() => {
     if (user && !redirecting) {
-      console.log('SignIn: User authenticated, redirecting to feed')
       setRedirecting(true)
-      // Use window.location for immediate redirect
-      window.location.href = '/feed'
+      // Navigate using app router
+      navigate('/feed', { replace: true })
     }
   }, [user, redirecting])
 
@@ -57,7 +56,6 @@ export default function SignIn() {
       return
     }
 
-    console.log('=== SIGNIN FORM SUBMIT ===')
     setSubmitting(true)
 
     try {
@@ -84,10 +82,8 @@ export default function SignIn() {
       }
 
       const result = await signIn(normalizedEmail, password)
-      console.log('SignIn result:', result)
 
       if (result.success) {
-        console.log('SignIn successful - will redirect after auth state updates')
         toast.success('Signed in successfully!')
 
         // Reset rate limiter on success
@@ -96,7 +92,6 @@ export default function SignIn() {
         // Don't redirect here - let the useEffect handle it when user state is set
         // The auth context will update and trigger the redirect in useEffect
       } else {
-        console.log('SignIn failed:', result.error)
         toast.error(result.error || 'Sign in failed')
 
         // Record failed attempt

@@ -22,6 +22,26 @@ export default function ForgotPassword() {
     setLoading(true)
 
     try {
+      // Server-side rate limit check
+      try {
+        const rlRes = await fetch('/api/auth/rate-limit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ operation: 'forgot-password', email: email.trim().toLowerCase() }),
+        })
+        if (rlRes.status === 429) {
+          const body = await rlRes.json().catch(() => ({}))
+          toast.error(
+            `Too many attempts. Please wait ${body.retryAfter ?? 60} seconds before trying again.`
+          )
+          setLoading(false)
+          return
+        }
+      } catch (e) {
+        // If rate-limit API fails, continue but do not block user
+        console.warn('Rate limit API check failed', e)
+      }
+
       const { error } = await forgotPassword(email)
 
       if (error) {

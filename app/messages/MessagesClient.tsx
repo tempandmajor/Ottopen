@@ -342,7 +342,6 @@ function MessagesContent() {
 
                           return (
                             <div key={conv.id} className="relative group">
-                              <Navigation />
                               <button
                                 onClick={() => setSelectedConversationId(conv.id)}
                                 className={`w-full p-3 rounded-lg text-left transition-colors hover:bg-literary-subtle ${
@@ -522,7 +521,6 @@ function MessagesContent() {
 
                               return (
                                 <div key={message.id}>
-                                  <Navigation />
                                   {showDateDivider && (
                                     <div className="flex items-center justify-center my-4">
                                       <div className="px-3 py-1 bg-muted rounded-full">

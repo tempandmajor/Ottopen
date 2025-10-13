@@ -209,7 +209,6 @@ function PostJobForm({ userId, accountType, onJobCreated }: PostJobFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2">
-        <Navigation />
         <div className="space-y-2">
           <Label htmlFor="job-title">Job Title *</Label>
           <Input

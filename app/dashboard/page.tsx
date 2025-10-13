@@ -33,7 +33,6 @@ export default async function DashboardPage() {
     writingStreak,
     writingSessions,
     writingGoals,
-    recentPosts,
     suggestedAuthors,
   ] = await Promise.all([
     getServerUserStatistics(userId),
@@ -42,7 +41,6 @@ export default async function DashboardPage() {
     getServerWritingStreak(userId),
     getServerWritingSessions(userId, 30),
     getServerWritingGoals(userId),
-    getServerPosts({ limit: 5, published: true }),
     getServerUsers('', 4),
   ])
 

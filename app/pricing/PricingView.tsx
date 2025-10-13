@@ -242,7 +242,6 @@ export function PricingView() {
                       <Card key={plan.tier} className="border-2">
                         <CardHeader>
                           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
-                            <Navigation />
                             <Icon className="h-6 w-6 text-blue-600" />
                           </div>
                           <CardTitle>{plan.name}</CardTitle>

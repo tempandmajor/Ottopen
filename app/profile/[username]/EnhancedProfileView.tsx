@@ -136,12 +136,13 @@ export default function EnhancedProfileView() {
         : false
 
       if (privacySettings && !isOwnProfile) {
-        if (privacySettings.profile_visibility === 'private') {
+        const ps = privacySettings as any
+        if (ps.profile_visibility === 'private') {
           setError('This profile is private')
           toast.error('This profile is private')
           return
         }
-        if (privacySettings.profile_visibility === 'followers_only' && !isFollowing) {
+        if (ps.profile_visibility === 'followers_only' && !isFollowing) {
           setError('This profile is only visible to followers')
           toast.error('This profile is only visible to followers')
           return
@@ -339,6 +340,7 @@ export default function EnhancedProfileView() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
+        <Navigation />
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-5xl mx-auto">
             <Card className="mb-8">
@@ -367,6 +369,7 @@ export default function EnhancedProfileView() {
   if (error || !profile) {
     return (
       <div className="min-h-screen bg-background">
+        <Navigation />
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
             <div className="text-center py-12">
@@ -394,6 +397,7 @@ export default function EnhancedProfileView() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Navigation />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-5xl mx-auto">
           {/* Profile Header */}
@@ -552,7 +556,11 @@ export default function EnhancedProfileView() {
                     <div className="flex flex-wrap gap-2">
                       {profile.website_url && (
                         <Button variant="ghost" size="sm" asChild>
-                          <a href={sanitizeUrl(profile.website_url)} target="_blank" rel="noopener noreferrer">
+                          <a
+                            href={sanitizeUrl(profile.website_url)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
                             <Globe className="h-4 w-4 mr-2" />
                             Website
                           </a>
@@ -572,7 +580,11 @@ export default function EnhancedProfileView() {
                       )}
                       {profile.linkedin_url && (
                         <Button variant="ghost" size="sm" asChild>
-                          <a href={sanitizeUrl(profile.linkedin_url)} target="_blank" rel="noopener noreferrer">
+                          <a
+                            href={sanitizeUrl(profile.linkedin_url)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
                             <Linkedin className="h-4 w-4 mr-2" />
                             LinkedIn
                           </a>
