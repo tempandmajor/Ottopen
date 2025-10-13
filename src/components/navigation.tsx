@@ -26,11 +26,20 @@ import {
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/src/contexts/auth-context'
+import type { User as SupabaseUser } from '@supabase/supabase-js'
+import type { User as ProfileUser } from '@/src/lib/supabase'
 
-export function Navigation() {
+interface NavigationProps {
+  serverUser?: (SupabaseUser & { profile?: ProfileUser }) | null
+}
+
+export function Navigation({ serverUser }: NavigationProps = {}) {
   const currentPath = usePathname()
   const router = useRouter()
-  const { user, loading, signOut } = useAuth()
+  const { user: clientUser, loading, signOut } = useAuth()
+
+  // Use server user as fallback if client user isn't loaded yet
+  const user = clientUser || serverUser
 
   const isActive = (path: string) => currentPath === path
 

@@ -520,7 +520,7 @@ export function EnhancedSubmissionsView({
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      <Navigation serverUser={user} />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Header with Analytics Toggle */}
