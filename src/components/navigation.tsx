@@ -18,7 +18,7 @@ import {
   LogOut,
   ChevronDown,
   Bell,
-  DollarSign,
+  Gift,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -104,7 +104,7 @@ export function Navigation({ user: userProp }: NavigationProps) {
                   title="Earn cash rewards by referring friends"
                 >
                   <Link href="/referrals">
-                    <DollarSign className="h-4 w-4" />
+                    <Gift className="h-4 w-4" />
                     <span className="hidden sm:inline">Earn</span>
                     <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                   </Link>

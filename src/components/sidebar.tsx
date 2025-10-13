@@ -16,13 +16,14 @@ import {
   Search,
   Upload,
   Briefcase,
-  DollarSign,
+  Gift,
   Clapperboard,
   HelpCircle,
   Shield,
   FileText,
   Menu,
   X,
+  UserCircle,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -55,7 +56,7 @@ const navigationSections: NavSection[] = [
     items: [
       { name: 'Search', href: '/search', icon: Search, requireAuth: true },
       { name: 'Works', href: '/works', icon: BookOpen },
-      { name: 'Authors', href: '/authors', icon: Users, requireAuth: true },
+      { name: 'Authors', href: '/authors', icon: UserCircle, requireAuth: true },
       { name: 'Book Clubs', href: '/clubs', icon: Users, requireAuth: true },
     ],
   },
@@ -74,7 +75,7 @@ const navigationSections: NavSection[] = [
       {
         name: 'Earn Rewards',
         href: '/referrals',
-        icon: DollarSign,
+        icon: Gift,
         badge: 'New',
         requireAuth: true,
       },
