@@ -128,7 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.warn('Auth initialization timeout - setting loading to false')
         setLoading(false)
       }
-    }, 3000) // 3 second timeout
+    }, 10000) // 10 second timeout
 
     // Helper to stop loading and clear timeout
     const stopLoading = () => {

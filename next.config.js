@@ -91,7 +91,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://api.openai.com https://api.anthropic.com https://vitals.vercel-insights.com https://o*.ingest.sentry.io",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://api.openai.com https://api.anthropic.com https://vitals.vercel-insights.com https://o4510172905603072.ingest.us.sentry.io",
               'frame-src https://js.stripe.com',
               "base-uri 'self'",
               "form-action 'self'",
