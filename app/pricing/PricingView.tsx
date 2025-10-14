@@ -1,5 +1,4 @@
 'use client'
-import { Navigation } from '@/src/components/navigation'
 
 import { Footer } from '@/src/components/footer'
 import { Button } from '@/src/components/ui/button'
@@ -154,7 +153,6 @@ export function PricingView() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navigation />
       <main className="flex-1">
         {/* Hero Section */}
         <section className="border-b bg-gradient-to-b from-blue-50 to-white py-20">

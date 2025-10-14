@@ -1,8 +1,7 @@
 'use client'
-import { Navigation } from '@/src/components/navigation'
 
 import { useState, useEffect } from 'react'
-import { Plus, Search, Users, BookOpen, TrendingUp, Filter } from 'lucide-react'
+import { Plus, Search, Users, TrendingUp, Filter } from 'lucide-react'
 import { Button } from '@/src/components/ui/button'
 import { Input } from '@/src/components/ui/input'
 import {
@@ -63,8 +62,6 @@ export function ClubsView() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-      {/* Header */}
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-16">
           <div className="max-w-4xl">
@@ -88,33 +85,13 @@ export function ClubsView() {
       {/* Stats Bar */}
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="flex items-center gap-3">
-              <div className="bg-muted p-3 rounded-lg">
-                <Users className="h-6 w-6 text-foreground" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{clubs.length}</div>
-                <div className="text-sm text-muted-foreground">Active Clubs</div>
-              </div>
+          <div className="flex items-center gap-3">
+            <div className="bg-muted p-3 rounded-lg">
+              <Users className="h-6 w-6 text-foreground" />
             </div>
-            <div className="flex items-center gap-3">
-              <div className="bg-muted p-3 rounded-lg">
-                <BookOpen className="h-6 w-6 text-foreground" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">1,234</div>
-                <div className="text-sm text-muted-foreground">Manuscripts Shared</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="bg-muted p-3 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-foreground" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">5,678</div>
-                <div className="text-sm text-muted-foreground">Critiques Exchanged</div>
-              </div>
+            <div>
+              <div className="text-2xl font-bold">{clubs.length}</div>
+              <div className="text-sm text-muted-foreground">Active Clubs</div>
             </div>
           </div>
         </div>
