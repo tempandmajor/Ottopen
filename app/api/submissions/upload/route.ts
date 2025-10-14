@@ -27,6 +27,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
+    // Validate filename for path traversal attacks
+    if (file.name.includes('..') || file.name.includes('/') || file.name.includes('\\')) {
+      return NextResponse.json({ error: 'Invalid filename' }, { status: 400 })
+    }
+
     // Validate file type
     const allowedTypes = [
       'application/pdf',

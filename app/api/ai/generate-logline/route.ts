@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import { validateAIRequest, validationErrorResponse } from '@/src/lib/ai-validation'
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,6 +19,13 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
+
+    // Validate input
+    const validation = validateAIRequest(body)
+    if (!validation.valid) {
+      return NextResponse.json(validationErrorResponse(validation.errors), { status: 400 })
+    }
+
     const { title, synopsis, type, genre } = body
 
     if (!title || !synopsis) {

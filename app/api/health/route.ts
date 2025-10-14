@@ -22,7 +22,39 @@ interface HealthCheck {
   }
 }
 
-export async function GET(request: NextRequest): Promise<NextResponse<HealthCheck>> {
+export async function GET(
+  request: NextRequest
+): Promise<NextResponse<HealthCheck | { status: string }>> {
+  const { searchParams } = new URL(request.url)
+  const detailed = searchParams.get('detailed')
+
+  // Public endpoint - minimal info only
+  if (detailed !== 'true') {
+    return NextResponse.json({ status: 'healthy' }, { status: 200 })
+  }
+
+  // Detailed endpoint - require admin authentication
+  const supabase = createServerSupabaseClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  // Check if user is admin
+  if (!user) {
+    return NextResponse.json({ status: 'healthy' }, { status: 200 })
+  }
+
+  const { data: userProfile } = await supabase
+    .from('users')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single()
+
+  if (!userProfile?.is_admin) {
+    return NextResponse.json({ status: 'healthy' }, { status: 200 })
+  }
+
+  // Admin authenticated - return detailed health check
   const startTime = Date.now()
   const checks: HealthCheck['checks'] = {
     database: { status: 'down' },
@@ -31,7 +63,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<HealthChec
 
   // Check database connection
   try {
-    const supabase = createServerSupabaseClient()
     const dbStart = Date.now()
 
     // Simple query to check connection
@@ -58,21 +89,17 @@ export async function GET(request: NextRequest): Promise<NextResponse<HealthChec
     }
   }
 
-  // Check environment configuration
-  const requiredEnvVars = [
-    'NEXT_PUBLIC_SUPABASE_URL',
-    'NEXT_PUBLIC_SUPABASE_ANON_KEY',
-    'SUPABASE_SERVICE_ROLE_KEY',
-    'STRIPE_SECRET_KEY',
-    'NEXTAUTH_SECRET',
-  ]
+  // Check environment configuration (basic check only, no specific vars)
+  const hasRequiredEnv = !!(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.SUPABASE_SERVICE_ROLE_KEY &&
+    process.env.STRIPE_SECRET_KEY
+  )
 
-  const missingVars = requiredEnvVars.filter(varName => !process.env[varName])
-
-  if (missingVars.length > 0) {
+  if (!hasRequiredEnv) {
     checks.environment = {
       status: 'misconfigured',
-      missing: missingVars,
+      missing: ['Some required environment variables'],
     }
   }
 
@@ -88,7 +115,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<HealthChec
   const healthCheck: HealthCheck = {
     status,
     timestamp: new Date().toISOString(),
-    version: process.env.npm_package_version || '0.0.0',
+    version: 'production',
     checks,
   }
 

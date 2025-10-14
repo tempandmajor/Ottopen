@@ -3,6 +3,7 @@ import { getServerUser } from '@/lib/server/auth'
 import { AIClient } from '@/src/lib/ai/ai-client'
 import { AIService } from '@/src/lib/ai-editor-service'
 import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
+import { validateAIRequest, validationErrorResponse } from '@/src/lib/ai-validation'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,6 +39,12 @@ async function handlePlotHoleDetection(request: NextRequest) {
     }
 
     const body: { text: string; manuscriptId?: string } = await request.json()
+
+    // Validate input
+    const validation = validateAIRequest(body)
+    if (!validation.valid) {
+      return NextResponse.json(validationErrorResponse(validation.errors), { status: 400 })
+    }
 
     if (!body.text || body.text.length < 50) {
       return NextResponse.json(

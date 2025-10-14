@@ -3,6 +3,7 @@ import { getServerUser } from '@/lib/server/auth'
 import { callPerplexity, streamPerplexity } from '@/src/lib/ai/perplexity-client'
 import { AIService } from '@/src/lib/ai-editor-service'
 import { withRateLimit } from '@/src/lib/rate-limit-new'
+import { validateAIRequest, validationErrorResponse } from '@/src/lib/ai-validation'
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic'
@@ -32,6 +33,13 @@ export async function POST(request: NextRequest): Promise<Response | NextRespons
     }
 
     const body = await request.json()
+
+    // Validate input
+    const validation = validateAIRequest(body)
+    if (!validation.valid) {
+      return NextResponse.json(validationErrorResponse(validation.errors), { status: 400 })
+    }
+
     const {
       query,
       stream = false,

@@ -5,6 +5,7 @@ import { buildCritiquePrompt, SYSTEM_PROMPTS } from '@/src/lib/ai/prompts/writin
 import { AIService } from '@/src/lib/ai-editor-service'
 import type { CritiqueRequest } from '@/src/lib/ai/prompts/writing-prompts'
 import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
+import { validateAIRequest, validationErrorResponse } from '@/src/lib/ai-validation'
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic'
@@ -25,6 +26,12 @@ async function handleCritique(request: NextRequest) {
     }
 
     const body: CritiqueRequest & { manuscriptId?: string; sceneId?: string } = await request.json()
+
+    // Validate input
+    const validation = validateAIRequest(body)
+    if (!validation.valid) {
+      return NextResponse.json(validationErrorResponse(validation.errors), { status: 400 })
+    }
 
     const userPrompt = buildCritiquePrompt(body)
     const userTier = user.profile?.account_tier || 'free'

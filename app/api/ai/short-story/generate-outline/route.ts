@@ -4,6 +4,7 @@ import { AIClient } from '@/src/lib/ai/ai-client'
 import { AIService } from '@/src/lib/ai-editor-service'
 import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import { validateAIRequest, validationErrorResponse } from '@/src/lib/ai-validation'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,6 +46,12 @@ async function handleGenerateOutline(request: NextRequest) {
     }
 
     const body: GenerateOutlineRequest = await request.json()
+
+    // Validate input
+    const validation = validateAIRequest(body)
+    if (!validation.valid) {
+      return NextResponse.json(validationErrorResponse(validation.errors), { status: 400 })
+    }
 
     if (!body.genre || !body.theme || !body.wordCount) {
       return NextResponse.json(
