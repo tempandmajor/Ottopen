@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 import { validateAIRequest, validationErrorResponse } from '@/src/lib/ai-validation'
+import { getSafeErrorMessage } from '@/src/lib/error-handling'
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,9 +38,12 @@ export async function POST(request: NextRequest) {
     const suggestions = generateLoglineSuggestions(title, synopsis, type, genre)
 
     return NextResponse.json({ suggestions })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Generate logline error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json(
+      { error: getSafeErrorMessage(error, 'Internal server error') },
+      { status: 500 }
+    )
   }
 }
 

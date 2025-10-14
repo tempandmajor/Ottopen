@@ -4,6 +4,7 @@ import { callPerplexity, streamPerplexity } from '@/src/lib/ai/perplexity-client
 import { AIService } from '@/src/lib/ai-editor-service'
 import { withRateLimit } from '@/src/lib/rate-limit-new'
 import { validateAIRequest, validationErrorResponse } from '@/src/lib/ai-validation'
+import { getSafeErrorMessage } from '@/src/lib/error-handling'
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic'
@@ -135,7 +136,9 @@ export async function POST(request: NextRequest): Promise<Response | NextRespons
             controller.close()
           } catch (error: any) {
             controller.enqueue(
-              encoder.encode(`data: ${JSON.stringify({ error: error.message })}\n\n`)
+              encoder.encode(
+                `data: ${JSON.stringify({ error: getSafeErrorMessage(error, 'Research request failed') })}\n\n`
+              )
             )
             controller.close()
           }
@@ -189,6 +192,9 @@ export async function POST(request: NextRequest): Promise<Response | NextRespons
     })
   } catch (error: any) {
     console.error('AI Research Error:', error)
-    return NextResponse.json({ error: error.message || 'Research request failed' }, { status: 500 })
+    return NextResponse.json(
+      { error: getSafeErrorMessage(error, 'Research request failed') },
+      { status: 500 }
+    )
   }
 }

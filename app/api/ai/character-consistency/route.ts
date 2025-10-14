@@ -4,6 +4,7 @@ import { AIClient } from '@/src/lib/ai/ai-client'
 import { AIService } from '@/src/lib/ai-editor-service'
 import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
 import { validateAIRequest, validationErrorResponse } from '@/src/lib/ai-validation'
+import { getSafeErrorMessage } from '@/src/lib/error-handling'
 
 export const dynamic = 'force-dynamic'
 
@@ -129,7 +130,10 @@ Analysis:`
     })
   } catch (error: any) {
     console.error('Character Consistency Error:', error)
-    return NextResponse.json({ error: error.message || 'AI request failed' }, { status: 500 })
+    return NextResponse.json(
+      { error: getSafeErrorMessage(error, 'AI request failed') },
+      { status: 500 }
+    )
   }
 }
 

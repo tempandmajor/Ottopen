@@ -6,6 +6,7 @@ import { AIService } from '@/src/lib/ai-editor-service'
 import type { ExpandRequest } from '@/src/lib/ai/prompts/writing-prompts'
 import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
 import { validateAIRequest, validationErrorResponse } from '@/src/lib/ai-validation'
+import { getSafeErrorMessage } from '@/src/lib/error-handling'
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic'
@@ -70,7 +71,10 @@ async function handleExpand(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('AI Expand Error:', error)
-    return NextResponse.json({ error: error.message || 'AI request failed' }, { status: 500 })
+    return NextResponse.json(
+      { error: getSafeErrorMessage(error, 'AI request failed') },
+      { status: 500 }
+    )
   }
 }
 
