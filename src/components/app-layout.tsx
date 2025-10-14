@@ -20,17 +20,16 @@ export function AppLayout({ children, editorSidebar }: AppLayoutProps) {
     setHasHydrated(true)
   }, [])
 
-  // Only show global sidebar in 'app' context (not in editors)
-  // Keep sidebar visible during loading to prevent flickering
-  const showGlobalSidebar = navigationContext === 'app' && (user || loading || !hasHydrated)
+  // Only show global sidebar in 'app' context (not in editors) and only when user is signed in
+  // Do not show during loading or pre-hydration to avoid pre-signin visibility
+  const showGlobalSidebar = navigationContext === 'app' && !!user
 
   // Show editor sidebar in editor contexts
   const showEditorSidebar =
     user && (navigationContext === 'ai-editor' || navigationContext === 'script-editor')
 
-  // Always reserve space for sidebar if we're in app context and have hydrated
-  // This prevents content jumping when auth loads
-  const shouldReserveSpace = hasHydrated && (navigationContext === 'app' || showEditorSidebar)
+  // Reserve space only when a sidebar is actually rendered to avoid left gutter when signed out
+  const shouldReserveSpace = hasHydrated && (showGlobalSidebar || showEditorSidebar)
 
   return (
     <div className="relative min-h-screen">
