@@ -5,6 +5,7 @@ import { AIService } from '@/src/lib/ai-editor-service'
 import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 import { validateAIRequest, validationErrorResponse } from '@/src/lib/ai-validation'
+import { getSafeErrorMessage } from '@/src/lib/error-handling'
 
 export const dynamic = 'force-dynamic'
 
@@ -221,7 +222,10 @@ Generate a rich, specific outline that a writer can immediately use to start dra
     })
   } catch (error: any) {
     console.error('Short Story Outline Generation Error:', error)
-    return NextResponse.json({ error: error.message || 'AI request failed' }, { status: 500 })
+    return NextResponse.json(
+      { error: getSafeErrorMessage(error, 'AI request failed') },
+      { status: 500 }
+    )
   }
 }
 
