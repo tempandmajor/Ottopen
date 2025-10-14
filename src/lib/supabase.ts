@@ -4,8 +4,8 @@ import type { Database } from './database.types'
 // Configuration management with security considerations
 function getSupabaseConfig() {
   // Primary: Environment variables (production/development)
-  const envUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const envKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const envUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
+  const envKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim()
 
   if (envUrl && envKey) {
     return { url: envUrl, anonKey: envKey }
@@ -13,8 +13,8 @@ function getSupabaseConfig() {
 
   // Development fallback - use environment variables if available
   if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') {
-    const fallbackUrl = process.env.SUPABASE_FALLBACK_URL
-    const fallbackKey = process.env.SUPABASE_FALLBACK_ANON_KEY
+    const fallbackUrl = process.env.SUPABASE_FALLBACK_URL?.trim()
+    const fallbackKey = process.env.SUPABASE_FALLBACK_ANON_KEY?.trim()
 
     if (fallbackUrl && fallbackKey) {
       console.warn('⚠️  Using fallback Supabase configuration from environment.')

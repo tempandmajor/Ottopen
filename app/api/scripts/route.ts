@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
   try {
     const { user } = await getServerUser()
     if (!user) {
+      console.info('scripts.GET: unauthorized')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -22,6 +23,7 @@ export async function GET(request: NextRequest) {
       status,
     })
 
+    console.info('scripts.GET: ok', { count: Array.isArray(scripts) ? scripts.length : 0 })
     return NextResponse.json({ scripts })
   } catch (error: any) {
     console.error('Failed to list scripts:', error)
@@ -34,6 +36,7 @@ export async function POST(request: NextRequest) {
   try {
     const { user } = await getServerUser()
     if (!user) {
+      console.info('scripts.POST: unauthorized')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -41,6 +44,7 @@ export async function POST(request: NextRequest) {
 
     const script = await ScriptService.create(user.id, body)
 
+    console.info('scripts.POST: created', { id: script?.id })
     return NextResponse.json({ script }, { status: 201 })
   } catch (error: any) {
     console.error('Failed to create script:', error)

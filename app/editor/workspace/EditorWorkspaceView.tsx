@@ -34,6 +34,7 @@ function ManuscriptWorkspaceContent() {
   const [loading, setLoading] = useState(true)
   const [contentChanged, setContentChanged] = useState(false)
   const [editorContent, setEditorContent] = useState('')
+  const [activeSceneId, setActiveSceneId] = useState<string | null>(null)
   const searchParams = useSearchParams()
   const [viewMode, setViewMode] = useState<'editor' | 'outline' | 'timeline'>('editor')
   const [dragScene, setDragScene] = useState<{ sceneId: string; fromChapterId: string } | null>(
@@ -91,11 +92,22 @@ function ManuscriptWorkspaceContent() {
   } = useAutoSave({
     onSave: async () => {
       if (!activeTab || !contentChanged) return
+      if (!activeSceneId) return
 
-      // TODO: Implement actual save logic when editor is integrated
-      // For now, just simulate a save
-      await new Promise(resolve => setTimeout(resolve, 500))
-      setContentChanged(false)
+      try {
+        const wordCount = editorContent.trim() ? editorContent.trim().split(/\s+/).length : 0
+        const resp = await fetch(`/api/manuscripts/${activeTab.fileId}/scenes/${activeSceneId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: editorContent, word_count: wordCount }),
+        })
+        if (!resp.ok) {
+          return
+        }
+        setContentChanged(false)
+      } catch (_) {
+        return
+      }
     },
     enabled: !!activeTab && contentChanged,
   })
@@ -209,6 +221,12 @@ function ManuscriptWorkspaceContent() {
             await createDefault()
           }
         }
+
+        const firstScene = (chaptersData?.[0]?.scenes || [])[0]
+        if (firstScene && !activeSceneId) {
+          setActiveSceneId(firstScene.id)
+          setEditorContent(firstScene.content || '')
+        }
       }
     } catch (error) {
       console.error('Failed to load manuscript data:', error)
@@ -223,8 +241,9 @@ function ManuscriptWorkspaceContent() {
   }
 
   const handleSceneClick = (sceneId: string) => {
-    console.log('Scene clicked:', sceneId)
-    // TODO: Scroll to scene in editor
+    setActiveSceneId(sceneId)
+    const scene = chapters.flatMap(ch => ch.scenes || []).find(sc => sc.id === sceneId) as any
+    setEditorContent((scene && scene.content) || '')
   }
 
   const handleAddChapter = async () => {

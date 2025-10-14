@@ -1,6 +1,7 @@
 'use client'
 
 import { Sidebar } from '@/src/components/sidebar'
+import { Navigation } from '@/src/components/navigation'
 import { useAuth } from '@/src/contexts/auth-context'
 import { useNavigationContext } from '@/src/hooks/useNavigationContext'
 import { useEffect, useState } from 'react'
@@ -20,9 +21,8 @@ export function AppLayout({ children, editorSidebar }: AppLayoutProps) {
     setHasHydrated(true)
   }, [])
 
-  // Only show global sidebar in 'app' context (not in editors) and only when user is signed in
-  // Do not show during loading or pre-hydration to avoid pre-signin visibility
-  const showGlobalSidebar = navigationContext === 'app' && !!user
+  // Show global sidebar in 'app' context when signed in or while loading to prevent flicker on refresh
+  const showGlobalSidebar = navigationContext === 'app' && (user || loading)
 
   // Show editor sidebar in editor contexts
   const showEditorSidebar =
@@ -33,12 +33,16 @@ export function AppLayout({ children, editorSidebar }: AppLayoutProps) {
 
   return (
     <div className="relative min-h-screen">
+      {/* Global header (always full width) */}
+      <Navigation user={user as any} />
+
       {/* Global sidebar for app context */}
       {showGlobalSidebar && <Sidebar />}
 
       {/* Editor-specific sidebar (passed as prop) */}
       {showEditorSidebar && editorSidebar}
 
+      {/* Content area is the only region inset to accommodate sidebar */}
       <div className={shouldReserveSpace ? 'lg:ml-64' : ''}>{children}</div>
     </div>
   )

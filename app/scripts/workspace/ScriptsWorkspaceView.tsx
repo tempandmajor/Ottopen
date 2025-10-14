@@ -54,10 +54,19 @@ function ScriptWorkspaceContent() {
     onSave: async () => {
       if (!activeTab || !contentChanged) return
 
-      // TODO: Implement actual save logic when editor is integrated
-      // For now, just simulate a save
-      await new Promise(resolve => setTimeout(resolve, 500))
-      setContentChanged(false)
+      try {
+        const resp = await fetch(`/api/scripts/${activeTab.fileId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ body: editorContent }),
+        })
+        if (!resp.ok) {
+          return
+        }
+        setContentChanged(false)
+      } catch (_) {
+        return
+      }
     },
     enabled: !!activeTab && contentChanged,
   })
@@ -182,6 +191,9 @@ function ScriptWorkspaceContent() {
         setIsLocked(!!script.is_locked)
         setRevisionColor(script.revision_color || 'white')
         setRevisionNumber(script.revision_number || 1)
+        if (typeof script.body === 'string') {
+          setEditorContent(script.body)
+        }
       }
 
       // Load script elements

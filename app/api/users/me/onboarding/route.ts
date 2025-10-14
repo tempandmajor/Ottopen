@@ -17,6 +17,7 @@ export async function PATCH(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     if (sessionError || !user) {
+      console.info('onboarding.PATCH: unauthorized', { sessionError: !!sessionError })
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -31,11 +32,17 @@ export async function PATCH(request: NextRequest) {
       .single()
 
     if (error) {
+      console.error('onboarding.PATCH: update failed', { userId: user.id, error: error.message })
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    console.info('onboarding.PATCH: updated', {
+      userId: user.id,
+      completed: data?.onboarding_completed,
+    })
     return NextResponse.json({ success: true, user: data })
   } catch (error: any) {
+    console.error('onboarding.PATCH: unhandled error', { error: error.message })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

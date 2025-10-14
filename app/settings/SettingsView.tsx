@@ -1,5 +1,4 @@
 'use client'
-import { Navigation } from '@/src/components/navigation'
 
 import { Footer } from '@/src/components/footer'
 import { Button } from '@/src/components/ui/button'
@@ -600,7 +599,6 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation user={currentUser} />
         <div className="container mx-auto px-4 py-6 sm:py-8">
           <div className="max-w-4xl mx-auto">
             <div className="text-center py-12">
@@ -615,7 +613,6 @@ export function SettingsView({ user: currentUser }: SettingsViewProps) {
 
   return (
     <div>
-      <Navigation user={currentUser} />
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-6 sm:py-8">
           <div className="max-w-4xl mx-auto">

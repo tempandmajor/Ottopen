@@ -1,5 +1,3 @@
-import { Navigation } from '@/src/components/navigation'
-
 import { requireAuth } from '@/lib/server/auth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card'
 import { Bell, CheckCircle, AlertCircle, Info, Mail } from 'lucide-react'
@@ -14,7 +12,6 @@ export default async function NotificationsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation user={user} />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto">
           {/* Header */}
