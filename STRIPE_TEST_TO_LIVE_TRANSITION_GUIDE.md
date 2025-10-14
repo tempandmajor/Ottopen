@@ -51,9 +51,9 @@ You're currently using Stripe **Test Mode** which uses test API keys (`sk_test_`
 
 **Your Current Test Webhook**:
 
-- Endpoint ID: `we_1SI1GqA5S8NBMyaJuiUPALHR`
+- Endpoint ID: `we_1SI1d4A5S8NBMyaJtygYxGkz`
 - URL: `https://ottopen.app/api/webhooks/stripe`
-- Secret: `whsec_nTSTHcOYG5VmkQiWkyMEJl6aku2t7pVt`
+- Secret: `[REDACTED - Available in Vercel environment variables]`
 
 **Why**: Webhook secrets are environment-specific for security.
 
@@ -280,7 +280,7 @@ New Value: pk_live_... (from Step 2)
 Target: Production
 
 Variable: STRIPE_WEBHOOK_SECRET
-Old Value: whsec_nTSTHcOYG5VmkQiWkyMEJl6aku2t7pVt (test)
+Old Value: [Current test webhook secret]
 New Value: whsec_... (from Step 4)
 Target: Production, Preview, Development
 
@@ -605,7 +605,7 @@ vercel --prod
 ```
 Account: acct_1SAf2tA5S8NBMyaJ
 Products: 7 created
-Webhook: we_1SI1GqA5S8NBMyaJuiUPALHR (configured for https://ottopen.app)
+Webhook: we_1SI1d4A5S8NBMyaJtygYxGkz (configured for https://ottopen.app)
 Status: ✅ Fully functional in test mode
 ```
 
