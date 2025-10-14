@@ -1,10 +1,29 @@
 -- Recipient routing and eligibility for paid agents/producers
 -- 1) User flags to receive submissions
 alter table if exists public.users
-  add column if not exists can_receive_submissions boolean not null default false,
-  add column if not exists receiving_plan text check (receiving_plan in ('none','basic','pro','enterprise')) default 'none',
-  add column if not exists specialties text[] default '{}',
+  add column if not exists can_receive_submissions boolean not null default false;
+
+alter table if exists public.users
+  add column if not exists receiving_plan text default 'none';
+
+alter table if exists public.users
+  add column if not exists specialties text[] default '{}';
+
+alter table if exists public.users
   add column if not exists company_name text;
+
+-- Add constraint for receiving_plan
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'users_receiving_plan_check'
+  ) then
+    alter table public.users
+    add constraint users_receiving_plan_check
+    check (receiving_plan in ('none','basic','pro','enterprise'));
+  end if;
+end $$;
 
 comment on column public.users.can_receive_submissions is 'Indicates user can receive submissions (paid role)';
 comment on column public.users.receiving_plan is 'Paid plan tier for receiving submissions';
@@ -33,33 +52,39 @@ where u.can_receive_submissions is true
 
 comment on view public.eligible_recipients is 'Public-safe list of recipients eligible to receive submissions';
 
--- 4) Recommended RLS (example; adjust if policies exist)
+-- 4) RLS policies
 -- Make sure RLS is enabled
 alter table if exists public.submissions enable row level security;
 
--- Submitter can select/insert their own submission
-create policy if not exists submissions_insert_own on public.submissions
+-- Drop existing policies if they exist
+drop policy if exists submissions_insert_own on public.submissions;
+drop policy if exists submissions_select_submitter on public.submissions;
+drop policy if exists submissions_select_assigned_reviewer on public.submissions;
+drop policy if exists submissions_update_withdrawn_by_submitter on public.submissions;
+drop policy if exists submissions_select_admin on public.submissions;
+
+-- Submitter can insert their own submission
+create policy submissions_insert_own on public.submissions
   for insert to authenticated
   with check (auth.uid() = submitter_id);
 
 -- Submitter can select their own submissions
-create policy if not exists submissions_select_submitter on public.submissions
+create policy submissions_select_submitter on public.submissions
   for select to authenticated
   using (auth.uid() = submitter_id);
 
 -- Assigned reviewer can select assigned submissions
-create policy if not exists submissions_select_assigned_reviewer on public.submissions
+create policy submissions_select_assigned_reviewer on public.submissions
   for select to authenticated
   using (auth.uid() = reviewer_id);
 
 -- Submitter can update to withdrawn
-create policy if not exists submissions_update_withdrawn_by_submitter on public.submissions
+create policy submissions_update_withdrawn_by_submitter on public.submissions
   for update to authenticated
   using (auth.uid() = submitter_id)
   with check (status in ('pending','withdrawn'));
 
--- Admins can select all (expects a role or a flag)
--- Replace `is_admin` with your actual admin check.
-create policy if not exists submissions_select_admin on public.submissions
+-- Admins can select all
+create policy submissions_select_admin on public.submissions
   for select to authenticated
   using (exists (select 1 from public.users u where u.id = auth.uid() and coalesce(u.is_admin,false)));
