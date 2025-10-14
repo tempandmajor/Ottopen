@@ -125,7 +125,7 @@ export function Sidebar() {
   const SidebarContent = () => (
     <div className="flex h-full flex-col">
       {/* Navigation */}
-      <ScrollArea className="flex-1 px-3 py-4 mt-14 lg:mt-16">
+      <ScrollArea className="flex-1 px-3 py-4">
         <nav className="space-y-6">
           {navigationSections.map((section, sectionIndex) => {
             const visibleItems = section.items.filter(shouldShowItem)
@@ -204,7 +204,7 @@ export function Sidebar() {
       )}
 
       {/* Desktop sidebar - always visible on large screens */}
-      <aside className="hidden lg:block lg:fixed lg:left-0 lg:top-0 lg:z-40 lg:h-screen lg:w-64 lg:border-r lg:bg-background">
+      <aside className="hidden lg:block lg:fixed lg:left-0 lg:top-14 xl:top-16 lg:z-40 lg:h-[calc(100vh-3.5rem)] xl:h-[calc(100vh-4rem)] lg:w-64 lg:border-r lg:bg-background">
         <SidebarContent />
       </aside>
     </>
