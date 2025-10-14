@@ -71,11 +71,19 @@ export function ScriptsBrowser() {
   }
 
   const handleCreateNew = () => {
-    router.push('/scripts/workspace?new=true')
+    if (typeof window !== 'undefined') {
+      window.open('/scripts/workspace?new=true', '_blank', 'noopener,noreferrer')
+    } else {
+      router.push('/scripts/workspace?new=true')
+    }
   }
 
   const handleOpenScript = (scriptId: string) => {
-    router.push(`/scripts/workspace?tabs=${scriptId}`)
+    if (typeof window !== 'undefined') {
+      window.open(`/scripts/workspace?tabs=${scriptId}`, '_blank', 'noopener,noreferrer')
+    } else {
+      router.push(`/scripts/workspace?tabs=${scriptId}`)
+    }
   }
 
   const handleDuplicate = async (script: Script) => {
@@ -194,13 +202,19 @@ export function ScriptsBrowser() {
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
                 Sort: {sortBy === 'recent' ? 'Recent' : sortBy === 'title' ? 'Title' : 'Pages'}
-                {sortAsc ? <SortAsc className="ml-2 h-4 w-4" /> : <SortDesc className="ml-2 h-4 w-4" />}
+                {sortAsc ? (
+                  <SortAsc className="ml-2 h-4 w-4" />
+                ) : (
+                  <SortDesc className="ml-2 h-4 w-4" />
+                )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => setSortBy('recent')}>Recent</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setSortBy('title')}>Title</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSortBy('page_count')}>Page Count</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortBy('page_count')}>
+                Page Count
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setSortAsc(!sortAsc)}>
                 {sortAsc ? 'Ascending' : 'Descending'}
               </DropdownMenuItem>
@@ -270,7 +284,11 @@ export function ScriptsBrowser() {
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100"
+                        >
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -335,7 +353,11 @@ export function ScriptsBrowser() {
 
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100"
+                      >
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>

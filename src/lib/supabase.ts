@@ -85,6 +85,7 @@ export interface User {
   website_url?: string
   twitter_handle?: string
   linkedin_url?: string
+  onboarding_completed?: boolean
   stripe_customer_id?: string
   stripe_connect_account_id?: string
   stripe_connect_onboarded?: boolean
@@ -236,7 +237,7 @@ export interface Submission {
   manuscript_id: string
   submitter_id: string
   reviewer_id?: string
-  status: 'pending' | 'under_review' | 'feedback_provided' | 'accepted' | 'rejected'
+  status: 'pending' | 'under_review' | 'feedback_provided' | 'accepted' | 'rejected' | 'withdrawn'
   submission_type: 'query' | 'requested_material' | 'unsolicited'
   reader_notes?: string
   agent_notes?: string

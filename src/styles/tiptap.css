@@ -166,3 +166,28 @@
   padding: 0.25rem 0.5rem;
   margin: -0.25rem -0.5rem;
 }
+
+/* Dual Dialogue Layout */
+.dual-dialogue-left,
+.dual-dialogue-right,
+.dual-dialogue-char-left,
+.dual-dialogue-char-right {
+  display: inline-block;
+  width: calc(50% - 0.75rem);
+  vertical-align: top;
+}
+
+.dual-dialogue-left,
+.dual-dialogue-char-left {
+  margin-right: 0.75rem;
+}
+
+.dual-dialogue-right,
+.dual-dialogue-char-right {
+  margin-left: 0.75rem;
+}
+
+.dual-dialogue-char-left,
+.dual-dialogue-char-right {
+  font-weight: 600;
+}

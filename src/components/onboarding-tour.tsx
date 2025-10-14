@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/src/components/ui/card'
 import { Button } from '@/src/components/ui/button'
 import { X, ChevronLeft, ChevronRight, Check } from 'lucide-react'
+import { useAuth } from '@/src/contexts/auth-context'
 
 export interface TourStep {
   target: string // CSS selector for the element to highlight
@@ -17,6 +18,7 @@ interface OnboardingTourProps {
   tourKey: string // Unique key to track if tour has been completed
   onComplete?: () => void
   autoStart?: boolean
+  useDatabase?: boolean // If true, uses database onboarding_completed instead of localStorage
 }
 
 export function OnboardingTour({
@@ -24,19 +26,29 @@ export function OnboardingTour({
   tourKey,
   onComplete,
   autoStart = true,
+  useDatabase = false,
 }: OnboardingTourProps) {
   const [currentStep, setCurrentStep] = useState(0)
   const [isActive, setIsActive] = useState(false)
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null)
+  const { user, refreshUser } = useAuth()
 
   useEffect(() => {
     // Check if tour has been completed
-    const completed = localStorage.getItem(`tour_completed_${tourKey}`)
-    if (!completed && autoStart) {
-      // Small delay to ensure DOM is ready
-      setTimeout(() => setIsActive(true), 500)
+    if (useDatabase) {
+      // Check from database via user profile
+      if (user && !user.onboarding_completed && autoStart) {
+        // Small delay to ensure DOM is ready
+        setTimeout(() => setIsActive(true), 500)
+      }
+    } else {
+      // Fallback to localStorage
+      const completed = localStorage.getItem(`tour_completed_${tourKey}`)
+      if (!completed && autoStart) {
+        setTimeout(() => setIsActive(true), 500)
+      }
     }
-  }, [tourKey, autoStart])
+  }, [tourKey, autoStart, useDatabase, user])
 
   useEffect(() => {
     if (!isActive) return
@@ -75,8 +87,26 @@ export function OnboardingTour({
     }
   }
 
-  const completeTour = () => {
-    localStorage.setItem(`tour_completed_${tourKey}`, 'true')
+  const completeTour = async () => {
+    if (useDatabase) {
+      // Update database via API
+      try {
+        await fetch('/api/users/me/onboarding', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ completed: true }),
+        })
+        // Refresh user profile state
+        if (refreshUser) {
+          await refreshUser()
+        }
+      } catch (error) {
+        console.error('Failed to update onboarding status:', error)
+      }
+    } else {
+      // Fallback to localStorage
+      localStorage.setItem(`tour_completed_${tourKey}`, 'true')
+    }
     setIsActive(false)
     onComplete?.()
   }

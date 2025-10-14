@@ -92,11 +92,24 @@ export function SubmissionsView({
     comparableWorks: '',
     authorBio: '',
     queryLetter: '',
+    recipientId: '',
   })
 
   const [formErrors, setFormErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false)
+  const [recipients, setRecipients] = useState<
+    Array<{
+      id: string
+      display_name: string
+      username: string
+      company_name: string
+      account_type: string
+      receiving_plan: string
+      specialties: string[]
+      avatar_url?: string
+    }>
+  >([])
 
   // Auto-save to localStorage
   useEffect(() => {
@@ -117,6 +130,25 @@ export function SubmissionsView({
       localStorage.setItem('submission-draft', JSON.stringify(formData))
     }
   }, [formData])
+
+  // Load eligible recipients when opening New Submission and when type/genre changes
+  useEffect(() => {
+    const fetchRecipients = async () => {
+      try {
+        const params = new URLSearchParams()
+        if (formData.type) params.set('type', formData.type)
+        if (formData.genre) params.set('genre', formData.genre)
+        const res = await fetch(`/api/recipients/eligible?${params.toString()}`)
+        if (res.ok) {
+          const data = await res.json()
+          setRecipients(data.recipients || [])
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+    fetchRecipients()
+  }, [formData.type, formData.genre])
 
   // Real-time subscription for submission status updates
   useEffect(() => {
@@ -235,7 +267,7 @@ export function SubmissionsView({
       const submissionResult = await createSubmissionAction({
         manuscript_id: manuscriptResult.data.id,
         submitter_id: userId,
-        reviewer_id: undefined,
+        reviewer_id: formData.recipientId || undefined,
         status: 'pending',
         submission_type: 'query',
         reader_notes: undefined,
@@ -273,6 +305,7 @@ export function SubmissionsView({
         comparableWorks: '',
         authorBio: '',
         queryLetter: '',
+        recipientId: '',
       })
       setHasAcceptedTerms(false)
       setFormErrors({})
@@ -315,6 +348,8 @@ export function SubmissionsView({
         return <CheckCircle className="h-4 w-4 text-green-600" />
       case 'rejected':
         return <XCircle className="h-4 w-4 text-red-600" />
+      case 'withdrawn':
+        return <Trash2 className="h-4 w-4 text-gray-600" />
       default:
         return <Clock className="h-4 w-4 text-gray-600" />
     }
@@ -330,6 +365,8 @@ export function SubmissionsView({
         return 'bg-green-50 text-green-800 border-green-300 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800'
       case 'rejected':
         return 'bg-red-50 text-red-800 border-red-300 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800'
+      case 'withdrawn':
+        return 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800'
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800'
     }
@@ -438,6 +475,38 @@ export function SubmissionsView({
                           className="pl-8 w-full sm:w-[200px]"
                         />
                       </div>
+
+                      <Separator />
+
+                      {/* Recipient Selection */}
+                      <div className="space-y-2">
+                        <Label htmlFor="recipient">Send To (Optional)</Label>
+                        <Select
+                          value={formData.recipientId}
+                          onValueChange={value => updateField('recipientId', value)}
+                        >
+                          <SelectTrigger id="recipient">
+                            <SelectValue placeholder="Agency Intake (default)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {recipients.length === 0 && (
+                              <SelectItem value="" disabled>
+                                No eligible recipients found
+                              </SelectItem>
+                            )}
+                            {recipients.map(r => (
+                              <SelectItem key={r.id} value={r.id}>
+                                {r.display_name || r.username}
+                                {r.company_name ? ` · ${r.company_name}` : ''}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Leave blank to route to Agency Intake. Selecting an agent/producer sends
+                          directly to that recipient if eligible.
+                        </p>
+                      </div>
                       <Select value={statusFilter} onValueChange={setStatusFilter}>
                         <SelectTrigger className="w-full sm:w-[150px]">
                           <SelectValue placeholder="Filter by status" />
@@ -448,6 +517,7 @@ export function SubmissionsView({
                           <SelectItem value="under_review">Under Review</SelectItem>
                           <SelectItem value="accepted">Accepted</SelectItem>
                           <SelectItem value="rejected">Rejected</SelectItem>
+                          <SelectItem value="withdrawn">Withdrawn</SelectItem>
                         </SelectContent>
                       </Select>
                       <Select value={sortBy} onValueChange={value => setSortBy(value as any)}>
@@ -512,6 +582,10 @@ export function SubmissionsView({
                                 </span>
                                 <span>Type: {submission.manuscript?.type || 'Unknown'}</span>
                                 <span>Genre: {submission.manuscript?.genre || 'Unknown'}</span>
+                                <span>
+                                  Recipient:{' '}
+                                  {submission.reviewer_id ? 'Assigned Reviewer' : 'Agency Intake'}
+                                </span>
                               </div>
                               {selectedSubmission === submission.id && (
                                 <div className="mt-4 space-y-3">

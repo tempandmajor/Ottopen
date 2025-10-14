@@ -24,6 +24,7 @@ interface AuthContextType {
   }) => Promise<{ success: boolean; error?: string }>
   signOut: () => Promise<void>
   forgotPassword: (email: string) => Promise<{ success: boolean; error?: string }>
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -84,17 +85,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return false
   }
 
-  // Session timeout management - re-enabled with proper timing
+  // Session timeout management
+  // Behavior: emulate long-lived sessions like Docs/Facebook by default.
+  // Configure with NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES; 0 or missing => effectively disabled (very large timeout, no warning).
+  const idleMinutesEnv = Number(process.env.NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES || '0')
+  const timeoutMs = idleMinutesEnv > 0 ? idleMinutesEnv * 60 * 1000 : 365 * 24 * 60 * 60 * 1000 // ~1 year
+  const warningMs =
+    idleMinutesEnv > 0 ? Math.min(2 * 60 * 1000, Math.max(0, timeoutMs - 60 * 1000)) : 0
+
   const { extend: extendSession } = useIdleTimeout({
-    timeout: 30 * 60 * 1000, // 30 minutes idle timeout
-    warningTime: 2 * 60 * 1000, // 2 minutes warning before timeout
+    timeout: timeoutMs,
+    warningTime: warningMs,
     onWarning: timeLeft => {
+      if (warningMs === 0) return
       if (user && !loading) {
         setTimeoutWarningTime(timeLeft)
         setShowTimeoutWarning(true)
       }
     },
     onTimeout: () => {
+      if (timeoutMs >= 365 * 24 * 60 * 60 * 1000) return // effectively disabled
       if (user && !loading) {
         console.log('Session timeout - signing out user')
         logAuthEvent('session_timeout', { userId: user.id, email: user.email })
@@ -485,6 +495,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [loading])
 
+  const refreshUser = async () => {
+    if (!supabase) return
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (session?.user) {
+        const userWithProfile = await fetchUserProfile(session.user)
+        setUser(userWithProfile)
+      }
+    } catch (error) {
+      console.error('Failed to refresh user:', error)
+    }
+  }
+
   const value = {
     user,
     loading,
@@ -492,6 +517,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signOut,
     forgotPassword,
+    refreshUser,
   }
 
   return (

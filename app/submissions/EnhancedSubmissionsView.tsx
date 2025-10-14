@@ -83,6 +83,7 @@ interface FormData {
   authorBio: string
   queryLetter: string
   manuscriptFile?: { url: string; file: File } | null
+  recipientId?: string
 }
 
 interface Analytics {
@@ -175,6 +176,18 @@ export function EnhancedSubmissionsView({
   const [selectedTemplate, setSelectedTemplate] = useState<string>('')
   const [loglineSuggestions, setLoglineSuggestions] = useState<string[]>([])
   const [selectedSubmissions, setSelectedSubmissions] = useState<Set<string>>(new Set())
+  const [recipients, setRecipients] = useState<
+    Array<{
+      id: string
+      display_name: string
+      username: string
+      company_name: string
+      account_type: string
+      receiving_plan: string
+      specialties: string[]
+      avatar_url?: string
+    }>
+  >([])
 
   const [formData, setFormData] = useState<FormData>({
     title: '',
@@ -200,12 +213,36 @@ export function EnhancedSubmissionsView({
     }
   }, [showAnalytics, userId])
 
+  const fetchRecipients = useCallback(async () => {
+    try {
+      const params = new URLSearchParams()
+      if (formData.type) params.set('type', formData.type)
+      if (formData.genre) params.set('genre', formData.genre)
+      const res = await fetch(`/api/recipients/eligible?${params.toString()}`)
+      if (res.ok) {
+        const data = await res.json()
+        setRecipients(data.recipients || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch recipients:', error)
+    }
+  }, [formData.type, formData.genre])
+
   // Load templates
   useEffect(() => {
     if (activeTab === 'new-submission') {
       fetchTemplates()
+      fetchRecipients()
     }
-  }, [activeTab])
+  }, [activeTab, fetchRecipients])
+
+  // Refresh recipients when genre/type changes
+  useEffect(() => {
+    if (activeTab === 'new-submission') {
+      fetchRecipients()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.genre, formData.type, fetchRecipients])
 
   // Real-time subscription for submission status updates
   useEffect(() => {
@@ -373,7 +410,7 @@ export function EnhancedSubmissionsView({
       const submissionResult = await createSubmissionAction({
         manuscript_id: manuscriptResult.data.id,
         submitter_id: userId,
-        reviewer_id: undefined,
+        reviewer_id: formData.recipientId || undefined,
         status: 'pending',
         submission_type: 'query',
         reader_notes: undefined,
@@ -411,6 +448,7 @@ export function EnhancedSubmissionsView({
         authorBio: '',
         queryLetter: '',
         manuscriptFile: null,
+        recipientId: undefined,
       })
       setHasAcceptedTerms(false)
       setShowOptionalFields(false)
@@ -554,6 +592,38 @@ export function EnhancedSubmissionsView({
                         <div>
                           <p className="text-sm text-muted-foreground">Total</p>
                           <p className="text-2xl font-bold">{analytics.totalSubmissions}</p>
+                        </div>
+
+                        <Separator />
+
+                        {/* Recipient Selection */}
+                        <div className="space-y-2">
+                          <Label htmlFor="recipient">Send To (Optional)</Label>
+                          <Select
+                            value={formData.recipientId || ''}
+                            onValueChange={value => updateField('recipientId', value)}
+                          >
+                            <SelectTrigger id="recipient">
+                              <SelectValue placeholder="Agency Intake (default)" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {recipients.length === 0 && (
+                                <SelectItem value="" disabled>
+                                  No eligible recipients found
+                                </SelectItem>
+                              )}
+                              {recipients.map(r => (
+                                <SelectItem key={r.id} value={r.id}>
+                                  {r.display_name || r.username}
+                                  {r.company_name ? ` · ${r.company_name}` : ''}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground">
+                            Leave blank to route to Agency Intake. Selecting an agent/producer sends
+                            directly to that recipient if eligible.
+                          </p>
                         </div>
                         <FileText className="h-8 w-8 text-muted-foreground" />
                       </div>
@@ -771,12 +841,12 @@ export function EnhancedSubmissionsView({
                                     </span>
                                     <span>Type: {submission.manuscript?.type || 'Unknown'}</span>
                                     <span>Genre: {submission.manuscript?.genre || 'Unknown'}</span>
-                                    {(submission as any).internal_rating && (
-                                      <span className="flex items-center">
-                                        <Star className="h-3 w-3 mr-1 fill-yellow-400 text-yellow-400" />
-                                        {(submission as any).internal_rating}/10
-                                      </span>
-                                    )}
+                                    <span>
+                                      Recipient:{' '}
+                                      {submission.reviewer_id
+                                        ? 'Assigned Reviewer'
+                                        : 'Agency Intake'}
+                                    </span>
                                   </div>
 
                                   {sla.isOverdue && (

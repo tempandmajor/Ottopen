@@ -71,11 +71,19 @@ export function ManuscriptsBrowser() {
   }
 
   const handleCreateNew = () => {
-    router.push('/editor/workspace?new=true')
+    if (typeof window !== 'undefined') {
+      window.open('/editor/workspace?new=true', '_blank', 'noopener,noreferrer')
+    } else {
+      router.push('/editor/workspace?new=true')
+    }
   }
 
   const handleOpenManuscript = (manuscriptId: string) => {
-    router.push(`/editor/workspace?tabs=${manuscriptId}`)
+    if (typeof window !== 'undefined') {
+      window.open(`/editor/workspace?tabs=${manuscriptId}`, '_blank', 'noopener,noreferrer')
+    } else {
+      router.push(`/editor/workspace?tabs=${manuscriptId}`)
+    }
   }
 
   const handleDuplicate = async (manuscript: Manuscript) => {
@@ -188,13 +196,19 @@ export function ManuscriptsBrowser() {
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
                 Sort: {sortBy === 'recent' ? 'Recent' : sortBy === 'title' ? 'Title' : 'Word Count'}
-                {sortAsc ? <SortAsc className="ml-2 h-4 w-4" /> : <SortDesc className="ml-2 h-4 w-4" />}
+                {sortAsc ? (
+                  <SortAsc className="ml-2 h-4 w-4" />
+                ) : (
+                  <SortDesc className="ml-2 h-4 w-4" />
+                )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => setSortBy('recent')}>Recent</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setSortBy('title')}>Title</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSortBy('word_count')}>Word Count</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortBy('word_count')}>
+                Word Count
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setSortAsc(!sortAsc)}>
                 {sortAsc ? 'Ascending' : 'Descending'}
               </DropdownMenuItem>
@@ -264,7 +278,11 @@ export function ManuscriptsBrowser() {
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100"
+                        >
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -330,7 +348,11 @@ export function ManuscriptsBrowser() {
 
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100"
+                      >
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>

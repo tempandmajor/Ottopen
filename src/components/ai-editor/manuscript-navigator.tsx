@@ -76,26 +76,7 @@ export function ManuscriptNavigator({
 
   return (
     <div className="flex h-full w-64 flex-col border-r bg-background">
-      {/* Header */}
-      <div className="border-b p-4">
-        <Button variant="ghost" size="sm" asChild className="mb-3 -ml-2">
-          <Link href="/dashboard">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Dashboard
-          </Link>
-        </Button>
-
-        <div className="flex items-center gap-2 mb-1">
-          <BookOpen className="h-5 w-5 text-primary" />
-          <h2 className="font-semibold truncate">{manuscriptTitle}</h2>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          {formatWordCount(totalWordCount)} words • {chapters.length}{' '}
-          {chapters.length === 1 ? 'chapter' : 'chapters'}
-        </p>
-      </div>
-
-      {/* Navigator Content */}
+      {/* Navigator Content (header removed to unify with global header) */}
       <ScrollArea className="flex-1">
         <div className="p-2">
           {chapters.map((chapter, index) => {
@@ -178,9 +159,7 @@ export function ManuscriptNavigator({
                               onClick={() => onSceneClick(scene.id)}
                               className={cn(
                                 'flex flex-1 items-start gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors',
-                                isActiveScene
-                                  ? 'bg-secondary font-medium'
-                                  : 'hover:bg-accent'
+                                isActiveScene ? 'bg-secondary font-medium' : 'hover:bg-accent'
                               )}
                             >
                               <span className="text-xs mt-0.5 flex-shrink-0">•</span>

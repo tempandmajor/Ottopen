@@ -39,6 +39,32 @@ export async function createManuscriptAction(
   try {
     const supabase = getServerSupabase()
 
+    // Server-side validation mirroring client
+    if (!manuscript.title || !manuscript.title.trim()) {
+      return { success: false, error: 'Title is required' }
+    }
+    if (!manuscript.type) {
+      return { success: false, error: 'Type is required' }
+    }
+    if (!manuscript.genre || !manuscript.genre.trim()) {
+      return { success: false, error: 'Genre is required' }
+    }
+    if (!manuscript.page_count || manuscript.page_count <= 0) {
+      return { success: false, error: 'Valid page count is required' }
+    }
+    if (!manuscript.logline || !manuscript.logline.trim()) {
+      return { success: false, error: 'Logline is required' }
+    }
+    if (manuscript.logline && manuscript.logline.length > 200) {
+      return { success: false, error: 'Logline must be 200 characters or less' }
+    }
+    if (!manuscript.synopsis || !manuscript.synopsis.trim()) {
+      return { success: false, error: 'Synopsis is required' }
+    }
+    if (manuscript.synopsis && manuscript.synopsis.length > 2000) {
+      return { success: false, error: 'Synopsis must be 2000 characters or less' }
+    }
+
     const { data, error } = await supabase.from('manuscripts').insert(manuscript).select().single()
 
     if (error) {
@@ -87,6 +113,37 @@ export async function createSubmissionAction(
   try {
     const supabase = getServerSupabase()
 
+    // Server-side validation for submission
+    if (!submission.manuscript_id) {
+      return { success: false, error: 'manuscript_id is required' }
+    }
+    if (!submission.submitter_id) {
+      return { success: false, error: 'submitter_id is required' }
+    }
+    if (!submission.submission_type) {
+      return { success: false, error: 'submission_type is required' }
+    }
+
+    // If reviewer_id provided, validate eligibility
+    if ((submission as any).reviewer_id) {
+      const reviewerId = (submission as any).reviewer_id as string
+      const { data: eligible, error: eligErr } = await supabase
+        .from('eligible_recipients')
+        .select('id')
+        .eq('id', reviewerId)
+        .maybeSingle()
+      if (eligErr) {
+        console.error('Eligibility check failed:', eligErr)
+        return { success: false, error: 'Failed to validate recipient eligibility' }
+      }
+      if (!eligible) {
+        return {
+          success: false,
+          error: 'Selected recipient is not eligible to receive submissions',
+        }
+      }
+    }
+
     const { data, error } = await supabase
       .from('submissions')
       .insert({
@@ -117,7 +174,7 @@ export async function withdrawSubmissionAction(
 
     const { error } = await supabase
       .from('submissions')
-      .update({ status: 'rejected' })
+      .update({ status: 'withdrawn' })
       .eq('id', submissionId)
 
     if (error) {
