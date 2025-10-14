@@ -20,9 +20,11 @@ export async function POST(req: NextRequest) {
     const body = (await req.json().catch(() => ({}))) as {
       priceId?: string
       mode?: 'subscription' | 'payment'
+      referralCode?: string
     }
     const priceId = (body.priceId || '').trim()
     const mode = body.mode || 'subscription'
+    const referralCode = body.referralCode?.trim()
 
     if (!priceId) {
       return NextResponse.json({ error: 'Missing priceId' }, { status: 400 })
@@ -57,14 +59,25 @@ export async function POST(req: NextRequest) {
 
     const origin = process.env.NEXT_PUBLIC_APP_URL || `${req.nextUrl.protocol}//${req.nextUrl.host}`
 
+    // Build metadata with optional referral code
+    const metadata: any = { user_id: userId }
+    if (referralCode) {
+      metadata.referral_code = referralCode
+    }
+
     const sessionParams: any = {
       mode,
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${origin}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/billing/cancelled`,
+      success_url: `${origin}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/pricing`,
       allow_promotion_codes: true,
-      metadata: { user_id: userId },
+      metadata,
+    }
+
+    // For subscriptions, also add referral code to subscription metadata
+    if (mode === 'subscription' && referralCode) {
+      sessionParams.subscription_data = { metadata }
     }
 
     const checkout = await stripe.checkout.sessions.create(sessionParams, {

@@ -1,5 +1,4 @@
 'use client'
-import { Navigation } from '@/src/components/navigation'
 
 import { PostCard } from '@/src/components/post-card'
 import { AuthorCard } from '@/src/components/author-card'
@@ -115,7 +114,6 @@ export function DashboardView({
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation user={user} />
       <WelcomeModal
         userName={user?.profile?.display_name || user?.profile?.username || undefined}
         userEmail={user?.email}

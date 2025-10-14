@@ -18,20 +18,33 @@ export async function POST(req: NextRequest) {
 
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, stripe_customer_id')
+      .select('id, email, stripe_customer_id')
       .eq('id', session.user.id)
       .single()
 
-    if (error || !user?.stripe_customer_id) {
-      return NextResponse.json({ error: 'No Stripe customer found' }, { status: 404 })
+    if (error || !user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    const origin = process.env.NEXT_PUBLIC_APP_URL || `${req.nextUrl.protocol}//${req.nextUrl.host}`
     const stripe = getStripe()
+    const origin = process.env.NEXT_PUBLIC_APP_URL || `${req.nextUrl.protocol}//${req.nextUrl.host}`
+
+    // Create Stripe customer if they don't have one
+    let customerId = user.stripe_customer_id
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: session.user.email || user.email || undefined,
+        metadata: { user_id: user.id },
+      })
+      customerId = customer.id
+
+      // Update user record with stripe_customer_id
+      await supabase.from('users').update({ stripe_customer_id: customerId }).eq('id', user.id)
+    }
 
     const portal = await stripe.billingPortal.sessions.create({
-      customer: user.stripe_customer_id,
-      return_url: `${origin}/settings/billing`,
+      customer: customerId,
+      return_url: `${origin}/settings?tab=subscription`,
     })
 
     return NextResponse.json({ url: portal.url }, { status: 200 })
