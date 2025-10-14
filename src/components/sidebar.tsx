@@ -204,7 +204,7 @@ export function Sidebar() {
       )}
 
       {/* Desktop sidebar - always visible on large screens */}
-      <aside className="hidden lg:block lg:fixed lg:left-0 lg:top-14 xl:top-16 lg:z-40 lg:h-[calc(100vh-3.5rem)] xl:h-[calc(100vh-4rem)] lg:w-64 lg:border-r lg:bg-background">
+      <aside className="hidden lg:block lg:fixed lg:left-0 lg:top-16 lg:z-40 lg:h-[calc(100vh-4rem)] lg:w-64 lg:border-r lg:bg-background">
         <SidebarContent />
       </aside>
     </>
