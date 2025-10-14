@@ -33,8 +33,8 @@ export function AppLayout({ children, editorSidebar }: AppLayoutProps) {
 
   return (
     <div className="relative min-h-screen">
-      {/* Global header (always full width) */}
-      <Navigation user={user as any} />
+      {/* Global header - gets user from auth context */}
+      <Navigation />
 
       {/* Global sidebar for app context */}
       {showGlobalSidebar && <Sidebar />}
