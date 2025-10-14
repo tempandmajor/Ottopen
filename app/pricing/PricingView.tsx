@@ -84,7 +84,7 @@ const industryPlans = [
   {
     name: 'Publisher Access',
     price: 300,
-    priceId: 'price_1SAflHA5S8NBMyaJ9k93hL7Q',
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PUBLISHER,
     tier: 'industry_premium',
     description: 'For book publishers & scouts',
     icon: BookOpen,
