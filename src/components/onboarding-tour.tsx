@@ -36,8 +36,9 @@ export function OnboardingTour({
   useEffect(() => {
     // Check if tour has been completed
     if (useDatabase) {
-      // Check from database via user profile
-      if (user && !user.onboarding_completed && autoStart) {
+      // Check from database via user profile (attached at user.profile)
+      const completed = (user as any)?.profile?.onboarding_completed === true
+      if (user && !completed && autoStart) {
         // Small delay to ensure DOM is ready
         setTimeout(() => setIsActive(true), 500)
       }
