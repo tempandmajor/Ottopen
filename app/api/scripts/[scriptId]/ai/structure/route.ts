@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService, ElementService } from '@/src/lib/script-service'
 import { AIScriptService } from '@/src/lib/ai-script-service'
+import logger from '@/src/lib/logger'
 
 // GET /api/scripts/[scriptId]/ai/structure - Analyze script structure
 export async function GET(request: NextRequest, { params }: { params: { scriptId: string } }) {
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest, { params }: { params: { scriptId
 
     return NextResponse.json(analysis)
   } catch (error: any) {
-    console.error('Failed to analyze structure:', error)
+    logger.error('Failed to analyze structure:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

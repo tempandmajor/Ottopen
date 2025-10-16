@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { withRateLimit, authRateLimiters } from '@/src/lib/rate-limit'
+import logger from '@/src/lib/logger'
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic'
@@ -74,7 +75,7 @@ async function handlePasswordVerification(request: NextRequest): Promise<Respons
       error: null,
     })
   } catch (error) {
-    console.error('Password verification error:', error)
+    logger.error('Password verification error:', error)
     return NextResponse.json({ valid: false, error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 // Force dynamic route
 export const dynamic = 'force-dynamic'
@@ -79,7 +80,7 @@ export async function GET(request: NextRequest) {
       recent_referrals: recentReferrals || [],
     })
   } catch (error) {
-    console.error('Error in get stats:', error)
+    logger.error('Error in get stats:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService, SceneService } from '@/src/lib/script-service'
+import logger from '@/src/lib/logger'
 
 // GET /api/scripts/[scriptId]/scenes - Get all scenes for a script
 export async function GET(request: NextRequest, { params }: { params: { scriptId: string } }) {
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest, { params }: { params: { scriptId
 
     return NextResponse.json({ scenes })
   } catch (error: any) {
-    console.error('Failed to get scenes:', error)
+    logger.error('Failed to get scenes:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest, { params }: { params: { scriptI
 
     return NextResponse.json({ scenes }, { status: 201 })
   } catch (error: any) {
-    console.error('Failed to generate scenes:', error)
+    logger.error('Failed to generate scenes:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

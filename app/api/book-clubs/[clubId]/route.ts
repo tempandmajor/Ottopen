@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { BookClubService } from '@/src/lib/book-club-service'
+import logger from '@/src/lib/logger'
 
 // GET /api/book-clubs/[clubId] - Get club details
 export async function GET(request: NextRequest, { params }: { params: { clubId: string } }) {
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest, { params }: { params: { clubId: 
 
     return NextResponse.json({ club })
   } catch (error: any) {
-    console.error('Failed to get club:', error)
+    logger.error('Failed to get club:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -37,7 +38,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { clubId
 
     return NextResponse.json({ club })
   } catch (error: any) {
-    console.error('Failed to update club:', error)
+    logger.error('Failed to update club:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -60,7 +61,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { clubI
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error('Failed to delete club:', error)
+    logger.error('Failed to delete club:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

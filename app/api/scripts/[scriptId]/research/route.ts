@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { researchQuery } from '@/src/lib/ai/perplexity-client'
+import logger from '@/src/lib/logger'
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic'
@@ -65,7 +66,7 @@ Query: ${query}
       citations: result.citations || [],
     })
   } catch (error: any) {
-    console.error('Script research error:', error)
+    logger.error('Script research error:', error)
     return NextResponse.json({ error: error.message || 'Research failed' }, { status: 500 })
   }
 }

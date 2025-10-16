@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 // Force dynamic route
 export const dynamic = 'force-dynamic'
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
     })
 
     if (balanceError) {
-      console.error('Error fetching balance:', balanceError)
+      logger.error('Error fetching balance:', balanceError)
       return NextResponse.json({ error: 'Failed to fetch balance' }, { status: 500 })
     }
 
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
 
     if (earningsError) {
-      console.error('Error fetching earnings:', earningsError)
+      logger.error('Error fetching earnings:', earningsError)
       return NextResponse.json({ error: 'Failed to fetch earnings' }, { status: 500 })
     }
 
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
       .order('requested_at', { ascending: false })
 
     if (payoutsError) {
-      console.error('Error fetching payouts:', payoutsError)
+      logger.error('Error fetching payouts:', payoutsError)
     }
 
     return NextResponse.json({
@@ -76,7 +77,7 @@ export async function GET(request: NextRequest) {
       payouts: payouts || [],
     })
   } catch (error) {
-    console.error('Error in get earnings:', error)
+    logger.error('Error in get earnings:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,12 +39,12 @@ export async function POST(request: NextRequest) {
     })
 
     if (error) {
-      console.error('Analytics insert error:', error)
+      logger.error('Analytics insert error:', error)
     }
 
     return NextResponse.json({ success: true, session_id: sessionId })
   } catch (error) {
-    console.error('Search analytics error:', error)
+    logger.error('Search analytics error:', error)
     return NextResponse.json({ success: false }, { status: 500 })
   }
 }

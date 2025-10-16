@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 // Force dynamic route
 export const dynamic = 'force-dynamic'
@@ -45,13 +46,13 @@ export async function DELETE(request: NextRequest, { params }: { params: { postI
     const { error: deleteError } = await supabase.from('posts').delete().eq('id', postId)
 
     if (deleteError) {
-      console.error('Failed to delete post:', deleteError)
+      logger.error('Failed to delete post:', deleteError)
       return NextResponse.json({ error: 'Failed to delete post' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Delete post error:', error)
+    logger.error('Delete post error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

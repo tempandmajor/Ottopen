@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 // GET /api/analytics/platform - Get platform-wide statistics (admin only)
 export async function GET(request: NextRequest) {
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
     startDate.setDate(startDate.getDate() - days)
     const startDateStr = startDate.toISOString().split('T')[0]
 
-    let response: any = {}
+    const response: any = {}
 
     // Platform Metrics
     if (metricType === 'platform' || metricType === 'all') {
@@ -248,7 +249,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response)
   } catch (error) {
-    console.error('Error fetching platform analytics:', error)
+    logger.error('Error fetching platform analytics:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -309,7 +310,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error tracking acquisition metric:', error)
+    logger.error('Error tracking acquisition metric:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

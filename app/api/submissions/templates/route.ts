@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,13 +26,13 @@ export async function GET(request: NextRequest) {
       .order('usage_count', { ascending: false })
 
     if (error) {
-      console.error('Templates error:', error)
+      logger.error('Templates error:', error)
       return NextResponse.json({ error: 'Failed to fetch templates' }, { status: 500 })
     }
 
     return NextResponse.json(templates || [])
   } catch (error) {
-    console.error('Templates error:', error)
+    logger.error('Templates error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -74,13 +75,13 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error('Create template error:', error)
+      logger.error('Create template error:', error)
       return NextResponse.json({ error: 'Failed to create template' }, { status: 500 })
     }
 
     return NextResponse.json(template)
   } catch (error) {
-    console.error('Create template error:', error)
+    logger.error('Create template error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

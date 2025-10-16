@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { dbService } from '@/src/lib/database'
 import { getServerUser } from '@/lib/server/auth'
+import logger from '@/src/lib/logger'
 
 // Force dynamic rendering since this route uses cookies
 export const dynamic = 'force-dynamic'
@@ -109,7 +110,7 @@ export async function GET(req: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('Data export error:', error)
+    logger.error('Data export error:', error)
     return NextResponse.json({ error: 'Failed to export data' }, { status: 500 })
   }
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 /**
  * PATCH /api/users/me/onboarding
@@ -32,7 +33,7 @@ export async function PATCH(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error('onboarding.PATCH: update failed', { userId: user.id, error: error.message })
+      logger.error('onboarding.PATCH: update failed', { userId: user.id, error: error.message })
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
@@ -42,7 +43,7 @@ export async function PATCH(request: NextRequest) {
     })
     return NextResponse.json({ success: true, user: data })
   } catch (error: any) {
-    console.error('onboarding.PATCH: unhandled error', { error: error.message })
+    logger.error('onboarding.PATCH: unhandled error', { error: error.message })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

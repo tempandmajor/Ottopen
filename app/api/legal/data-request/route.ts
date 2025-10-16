@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import crypto from 'crypto'
+import logger from '@/src/lib/logger'
 
 /**
  * POST /api/legal/data-request
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     )
   } catch (error: any) {
-    console.error('Error submitting data request:', error)
+    logger.error('Error submitting data request:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -105,7 +106,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ requests })
   } catch (error: any) {
-    console.error('Error fetching data requests:', error)
+    logger.error('Error fetching data requests:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

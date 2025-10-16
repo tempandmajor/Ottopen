@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 import { nanoid } from 'nanoid'
+import logger from '@/src/lib/logger'
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic'
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (createError) {
-      console.error('Error creating referral code:', createError)
+      logger.error('Error creating referral code:', createError)
       return NextResponse.json({ error: 'Failed to create referral code' }, { status: 500 })
     }
 
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
       referral_code: newCode,
     })
   } catch (error) {
-    console.error('Error in generate referral:', error)
+    logger.error('Error in generate referral:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

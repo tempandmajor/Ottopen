@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     if (statsError && statsError.code !== 'PGRST116') {
       // PGRST116 is "no rows returned", which is ok
-      console.error('Stats error:', statsError)
+      logger.error('Stats error:', statsError)
     }
 
     // Get submission trends using the database function
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
     })
 
     if (trendsError) {
-      console.error('Trends error:', trendsError)
+      logger.error('Trends error:', trendsError)
     }
 
     // Get submissions by status
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
       .eq('submitter_id', userId)
 
     if (submissionsError) {
-      console.error('Submissions error:', submissionsError)
+      logger.error('Submissions error:', submissionsError)
     }
 
     // Get manuscripts to get genre and type info
@@ -110,7 +111,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(analytics)
   } catch (error) {
-    console.error('Analytics error:', error)
+    logger.error('Analytics error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

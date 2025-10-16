@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 // POST /api/messages/reactions - Add reaction to message
 export async function POST(request: NextRequest) {
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ reaction })
   } catch (error) {
-    console.error('Error adding reaction:', error)
+    logger.error('Error adding reaction:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -96,7 +97,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ reactions: Object.values(groupedReactions) })
   } catch (error) {
-    console.error('Error fetching reactions:', error)
+    logger.error('Error fetching reactions:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -134,7 +135,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error removing reaction:', error)
+    logger.error('Error removing reaction:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

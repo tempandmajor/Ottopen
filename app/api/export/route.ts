@@ -3,6 +3,7 @@ import { getServerUser } from '@/lib/server/auth'
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, PageBreak } from 'docx'
 import { jsPDF } from 'jspdf'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs' // Force Node.js runtime for epub-gen
@@ -105,7 +106,7 @@ async function handleExport(request: NextRequest) {
       },
     })
   } catch (error: any) {
-    console.error('Export Error:', error)
+    logger.error('Export Error:', error)
     return NextResponse.json({ error: error.message || 'Export failed' }, { status: 500 })
   }
 }

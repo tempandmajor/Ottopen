@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,7 +54,7 @@ async function handleGetEvents(request: NextRequest, { params }: { params: { clu
       events: transformedEvents,
     })
   } catch (error: any) {
-    console.error('Get events error:', error)
+    logger.error('Get events error:', error)
     return NextResponse.json(
       { error: 'Failed to fetch events', details: error.message },
       { status: 500 }
@@ -127,7 +128,7 @@ async function handleCreateEvent(request: NextRequest, { params }: { params: { c
       event,
     })
   } catch (error: any) {
-    console.error('Create event error:', error)
+    logger.error('Create event error:', error)
     return NextResponse.json(
       { error: 'Failed to create event', details: error.message },
       { status: 500 }

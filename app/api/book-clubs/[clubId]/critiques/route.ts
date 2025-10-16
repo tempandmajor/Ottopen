@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -78,7 +79,7 @@ async function handleGetCritiques(
       critiques: transformedCritiques,
     })
   } catch (error: any) {
-    console.error('Get critiques error:', error)
+    logger.error('Get critiques error:', error)
     return NextResponse.json(
       { error: 'Failed to fetch critiques', details: error.message },
       { status: 500 }

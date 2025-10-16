@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService, CharacterService, ElementService } from '@/src/lib/script-service'
 import { AIScriptService } from '@/src/lib/ai-script-service'
+import logger from '@/src/lib/logger'
 
 // POST /api/scripts/[scriptId]/ai/character-voice - Check character voice consistency
 export async function POST(request: NextRequest, { params }: { params: { scriptId: string } }) {
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest, { params }: { params: { scriptI
 
     return NextResponse.json(analysis)
   } catch (error: any) {
-    console.error('Failed to check character voice:', error)
+    logger.error('Failed to check character voice:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

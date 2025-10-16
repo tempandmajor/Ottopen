@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService } from '@/src/lib/script-service'
 import { AIScriptService } from '@/src/lib/ai-script-service'
+import logger from '@/src/lib/logger'
 
 // POST /api/scripts/[scriptId]/ai/beats - Generate story beats with AI
 export async function POST(request: NextRequest, { params }: { params: { scriptId: string } }) {
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest, { params }: { params: { scriptI
 
     return NextResponse.json(result)
   } catch (error: any) {
-    console.error('Failed to generate beats:', error)
+    logger.error('Failed to generate beats:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

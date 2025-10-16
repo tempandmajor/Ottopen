@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 // GET /api/analytics/user - Get comprehensive user analytics
 export async function GET(request: NextRequest) {
@@ -123,7 +124,7 @@ export async function GET(request: NextRequest) {
       recentActivity: recentActivity?.slice(0, 20) || [],
     })
   } catch (error) {
-    console.error('Error fetching user analytics:', error)
+    logger.error('Error fetching user analytics:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -161,7 +162,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error tracking activity:', error)
+    logger.error('Error tracking activity:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

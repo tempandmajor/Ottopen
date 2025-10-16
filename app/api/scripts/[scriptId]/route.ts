@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService } from '@/src/lib/script-service'
+import logger from '@/src/lib/logger'
 
 // GET /api/scripts/[scriptId] - Get script by ID
 export async function GET(request: NextRequest, { params }: { params: { scriptId: string } }) {
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest, { params }: { params: { scriptId
 
     return NextResponse.json({ script })
   } catch (error: any) {
-    console.error('Failed to get script:', error)
+    logger.error('Failed to get script:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -54,7 +55,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { script
 
     return NextResponse.json({ script: updatedScript })
   } catch (error: any) {
-    console.error('Failed to update script:', error)
+    logger.error('Failed to update script:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -80,7 +81,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { scrip
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error('Failed to delete script:', error)
+    logger.error('Failed to delete script:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

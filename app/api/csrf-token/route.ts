@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getCsrfToken } from '@/src/lib/csrf'
+import logger from '@/src/lib/logger'
 
 // Force dynamic rendering since this route uses cookies
 export const dynamic = 'force-dynamic'
@@ -16,7 +17,7 @@ export async function GET() {
 
     return NextResponse.json({ csrfToken: token })
   } catch (error) {
-    console.error('CSRF token generation error:', error)
+    logger.error('CSRF token generation error:', error)
     return NextResponse.json({ error: 'Failed to generate CSRF token' }, { status: 500 })
   }
 }

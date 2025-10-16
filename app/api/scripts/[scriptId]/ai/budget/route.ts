@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService, ElementService, CharacterService } from '@/src/lib/script-service'
 import { AIAdvancedService } from '@/src/lib/ai-advanced-service'
+import logger from '@/src/lib/logger'
 
 // GET /api/scripts/[scriptId]/ai/budget - Estimate production budget
 export async function GET(request: NextRequest, { params }: { params: { scriptId: string } }) {
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest, { params }: { params: { scriptId
 
     return NextResponse.json(budgetEstimation)
   } catch (error: any) {
-    console.error('Failed to estimate budget:', error)
+    logger.error('Failed to estimate budget:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

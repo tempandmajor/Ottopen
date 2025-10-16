@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
+import logger from '@/src/lib/logger'
 
 /**
  * POST /api/legal/consent
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ consent: data })
   } catch (error: any) {
-    console.error('Error updating consent:', error)
+    logger.error('Error updating consent:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -74,7 +75,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ consents })
   } catch (error: any) {
-    console.error('Error fetching consents:', error)
+    logger.error('Error fetching consents:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

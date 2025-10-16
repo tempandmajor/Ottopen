@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 import Stripe from 'stripe'
+import logger from '@/src/lib/logger'
 
 function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
       account_id: accountId,
     })
   } catch (error: any) {
-    console.error('Error in Stripe Connect onboarding:', error)
+    logger.error('Error in Stripe Connect onboarding:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }

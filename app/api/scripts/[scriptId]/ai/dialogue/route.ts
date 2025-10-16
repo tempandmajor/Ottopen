@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService, CharacterService } from '@/src/lib/script-service'
 import { AIScriptService } from '@/src/lib/ai-script-service'
+import logger from '@/src/lib/logger'
 
 // POST /api/scripts/[scriptId]/ai/dialogue - Enhance dialogue with AI
 export async function POST(request: NextRequest, { params }: { params: { scriptId: string } }) {
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest, { params }: { params: { scriptI
 
     return NextResponse.json(result)
   } catch (error: any) {
-    console.error('Failed to enhance dialogue:', error)
+    logger.error('Failed to enhance dialogue:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

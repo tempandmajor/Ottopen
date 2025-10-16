@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 // GET /api/messages/threads?parentMessageId=xxx - Get thread replies
 export async function GET(request: NextRequest) {
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ replies })
   } catch (error) {
-    console.error('Error fetching thread replies:', error)
+    logger.error('Error fetching thread replies:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -113,7 +114,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ reply })
   } catch (error) {
-    console.error('Error creating thread reply:', error)
+    logger.error('Error creating thread reply:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

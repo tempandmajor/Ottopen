@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 export async function POST(request: NextRequest) {
   try {
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest) {
       })
 
     if (uploadError) {
-      console.error('Upload error:', uploadError)
+      logger.error('Upload error:', uploadError)
       return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 })
     }
 
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
       })
 
       if (dbError) {
-        console.error('Database error:', dbError)
+        logger.error('Database error:', dbError)
         // Don't fail the upload if DB insert fails
       }
     }
@@ -100,7 +101,7 @@ export async function POST(request: NextRequest) {
       fileSize: file.size,
     })
   } catch (error) {
-    console.error('Upload error:', error)
+    logger.error('Upload error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService, ProductionReportService } from '@/src/lib/script-service'
+import logger from '@/src/lib/logger'
 
 // GET /api/scripts/[scriptId]/report - Generate production report
 export async function GET(request: NextRequest, { params }: { params: { scriptId: string } }) {
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest, { params }: { params: { scriptId
 
     return NextResponse.json({ report })
   } catch (error: any) {
-    console.error('Failed to generate production report:', error)
+    logger.error('Failed to generate production report:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

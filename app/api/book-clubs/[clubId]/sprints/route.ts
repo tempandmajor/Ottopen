@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -66,7 +67,7 @@ async function handleGetSprints(request: NextRequest, { params }: { params: { cl
       sprints: formattedSprints,
     })
   } catch (error: any) {
-    console.error('Get sprints error:', error)
+    logger.error('Get sprints error:', error)
     return NextResponse.json(
       { error: 'Failed to fetch sprints', details: error.message },
       { status: 500 }
@@ -130,7 +131,7 @@ async function handleCreateSprint(
       sprint,
     })
   } catch (error: any) {
-    console.error('Create sprint error:', error)
+    logger.error('Create sprint error:', error)
     return NextResponse.json(
       { error: 'Failed to create sprint', details: error.message },
       { status: 500 }

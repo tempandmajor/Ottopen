@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
+import logger from '@/src/lib/logger'
 
 /**
  * POST /api/legal/dmca/counter-notice
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ counterNotice: data }, { status: 201 })
   } catch (error: any) {
-    console.error('Error submitting counter notice:', error)
+    logger.error('Error submitting counter notice:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

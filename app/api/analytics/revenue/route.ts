@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 // GET /api/analytics/revenue - Get revenue analytics
 export async function GET(request: NextRequest) {
@@ -179,7 +180,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ error: 'Invalid type parameter' }, { status: 400 })
   } catch (error) {
-    console.error('Error fetching revenue analytics:', error)
+    logger.error('Error fetching revenue analytics:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -241,7 +242,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error tracking payment:', error)
+    logger.error('Error tracking payment:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

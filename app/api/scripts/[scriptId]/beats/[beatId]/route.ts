@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService, BeatService } from '@/src/lib/script-service'
+import logger from '@/src/lib/logger'
 
 // PATCH /api/scripts/[scriptId]/beats/[beatId] - Update beat
 export async function PATCH(
@@ -31,7 +32,7 @@ export async function PATCH(
 
     return NextResponse.json({ beat })
   } catch (error: any) {
-    console.error('Failed to update beat:', error)
+    logger.error('Failed to update beat:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -64,7 +65,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error('Failed to delete beat:', error)
+    logger.error('Failed to delete beat:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

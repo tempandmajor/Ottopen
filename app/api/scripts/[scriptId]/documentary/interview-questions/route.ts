@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService } from '@/src/lib/script-service'
 import { AIDocumentaryService } from '@/src/lib/ai-documentary-service'
+import logger from '@/src/lib/logger'
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic'
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest, { params }: { params: { scriptI
 
     return NextResponse.json({ questions })
   } catch (error: any) {
-    console.error('Failed to generate interview questions:', error)
+    logger.error('Failed to generate interview questions:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

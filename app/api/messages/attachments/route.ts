@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 // POST /api/messages/attachments - Add attachment to message
 export async function POST(request: NextRequest) {
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ attachment })
   } catch (error) {
-    console.error('Error adding attachment:', error)
+    logger.error('Error adding attachment:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -126,7 +127,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ attachments })
   } catch (error) {
-    console.error('Error fetching attachments:', error)
+    logger.error('Error fetching attachments:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -178,7 +179,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error deleting attachment:', error)
+    logger.error('Error deleting attachment:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

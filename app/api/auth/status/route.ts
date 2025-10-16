@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    let response = NextResponse.json({ ok: true })
+    const response = NextResponse.json({ ok: true })
 
     const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
       cookies: {

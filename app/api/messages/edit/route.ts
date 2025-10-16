@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 // PUT /api/messages/edit - Edit a message
 export async function PUT(request: NextRequest) {
@@ -59,7 +60,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ message: updatedMessage })
   } catch (error) {
-    console.error('Error editing message:', error)
+    logger.error('Error editing message:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -87,7 +88,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ history })
   } catch (error) {
-    console.error('Error fetching edit history:', error)
+    logger.error('Error fetching edit history:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -130,7 +131,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ message: deletedMessage })
   } catch (error) {
-    console.error('Error deleting message:', error)
+    logger.error('Error deleting message:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

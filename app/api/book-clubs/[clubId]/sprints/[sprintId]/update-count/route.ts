@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,7 +41,7 @@ async function handleUpdateWordCount(
       participant,
     })
   } catch (error: any) {
-    console.error('Update word count error:', error)
+    logger.error('Update word count error:', error)
     return NextResponse.json(
       { error: 'Failed to update word count', details: error.message },
       { status: 500 }

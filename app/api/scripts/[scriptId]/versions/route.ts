@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 import { VersionManager } from '@/src/lib/version-control/version-manager'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest, { params }: { params: { scriptId
       versions,
     })
   } catch (error: any) {
-    console.error('Get versions error:', error)
+    logger.error('Get versions error:', error)
     return NextResponse.json(
       { error: 'Failed to fetch versions', details: error.message },
       { status: 500 }
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest, { params }: { params: { scriptI
       version,
     })
   } catch (error: any) {
-    console.error('Create version error:', error)
+    logger.error('Create version error:', error)
     return NextResponse.json(
       { error: 'Failed to create version', details: error.message },
       { status: 500 }

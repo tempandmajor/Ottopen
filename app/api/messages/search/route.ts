@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 // Force dynamic rendering since this route uses cookies
 export const dynamic = 'force-dynamic'
@@ -125,7 +126,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ messages: messages || [] })
   } catch (error) {
-    console.error('Error searching messages:', error)
+    logger.error('Error searching messages:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

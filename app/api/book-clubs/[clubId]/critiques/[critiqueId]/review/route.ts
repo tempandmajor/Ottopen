@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -137,7 +138,7 @@ async function handleSubmitReview(
       newCredits,
     })
   } catch (error: any) {
-    console.error('Submit review error:', error)
+    logger.error('Submit review error:', error)
     return NextResponse.json(
       { error: 'Failed to submit review', details: error.message },
       { status: 500 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -117,7 +118,7 @@ async function handleGetMembers(request: NextRequest, { params }: { params: { cl
       members: memberStats,
     })
   } catch (error: any) {
-    console.error('Get members error:', error)
+    logger.error('Get members error:', error)
     return NextResponse.json(
       { error: 'Failed to fetch members', details: error.message },
       { status: 500 }

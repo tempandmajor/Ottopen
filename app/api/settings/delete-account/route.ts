@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { dbService } from '@/src/lib/database'
 import { getServerUser } from '@/lib/server/auth'
 import { authService } from '@/src/lib/auth'
+import logger from '@/src/lib/logger'
 
 export async function POST(req: NextRequest) {
   try {
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
         p_details: { timestamp: new Date().toISOString() },
       })
     } catch (err) {
-      console.error('Failed to log activity:', err)
+      logger.error('Failed to log activity:', err)
     }
 
     // Delete user data in order (due to foreign key constraints)
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest) {
     // 10. Delete auth user (Supabase Auth)
     const { error: authError } = await supabase.auth.admin.deleteUser(userId)
     if (authError) {
-      console.error('Failed to delete auth user:', authError)
+      logger.error('Failed to delete auth user:', authError)
       // Continue anyway - user data is already deleted
     }
 
@@ -87,7 +88,7 @@ export async function POST(req: NextRequest) {
       message: 'Account deleted successfully',
     })
   } catch (error) {
-    console.error('Account deletion error:', error)
+    logger.error('Account deletion error:', error)
     return NextResponse.json({ error: 'Failed to delete account' }, { status: 500 })
   }
 }

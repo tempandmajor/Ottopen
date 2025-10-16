@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService, ElementService } from '@/src/lib/script-service'
 import { ExportService, type ExportFormat } from '@/src/lib/export-service'
+import logger from '@/src/lib/logger'
 
 // Force Node.js runtime for file system operations (epub-gen)
 export const runtime = 'nodejs'
@@ -82,7 +83,7 @@ export async function GET(request: NextRequest, { params }: { params: { scriptId
       },
     })
   } catch (error: any) {
-    console.error('Export error:', error)
+    logger.error('Export error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

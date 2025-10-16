@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 export async function GET(request: NextRequest) {
   try {
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Submissions error:', error)
+      logger.error('Submissions error:', error)
       return NextResponse.json({ error: 'Failed to fetch submissions' }, { status: 500 })
     }
 
@@ -86,7 +87,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ error: 'Unsupported format' }, { status: 400 })
   } catch (error) {
-    console.error('Export error:', error)
+    logger.error('Export error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

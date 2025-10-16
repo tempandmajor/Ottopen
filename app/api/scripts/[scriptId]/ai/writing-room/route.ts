@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService, ElementService } from '@/src/lib/script-service'
 import { AIAdvancedService } from '@/src/lib/ai-advanced-service'
+import logger from '@/src/lib/logger'
 
 // POST /api/scripts/[scriptId]/ai/writing-room - Get feedback from different perspectives
 export async function POST(request: NextRequest, { params }: { params: { scriptId: string } }) {
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest, { params }: { params: { scriptI
 
     return NextResponse.json({ perspective, feedback })
   } catch (error: any) {
-    console.error('Failed to generate writing room feedback:', error)
+    logger.error('Failed to generate writing room feedback:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

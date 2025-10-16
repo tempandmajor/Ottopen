@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 import { FinalDraftExporter, FinalDraftElement } from '@/src/lib/export/final-draft-exporter'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest, { params }: { params: { scriptId
       },
     })
   } catch (error: any) {
-    console.error('Final Draft export error:', error)
+    logger.error('Final Draft export error:', error)
     return NextResponse.json({ error: 'Export failed', details: error.message }, { status: 500 })
   }
 }

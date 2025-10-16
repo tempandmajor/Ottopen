@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { BookClubService } from '@/src/lib/book-club-service'
+import logger from '@/src/lib/logger'
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic'
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ clubs })
   } catch (error: any) {
-    console.error('Failed to list clubs:', error)
+    logger.error('Failed to list clubs:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ club }, { status: 201 })
   } catch (error: any) {
-    console.error('Failed to create club:', error)
+    logger.error('Failed to create club:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

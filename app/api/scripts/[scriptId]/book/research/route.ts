@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService } from '@/src/lib/script-service'
 import { AIBookService } from '@/src/lib/ai-book-service'
+import logger from '@/src/lib/logger'
 
 // POST /api/scripts/[scriptId]/book/research - Generate research suggestions
 export async function POST(request: NextRequest, { params }: { params: { scriptId: string } }) {
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest, { params }: { params: { scriptI
 
     return NextResponse.json(research)
   } catch (error) {
-    console.error('Research suggestions error:', error)
+    logger.error('Research suggestions error:', error)
     return NextResponse.json({ error: 'Failed to generate research suggestions' }, { status: 500 })
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService } from '@/src/lib/script-service'
+import logger from '@/src/lib/logger'
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic'
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
     console.info('scripts.GET: ok', { count: Array.isArray(scripts) ? scripts.length : 0 })
     return NextResponse.json({ scripts })
   } catch (error: any) {
-    console.error('Failed to list scripts:', error)
+    logger.error('Failed to list scripts:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
     console.info('scripts.POST: created', { id: script?.id })
     return NextResponse.json({ script }, { status: 201 })
   } catch (error: any) {
-    console.error('Failed to create script:', error)
+    logger.error('Failed to create script:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

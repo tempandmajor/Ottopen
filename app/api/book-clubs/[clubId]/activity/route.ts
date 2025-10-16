@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -60,7 +61,7 @@ async function handleGetActivity(request: NextRequest, { params }: { params: { c
       activities,
     })
   } catch (error: any) {
-    console.error('Get activity error:', error)
+    logger.error('Get activity error:', error)
     return NextResponse.json(
       { error: 'Failed to fetch activity', details: error.message },
       { status: 500 }

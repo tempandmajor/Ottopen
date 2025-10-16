@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -94,7 +95,7 @@ async function handleSubmitCritique(
       creditsRemaining: membership.credits - creditCost,
     })
   } catch (error: any) {
-    console.error('Submit critique error:', error)
+    logger.error('Submit critique error:', error)
     return NextResponse.json(
       { error: 'Failed to submit for critique', details: error.message },
       { status: 500 }

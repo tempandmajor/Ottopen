@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 import { sceneExpander } from '@/src/lib/ai/scene-expansion'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest, { params }: { params: { scriptId
       totalPages: scenes.reduce((sum, s) => sum + s.pageCount, 0).toFixed(1),
     })
   } catch (error: any) {
-    console.error('Pacing analysis error:', error)
+    logger.error('Pacing analysis error:', error)
     return NextResponse.json({ error: 'Analysis failed', details: error.message }, { status: 500 })
   }
 }

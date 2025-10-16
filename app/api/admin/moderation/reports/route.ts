@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
+import logger from '@/src/lib/logger'
 
 /**
  * GET /api/admin/moderation/reports
@@ -71,7 +72,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ reports })
   } catch (error: any) {
-    console.error('Error fetching reports:', error)
+    logger.error('Error fetching reports:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -121,7 +122,7 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ report: data })
   } catch (error: any) {
-    console.error('Error updating report:', error)
+    logger.error('Error updating report:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

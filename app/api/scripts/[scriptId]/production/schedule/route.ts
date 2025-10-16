@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 import { ProductionDocumentGenerator } from '@/src/lib/production/call-sheet-generator'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest, { params }: { params: { scriptI
       schedule,
     })
   } catch (error: any) {
-    console.error('Shooting schedule generation error:', error)
+    logger.error('Shooting schedule generation error:', error)
     return NextResponse.json(
       { error: 'Schedule generation failed', details: error.message },
       { status: 500 }

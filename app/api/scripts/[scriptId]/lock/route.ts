@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService } from '@/src/lib/script-service'
+import logger from '@/src/lib/logger'
 
 // POST /api/scripts/[scriptId]/lock - Lock script to prevent edits
 export async function POST(request: NextRequest, { params }: { params: { scriptId: string } }) {
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest, { params }: { params: { scriptI
 
     return NextResponse.json({ script: updatedScript })
   } catch (error: any) {
-    console.error('Failed to lock script:', error)
+    logger.error('Failed to lock script:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -49,7 +50,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { scrip
 
     return NextResponse.json({ script: updatedScript })
   } catch (error: any) {
-    console.error('Failed to unlock script:', error)
+    logger.error('Failed to unlock script:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

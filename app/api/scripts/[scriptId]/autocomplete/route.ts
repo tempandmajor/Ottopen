@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 import { scriptAutocomplete, AutocompleteContext } from '@/src/lib/ai/script-autocomplete'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest, { params }: { params: { scriptI
       useAI,
     })
   } catch (error: any) {
-    console.error('Autocomplete error:', error)
+    logger.error('Autocomplete error:', error)
     return NextResponse.json(
       { error: 'Autocomplete failed', details: error.message },
       { status: 500 }

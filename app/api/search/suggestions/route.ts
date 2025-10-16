@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest) {
     })
 
     if (error) {
-      console.error('Suggestions query error:', error)
+      logger.error('Suggestions query error:', error)
       return NextResponse.json([])
     }
 
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(suggestions)
   } catch (error) {
-    console.error('Search suggestions error:', error)
+    logger.error('Search suggestions error:', error)
     return NextResponse.json([])
   }
 }

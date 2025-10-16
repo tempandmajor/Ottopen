@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService, ElementService, CharacterService } from '@/src/lib/script-service'
 import { AIAdvancedService } from '@/src/lib/ai-advanced-service'
+import logger from '@/src/lib/logger'
 
 // GET /api/scripts/[scriptId]/ai/casting - Generate casting suggestions
 export async function GET(request: NextRequest, { params }: { params: { scriptId: string } }) {
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest, { params }: { params: { scriptId
 
     return NextResponse.json({ suggestions: castingSuggestions })
   } catch (error: any) {
-    console.error('Failed to generate casting suggestions:', error)
+    logger.error('Failed to generate casting suggestions:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

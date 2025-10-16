@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService, ElementService } from '@/src/lib/script-service'
 import { AIScriptService } from '@/src/lib/ai-script-service'
+import logger from '@/src/lib/logger'
 
 // GET /api/scripts/[scriptId]/ai/coverage - Generate AI script coverage
 export async function GET(
@@ -35,7 +36,7 @@ export async function GET(
 
     return NextResponse.json(coverage)
   } catch (error: any) {
-    console.error('Failed to generate coverage:', error)
+    logger.error('Failed to generate coverage:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

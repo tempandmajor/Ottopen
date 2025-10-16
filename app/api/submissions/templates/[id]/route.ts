@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -27,7 +28,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       })
 
       if (error) {
-        console.error('Increment usage error:', error)
+        logger.error('Increment usage error:', error)
 
         // Fallback: fetch current count and increment
         const { data: template } = await supabase
@@ -78,13 +79,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       .single()
 
     if (error) {
-      console.error('Update template error:', error)
+      logger.error('Update template error:', error)
       return NextResponse.json({ error: 'Failed to update template' }, { status: 500 })
     }
 
     return NextResponse.json(data)
   } catch (error) {
-    console.error('Update template error:', error)
+    logger.error('Update template error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -110,13 +111,13 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       .eq('user_id', user.id) // Ensure user owns the template
 
     if (error) {
-      console.error('Delete template error:', error)
+      logger.error('Delete template error:', error)
       return NextResponse.json({ error: 'Failed to delete template' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Delete template error:', error)
+    logger.error('Delete template error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService, ElementService } from '@/src/lib/script-service'
 import { ScriptFormatter } from '@/src/lib/script-formatter'
+import logger from '@/src/lib/logger'
 
 // GET /api/scripts/[scriptId]/elements - Get all elements for a script
 export async function GET(request: NextRequest, { params }: { params: { scriptId: string } }) {
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest, { params }: { params: { scriptId
 
     return NextResponse.json({ elements })
   } catch (error: any) {
-    console.error('Failed to get elements:', error)
+    logger.error('Failed to get elements:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest, { params }: { params: { scriptI
 
     return NextResponse.json({ elements }, { status: 201 })
   } catch (error: any) {
-    console.error('Failed to create elements:', error)
+    logger.error('Failed to create elements:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

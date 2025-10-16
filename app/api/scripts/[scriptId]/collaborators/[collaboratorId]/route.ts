@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService, CollaborationService } from '@/src/lib/script-service'
+import logger from '@/src/lib/logger'
 
 // DELETE /api/scripts/[scriptId]/collaborators/[collaboratorId] - Remove collaborator
 export async function DELETE(
@@ -34,7 +35,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error('Failed to remove collaborator:', error)
+    logger.error('Failed to remove collaborator:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

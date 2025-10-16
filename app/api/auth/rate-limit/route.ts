@@ -3,6 +3,7 @@ import { RateLimiter } from '@/src/lib/rate-limit'
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import { getValidatedEnvVar } from '@/src/lib/env-validation'
+import logger from '@/src/lib/logger'
 
 // Lazy initialization for Upstash Redis
 let _redis: Redis | null | undefined = undefined
@@ -35,12 +36,12 @@ function getUpstashRateLimiters(): {
     })
 
     if (url && token) {
-      console.log('[RATE_LIMIT] Initializing Upstash Redis rate limiters')
+      logger.info('[RATE_LIMIT] Initializing Upstash Redis rate limiters')
       _redis = new Redis({ url, token })
       _upstashSignin = new Ratelimit({ redis: _redis, limiter: Ratelimit.slidingWindow(5, '5 m') })
       _upstashSignup = new Ratelimit({ redis: _redis, limiter: Ratelimit.slidingWindow(3, '5 m') })
     } else {
-      console.log(
+      logger.info(
         '[RATE_LIMIT] Upstash Redis not configured, using in-memory rate limiting fallback'
       )
       _redis = null
@@ -48,7 +49,7 @@ function getUpstashRateLimiters(): {
       _upstashSignup = null
     }
   } catch (error) {
-    console.error('[RATE_LIMIT] Error initializing Upstash Redis:', error)
+    logger.error('[RATE_LIMIT] Error initializing Upstash Redis:', error)
     _redis = null
     _upstashSignin = null
     _upstashSignup = null

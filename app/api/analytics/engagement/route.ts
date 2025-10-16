@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 // GET /api/analytics/engagement - Get platform engagement metrics
 export async function GET(request: NextRequest) {
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - days)
 
-    let response: any = {}
+    const response: any = {}
 
     // Daily Active Users
     if (metricType === 'dau' || metricType === 'all') {
@@ -208,7 +209,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response)
   } catch (error) {
-    console.error('Error fetching engagement metrics:', error)
+    logger.error('Error fetching engagement metrics:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -247,7 +248,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error tracking funnel event:', error)
+    logger.error('Error tracking funnel event:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

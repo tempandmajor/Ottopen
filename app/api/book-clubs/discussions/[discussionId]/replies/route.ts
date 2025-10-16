@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { DiscussionService } from '@/src/lib/book-club-service'
 import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,7 +24,7 @@ async function handleGetReplies(
       replies,
     })
   } catch (error: any) {
-    console.error('Get replies error:', error)
+    logger.error('Get replies error:', error)
     return NextResponse.json(
       { error: 'Failed to fetch replies', details: error.message },
       { status: 500 }
@@ -63,7 +64,7 @@ async function handleAddReply(
       reply,
     })
   } catch (error: any) {
-    console.error('Add reply error:', error)
+    logger.error('Add reply error:', error)
     return NextResponse.json(
       { error: 'Failed to add reply', details: error.message },
       { status: 500 }

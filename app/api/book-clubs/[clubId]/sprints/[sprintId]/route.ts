@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,7 +32,7 @@ async function handleGetSprint(
       sprint,
     })
   } catch (error: any) {
-    console.error('Get sprint error:', error)
+    logger.error('Get sprint error:', error)
     return NextResponse.json(
       { error: 'Failed to fetch sprint', details: error.message },
       { status: 500 }

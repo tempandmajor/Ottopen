@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 import Stripe from 'stripe'
+import logger from '@/src/lib/logger'
 
 // Force dynamic route
 export const dynamic = 'force-dynamic'
@@ -80,7 +81,7 @@ export async function GET(request: NextRequest) {
       account_id: userData.stripe_connect_account_id,
     })
   } catch (error: any) {
-    console.error('Error checking Connect status:', error)
+    logger.error('Error checking Connect status:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }

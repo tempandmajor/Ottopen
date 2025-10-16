@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 import { sceneExpander, SceneExpansionRequest } from '@/src/lib/ai/scene-expansion'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest, { params }: { params: { scriptI
       scene: expandedScene,
     })
   } catch (error: any) {
-    console.error('Scene expansion error:', error)
+    logger.error('Scene expansion error:', error)
     return NextResponse.json(
       { error: 'Scene expansion failed', details: error.message },
       { status: 500 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 // GET /api/analytics/script/[scriptId] - Get script performance analytics
 export async function GET(request: NextRequest, { params }: { params: { scriptId: string } }) {
@@ -172,7 +173,7 @@ export async function GET(request: NextRequest, { params }: { params: { scriptId
       topViewers: isOwner ? topViewers : [],
     })
   } catch (error) {
-    console.error('Error fetching script analytics:', error)
+    logger.error('Error fetching script analytics:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -204,7 +205,7 @@ export async function POST(request: NextRequest, { params }: { params: { scriptI
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error tracking script view:', error)
+    logger.error('Error tracking script view:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

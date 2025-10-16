@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 // Force dynamic route
 export const dynamic = 'force-dynamic'
@@ -51,13 +52,13 @@ export async function GET(request: NextRequest) {
     const { data: reports, error } = await query
 
     if (error) {
-      console.error('Failed to fetch reports:', error)
+      logger.error('Failed to fetch reports:', error)
       return NextResponse.json({ error: 'Failed to fetch reports' }, { status: 500 })
     }
 
     return NextResponse.json({ reports })
   } catch (error) {
-    console.error('Get reports error:', error)
+    logger.error('Get reports error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -107,13 +108,13 @@ export async function PATCH(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error('Failed to update report:', error)
+      logger.error('Failed to update report:', error)
       return NextResponse.json({ error: 'Failed to update report' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, report })
   } catch (error) {
-    console.error('Update report error:', error)
+    logger.error('Update report error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

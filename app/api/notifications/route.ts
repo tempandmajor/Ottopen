@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 export async function GET(request: NextRequest) {
   try {
@@ -34,13 +35,13 @@ export async function GET(request: NextRequest) {
     const { data: notifications, error } = await query
 
     if (error) {
-      console.error('Notifications error:', error)
+      logger.error('Notifications error:', error)
       return NextResponse.json({ error: 'Failed to fetch notifications' }, { status: 500 })
     }
 
     return NextResponse.json(notifications || [])
   } catch (error) {
-    console.error('Notifications error:', error)
+    logger.error('Notifications error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -71,7 +72,7 @@ export async function PUT(request: NextRequest) {
         .eq('read', false)
 
       if (error) {
-        console.error('Mark all read error:', error)
+        logger.error('Mark all read error:', error)
         return NextResponse.json({ error: 'Failed to mark notifications as read' }, { status: 500 })
       }
 
@@ -86,13 +87,13 @@ export async function PUT(request: NextRequest) {
       .eq('user_id', user.id)
 
     if (error) {
-      console.error('Update notification error:', error)
+      logger.error('Update notification error:', error)
       return NextResponse.json({ error: 'Failed to update notification' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Update notification error:', error)
+    logger.error('Update notification error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

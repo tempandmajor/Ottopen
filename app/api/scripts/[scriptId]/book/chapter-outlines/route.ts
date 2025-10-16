@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService } from '@/src/lib/script-service'
 import { AIBookService } from '@/src/lib/ai-book-service'
+import logger from '@/src/lib/logger'
 
 // POST /api/scripts/[scriptId]/book/chapter-outlines - Generate chapter outlines
 export async function POST(request: NextRequest, { params }: { params: { scriptId: string } }) {
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest, { params }: { params: { scriptI
 
     return NextResponse.json(outline)
   } catch (error) {
-    console.error('Chapter outlines error:', error)
+    logger.error('Chapter outlines error:', error)
     return NextResponse.json({ error: 'Failed to generate chapter outlines' }, { status: 500 })
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 import { ProductionDocumentGenerator, CallSheet } from '@/src/lib/production/call-sheet-generator'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest, { params }: { params: { scriptI
       callSheet,
     })
   } catch (error: any) {
-    console.error('Call sheet generation error:', error)
+    logger.error('Call sheet generation error:', error)
     return NextResponse.json(
       { error: 'Call sheet generation failed', details: error.message },
       { status: 500 }

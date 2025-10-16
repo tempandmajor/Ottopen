@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,13 +16,13 @@ export async function GET() {
       .limit(20)
 
     if (error) {
-      console.error('Trending searches error:', error)
+      logger.error('Trending searches error:', error)
       return NextResponse.json([])
     }
 
     return NextResponse.json(data || [])
   } catch (error) {
-    console.error('Trending searches error:', error)
+    logger.error('Trending searches error:', error)
     return NextResponse.json([])
   }
 }

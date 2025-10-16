@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService, ElementService } from '@/src/lib/script-service'
+import logger from '@/src/lib/logger'
 
 // PATCH /api/scripts/[scriptId]/elements/[elementId] - Update element
 export async function PATCH(
@@ -31,7 +32,7 @@ export async function PATCH(
 
     return NextResponse.json({ element })
   } catch (error: any) {
-    console.error('Failed to update element:', error)
+    logger.error('Failed to update element:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -64,7 +65,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error('Failed to delete element:', error)
+    logger.error('Failed to delete element:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

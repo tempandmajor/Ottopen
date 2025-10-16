@@ -20,7 +20,7 @@ async function handleSetSession(request: NextRequest) {
       return NextResponse.json({ ok: false, error: 'Server not configured' }, { status: 500 })
     }
 
-    let response = NextResponse.json({ ok: true }, { status: 200 })
+    const response = NextResponse.json({ ok: true }, { status: 200 })
 
     const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
       cookies: {
@@ -40,6 +40,34 @@ async function handleSetSession(request: NextRequest) {
     const { error } = await supabase.auth.setSession({ access_token, refresh_token })
     if (error) {
       return NextResponse.json({ ok: false, error: error.message }, { status: 400 })
+    }
+
+    // Harden cookies for persistence across restarts and subdomains
+    try {
+      const hostname = request.nextUrl.hostname
+      const isLocal = hostname === 'localhost' || /^(\d+\.){3}\d+$/.test(hostname)
+      const apex = hostname.split('.').slice(-2).join('.')
+      const domain = isLocal ? undefined : apex
+      const maxAge = 60 * 60 * 24 * 90 // 90 days
+
+      // Re-set Supabase cookies with explicit attributes
+      const cookiesSet = response.cookies.getAll()
+      cookiesSet
+        .filter(c => c.name.startsWith('sb-'))
+        .forEach(c => {
+          response.cookies.set({
+            name: c.name,
+            value: c.value,
+            httpOnly: true,
+            secure: !isLocal,
+            sameSite: 'lax',
+            path: '/',
+            ...(domain ? { domain } : {}),
+            maxAge,
+          })
+        })
+    } catch (_) {
+      // Best-effort hardening; ignore failures
     }
 
     return response

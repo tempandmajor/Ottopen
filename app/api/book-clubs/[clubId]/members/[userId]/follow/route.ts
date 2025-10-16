@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -67,7 +68,7 @@ async function handleFollowMember(
       })
     }
   } catch (error: any) {
-    console.error('Follow member error:', error)
+    logger.error('Follow member error:', error)
     return NextResponse.json(
       { error: 'Failed to follow member', details: error.message },
       { status: 500 }

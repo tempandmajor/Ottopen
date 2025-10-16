@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService, ElementService, CharacterService } from '@/src/lib/script-service'
 import { AIAdvancedService } from '@/src/lib/ai-advanced-service'
+import logger from '@/src/lib/logger'
 
 // POST /api/scripts/[scriptId]/ai/table-read - Generate AI table read
 export async function POST(request: NextRequest, { params }: { params: { scriptId: string } }) {
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest, { params }: { params: { scriptI
 
     return NextResponse.json(tableRead)
   } catch (error: any) {
-    console.error('Failed to generate table read:', error)
+    logger.error('Failed to generate table read:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

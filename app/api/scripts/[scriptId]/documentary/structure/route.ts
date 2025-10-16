@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerUser } from '@/lib/server/auth'
 import { ScriptService, ElementService } from '@/src/lib/script-service'
 import { AIDocumentaryService } from '@/src/lib/ai-documentary-service'
+import logger from '@/src/lib/logger'
 
 // GET /api/scripts/[scriptId]/documentary/structure - Analyze documentary structure
 export async function GET(request: NextRequest, { params }: { params: { scriptId: string } }) {
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest, { params }: { params: { scriptId
 
     return NextResponse.json(structure)
   } catch (error: any) {
-    console.error('Failed to analyze documentary structure:', error)
+    logger.error('Failed to analyze documentary structure:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
