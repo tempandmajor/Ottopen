@@ -37,7 +37,7 @@ export function Navigation({ user: _userProp }: NavigationProps) {
   const [isPending, startTransition] = useTransition()
 
   // Always use global auth context as single source of truth
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
 
   const isActive = (path: string) => currentPath === path
 
@@ -162,6 +162,9 @@ export function Navigation({ user: _userProp }: NavigationProps) {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            ) : loading ? (
+              /* Loading state - show placeholder to prevent layout shift */
+              <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />
             ) : (
               /* Unauthenticated user buttons */
               <>
