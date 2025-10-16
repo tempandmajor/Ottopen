@@ -5,14 +5,17 @@ import { AIService } from '@/src/lib/ai-editor-service'
 import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
 import { validateAIRequest, validationErrorResponse } from '@/src/lib/ai-validation'
 import { getSafeErrorMessage } from '@/src/lib/error-handling'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
 const READABILITY_SYSTEM_PROMPT = `You are an expert in readability analysis and writing assessment. Analyze text for clarity, accessibility, and reading level using standard metrics like Flesch-Kincaid, and provide actionable improvement suggestions.`
 
 async function handleReadabilityAnalysis(request: NextRequest) {
+  let user: any = null
   try {
-    const { user } = await getServerUser()
+    const result = await getServerUser()
+    user = result.user
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -112,7 +115,11 @@ Analysis:`
       tokensUsed: response.tokensUsed,
     })
   } catch (error: any) {
-    console.error('Readability Analysis Error:', error)
+    logger.error('AI Readability Analysis request failed', error, {
+      userId: user?.id,
+      userTier: user?.profile?.account_tier,
+      endpoint: 'readability',
+    })
     return NextResponse.json(
       { error: getSafeErrorMessage(error, 'AI request failed') },
       { status: 500 }

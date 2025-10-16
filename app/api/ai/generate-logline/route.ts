@@ -4,17 +4,20 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 import { validateAIRequest, validationErrorResponse } from '@/src/lib/ai-validation'
 import { getSafeErrorMessage } from '@/src/lib/error-handling'
+import logger from '@/src/lib/logger'
 
 export async function POST(request: NextRequest) {
+  let user: any = null
   try {
     const supabase = createServerSupabaseClient()
 
     // Check authentication
     const {
-      data: { user },
+      data: { user: authUser },
       error: authError,
     } = await supabase.auth.getUser()
 
+    user = authUser
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -39,7 +42,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ suggestions })
   } catch (error: any) {
-    console.error('Generate logline error:', error)
+    logger.error('AI Generate Logline request failed', error, {
+      userId: user?.id,
+      endpoint: 'generate-logline',
+    })
     return NextResponse.json(
       { error: getSafeErrorMessage(error, 'Internal server error') },
       { status: 500 }

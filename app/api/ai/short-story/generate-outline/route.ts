@@ -6,6 +6,7 @@ import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
 import { createServerSupabaseClient } from '@/src/lib/supabase-server'
 import { validateAIRequest, validationErrorResponse } from '@/src/lib/ai-validation'
 import { getSafeErrorMessage } from '@/src/lib/error-handling'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,8 +30,10 @@ interface GenerateOutlineRequest {
 }
 
 async function handleGenerateOutline(request: NextRequest) {
+  let user: any = null
   try {
-    const { user } = await getServerUser()
+    const result = await getServerUser()
+    user = result.user
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -221,7 +224,11 @@ Generate a rich, specific outline that a writer can immediately use to start dra
       tokensUsed: response.tokensUsed,
     })
   } catch (error: any) {
-    console.error('Short Story Outline Generation Error:', error)
+    logger.error('AI Short Story Outline Generation request failed', error, {
+      userId: user?.id,
+      userTier: user?.profile?.account_tier,
+      endpoint: 'short-story/generate-outline',
+    })
     return NextResponse.json(
       { error: getSafeErrorMessage(error, 'AI request failed') },
       { status: 500 }

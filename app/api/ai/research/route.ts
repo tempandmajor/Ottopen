@@ -5,6 +5,7 @@ import { AIService } from '@/src/lib/ai-editor-service'
 import { withRateLimit } from '@/src/lib/rate-limit-new'
 import { validateAIRequest, validationErrorResponse } from '@/src/lib/ai-validation'
 import { getSafeErrorMessage } from '@/src/lib/error-handling'
+import logger from '@/src/lib/logger'
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic'
@@ -16,7 +17,8 @@ export async function POST(request: NextRequest): Promise<Response | NextRespons
     return rateLimitResult.error!
   }
   try {
-    const { user } = await getServerUser()
+    const result = await getServerUser()
+    user = result.user
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -191,7 +193,11 @@ export async function POST(request: NextRequest): Promise<Response | NextRespons
       tokensUsed: response.tokensUsed,
     })
   } catch (error: any) {
-    console.error('AI Research Error:', error)
+    logger.error('AI Research request failed', error, {
+      userId: user?.id,
+      userTier: user?.profile?.account_tier,
+      endpoint: 'research',
+    })
     return NextResponse.json(
       { error: getSafeErrorMessage(error, 'Research request failed') },
       { status: 500 }

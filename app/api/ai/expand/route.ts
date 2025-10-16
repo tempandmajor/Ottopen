@@ -7,13 +7,16 @@ import type { ExpandRequest } from '@/src/lib/ai/prompts/writing-prompts'
 import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
 import { validateAIRequest, validationErrorResponse } from '@/src/lib/ai-validation'
 import { getSafeErrorMessage } from '@/src/lib/error-handling'
+import logger from '@/src/lib/logger'
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic'
 
 async function handleExpand(request: NextRequest) {
+  let user: any = null
   try {
-    const { user } = await getServerUser()
+    const result = await getServerUser()
+    user = result.user
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -70,7 +73,11 @@ async function handleExpand(request: NextRequest) {
       tokensUsed: response.tokensUsed,
     })
   } catch (error: any) {
-    console.error('AI Expand Error:', error)
+    logger.error('AI Expand request failed', error, {
+      userId: user?.id,
+      userTier: user?.profile?.account_tier,
+      endpoint: 'expand',
+    })
     return NextResponse.json(
       { error: getSafeErrorMessage(error, 'AI request failed') },
       { status: 500 }

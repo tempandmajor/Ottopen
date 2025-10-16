@@ -5,6 +5,7 @@ import { AIService } from '@/src/lib/ai-editor-service'
 import { createRateLimitedHandler } from '@/src/lib/rate-limit-new'
 import { validateAIRequest, validationErrorResponse } from '@/src/lib/ai-validation'
 import { getSafeErrorMessage } from '@/src/lib/error-handling'
+import logger from '@/src/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,8 +22,10 @@ Focus on:
 Provide detailed, actionable feedback with specific examples.`
 
 async function handleCharacterConsistency(request: NextRequest) {
+  let user: any = null
   try {
-    const { user } = await getServerUser()
+    const result = await getServerUser()
+    user = result.user
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -129,7 +132,11 @@ Analysis:`
       tokensUsed: response.tokensUsed,
     })
   } catch (error: any) {
-    console.error('Character Consistency Error:', error)
+    logger.error('AI Character Consistency request failed', error, {
+      userId: user?.id,
+      userTier: user?.profile?.account_tier,
+      endpoint: 'character-consistency',
+    })
     return NextResponse.json(
       { error: getSafeErrorMessage(error, 'AI request failed') },
       { status: 500 }
