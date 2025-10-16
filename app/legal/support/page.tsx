@@ -1,5 +1,3 @@
-import { Navigation } from '@/src/components/navigation'
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card'
 import { Separator } from '@/src/components/ui/separator'
 import { Button } from '@/src/components/ui/button'
@@ -98,7 +96,7 @@ export default function SupportPolicy() {
                       <p className="text-sm text-muted-foreground mb-2">
                         Browse our comprehensive knowledge base and FAQ
                       </p>
-                      <p className="text-sm font-medium">help.ottopen.com</p>
+                      <p className="text-sm font-medium">help.ottopen.app</p>
                     </div>
 
                     <div className="border border-literary-border rounded-lg p-4">
@@ -333,7 +331,7 @@ export default function SupportPolicy() {
                     <p className="text-muted-foreground">General Support: hello@ottopen.app</p>
                     <p className="text-muted-foreground">Escalations: hello@ottopen.app</p>
                     <p className="text-muted-foreground">Premium Support: hello@ottopen.app</p>
-                    <p className="text-muted-foreground">Help Center: help.ottopen.com</p>
+                    <p className="text-muted-foreground">Help Center: help.ottopen.app</p>
                   </div>
                 </section>
               </div>

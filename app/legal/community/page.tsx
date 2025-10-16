@@ -1,5 +1,3 @@
-import { Navigation } from '@/src/components/navigation'
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card'
 import { Separator } from '@/src/components/ui/separator'
 import { Button } from '@/src/components/ui/button'
@@ -382,7 +380,7 @@ export default function CommunityGuidelines() {
                     If you believe a moderation action was taken in error:
                   </p>
                   <ol className="list-decimal list-inside text-muted-foreground space-y-2 mb-4">
-                    <li>Email appeals@ottopen.com within 30 days of the action</li>
+                    <li>Email appeals@ottopen.app within 30 days of the action</li>
                     <li>Include your username and details about the disputed action</li>
                     <li>Provide any relevant context or evidence</li>
                     <li>Our appeals team will review and respond within 7 business days</li>
