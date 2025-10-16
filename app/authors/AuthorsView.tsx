@@ -1,5 +1,4 @@
 'use client'
-import { Navigation } from '@/src/components/navigation'
 
 import { AuthorCard } from '@/src/components/author-card'
 import { Button } from '@/src/components/ui/button'
@@ -412,7 +411,6 @@ export function AuthorsView({
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
       {/* Quick View Modal */}
       <Dialog open={!!quickViewAuthor} onOpenChange={() => setQuickViewAuthor(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">

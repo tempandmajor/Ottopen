@@ -1,5 +1,3 @@
-import { Navigation } from '@/src/components/navigation'
-
 import { Card, CardContent } from '@/src/components/ui/card'
 import { Separator } from '@/src/components/ui/separator'
 import { Button } from '@/src/components/ui/button'

@@ -1,5 +1,4 @@
 'use client'
-import { Navigation } from '@/src/components/navigation'
 
 import { Button } from '@/src/components/ui/button'
 import { Input } from '@/src/components/ui/input'
@@ -661,7 +660,6 @@ export function WorksView({ initialPosts, initialStats }: WorksViewProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
       <div className="container mx-auto px-4 py-6 sm:py-8">
         <div className="max-w-7xl mx-auto">
           {/* Header */}

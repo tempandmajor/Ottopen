@@ -21,28 +21,33 @@ export function AppLayout({ children, editorSidebar }: AppLayoutProps) {
     setHasHydrated(true)
   }, [])
 
-  // Show global sidebar in 'app' context when signed in or while loading to prevent flicker on refresh
-  const showGlobalSidebar = navigationContext === 'app' && (user || loading)
+  // Show global sidebar in 'app' context when signed in
+  // Keep showing during loading to prevent flicker, but only if we've hydrated
+  const showGlobalSidebar = navigationContext === 'app' && hasHydrated && (user || loading)
 
-  // Show editor sidebar in editor contexts
+  // Show editor sidebar in editor contexts when user is authenticated
   const showEditorSidebar =
-    user && (navigationContext === 'ai-editor' || navigationContext === 'script-editor')
+    hasHydrated &&
+    user &&
+    !loading &&
+    (navigationContext === 'ai-editor' || navigationContext === 'script-editor')
 
-  // Reserve space only when a sidebar is actually rendered to avoid left gutter when signed out
-  const shouldReserveSpace = hasHydrated && (showGlobalSidebar || showEditorSidebar)
+  // Reserve sidebar space when sidebar is shown
+  // This prevents layout shift and maintains consistent spacing
+  const shouldReserveSpace = showGlobalSidebar || showEditorSidebar
 
   return (
     <div className="relative min-h-screen">
       {/* Global header - gets user from auth context */}
       <Navigation />
 
-      {/* Global sidebar for app context */}
+      {/* Global sidebar for app context - shown when user is authenticated or loading */}
       {showGlobalSidebar && <Sidebar />}
 
       {/* Editor-specific sidebar (passed as prop) */}
       {showEditorSidebar && editorSidebar}
 
-      {/* Content area is the only region inset to accommodate sidebar */}
+      {/* Content area with consistent spacing - sidebar space reserved when sidebar shown */}
       <div className={shouldReserveSpace ? 'lg:ml-64' : ''}>{children}</div>
     </div>
   )

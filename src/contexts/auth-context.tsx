@@ -31,8 +31,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<(SupabaseUser & { profile?: User }) | null>(null)
-  // Start with loading: false on server, will be set to true in useEffect on client
-  const [loading, setLoading] = useState(false)
+  // CRITICAL: Start with loading: true to match client-side initialization behavior
+  // This prevents hydration mismatch where server renders with loading:false
+  // but client immediately sets loading:true in useEffect
+  const [loading, setLoading] = useState(true)
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false)
   const [timeoutWarningTime, setTimeoutWarningTime] = useState(0)
 
@@ -128,8 +130,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    // Set loading to true when starting auth initialization (client-side only)
-    setLoading(true)
+    // Note: loading already starts as true to prevent hydration mismatch
+    // No need to set it again here
     let mounted = true
 
     // Safety timeout to prevent loading state from hanging forever

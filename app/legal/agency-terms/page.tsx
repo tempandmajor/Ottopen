@@ -1,5 +1,4 @@
 'use client'
-import { Navigation } from '@/src/components/navigation'
 
 import { Footer } from '@/src/components/footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card'

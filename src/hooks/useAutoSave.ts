@@ -6,6 +6,9 @@ interface UseAutoSaveOptions {
   onSave: () => Promise<void>
   interval?: number // milliseconds
   enabled?: boolean
+  maxRetries?: number // exponential backoff retries on failure
+  retryBaseMs?: number // base delay for backoff
+  beforeUnloadSave?: boolean // attempt a save on page close when enabled
 }
 
 interface AutoSaveState {
@@ -20,6 +23,9 @@ export function useAutoSave({
   onSave,
   interval = AUTO_SAVE_INTERVAL,
   enabled = true,
+  maxRetries = 3,
+  retryBaseMs = 2000,
+  beforeUnloadSave = true,
 }: UseAutoSaveOptions) {
   const [state, setState] = useState<AutoSaveState>({
     isSaving: false,
@@ -28,6 +34,8 @@ export function useAutoSave({
   })
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isMountedRef = useRef(true)
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const retryCountRef = useRef(0)
 
   // Manual save function
   const save = async () => {
@@ -43,6 +51,12 @@ export function useAutoSave({
           lastSaved: new Date(),
           error: null,
         })
+        // Reset retry state on success
+        retryCountRef.current = 0
+        if (retryTimeoutRef.current) {
+          clearTimeout(retryTimeoutRef.current)
+          retryTimeoutRef.current = null
+        }
       }
     } catch (error) {
       if (isMountedRef.current) {
@@ -51,6 +65,18 @@ export function useAutoSave({
           lastSaved: null,
           error: error instanceof Error ? error.message : 'Save failed',
         })
+        // Schedule exponential backoff retry
+        if (retryCountRef.current < maxRetries) {
+          const delay = retryBaseMs * Math.pow(2, retryCountRef.current)
+          retryCountRef.current += 1
+          if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current)
+          retryTimeoutRef.current = setTimeout(() => {
+            // Only retry if still enabled and mounted
+            if (isMountedRef.current && enabled) {
+              save()
+            }
+          }, delay)
+        }
       }
     }
   }
@@ -61,6 +87,10 @@ export function useAutoSave({
       if (saveTimeoutRef.current) {
         clearInterval(saveTimeoutRef.current)
         saveTimeoutRef.current = null
+      }
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current)
+        retryTimeoutRef.current = null
       }
       return
     }
@@ -73,6 +103,10 @@ export function useAutoSave({
       if (saveTimeoutRef.current) {
         clearInterval(saveTimeoutRef.current)
       }
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current)
+        retryTimeoutRef.current = null
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, interval])
@@ -84,6 +118,23 @@ export function useAutoSave({
       isMountedRef.current = false
     }
   }, [])
+
+  // Attempt save on page unload if enabled
+  useEffect(() => {
+    if (!beforeUnloadSave) return
+    const handler = (e: BeforeUnloadEvent) => {
+      if (!enabled) return
+      // Fire-and-forget; do not block unload
+      try {
+        save()
+      } catch (_) {
+        // ignore
+      }
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, beforeUnloadSave])
 
   return {
     ...state,

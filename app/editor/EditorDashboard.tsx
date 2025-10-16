@@ -1,5 +1,4 @@
 'use client'
-import { Navigation } from '@/src/components/navigation'
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
@@ -97,7 +96,6 @@ export function EditorDashboard({ user }: EditorDashboardProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation user={user} />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto">
           {/* Header */}

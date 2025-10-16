@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js'
-import type { Database } from './database.types'
 
 // Configuration management with security considerations
 function getSupabaseConfig() {
@@ -30,7 +29,7 @@ function getSupabaseConfig() {
 
 // Lazy getter for Supabase client - only creates when accessed, not at module import time
 // This prevents build-time errors when env vars aren't available
-let _supabaseClient: ReturnType<typeof createClient<Database>> | null = null
+let _supabaseClient: ReturnType<typeof createClient> | null = null
 function getSupabaseClient() {
   if (_supabaseClient) return _supabaseClient
 
@@ -40,7 +39,7 @@ function getSupabaseClient() {
     return null
   }
 
-  _supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  _supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
@@ -53,7 +52,7 @@ function getSupabaseClient() {
 }
 
 // Export a proxy that lazily initializes the client
-export const supabase = new Proxy({} as ReturnType<typeof createClient<Database>>, {
+export const supabase = new Proxy({} as ReturnType<typeof createClient>, {
   get(_target, prop) {
     const client = getSupabaseClient()
     if (!client) return undefined

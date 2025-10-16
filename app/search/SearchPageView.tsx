@@ -1,5 +1,4 @@
 'use client'
-import { Navigation } from '@/src/components/navigation'
 import { Suspense } from 'react'
 import EnhancedSearchView from './EnhancedSearchView'
 import { Search } from 'lucide-react'
@@ -16,7 +15,6 @@ interface SearchPageViewProps {
 export default function SearchPageView({ user }: SearchPageViewProps) {
   return (
     <div className="min-h-screen bg-background">
-      <Navigation user={user} />
       <Suspense
         fallback={
           <div className="container mx-auto px-4 py-6">

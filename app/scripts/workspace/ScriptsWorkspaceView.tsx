@@ -191,8 +191,15 @@ function ScriptWorkspaceContent() {
         setIsLocked(!!script.is_locked)
         setRevisionColor(script.revision_color || 'white')
         setRevisionNumber(script.revision_number || 1)
-        if (typeof script.body === 'string') {
-          setEditorContent(script.body)
+        try {
+          const draft = localStorage.getItem(`script:${scriptId}:body`)
+          if (draft !== null) {
+            setEditorContent(draft)
+          } else if (typeof script.body === 'string') {
+            setEditorContent(script.body)
+          }
+        } catch {
+          if (typeof script.body === 'string') setEditorContent(script.body)
         }
       }
 
@@ -341,6 +348,11 @@ function ScriptWorkspaceContent() {
               onChange={content => {
                 setEditorContent(content)
                 setContentChanged(true)
+                try {
+                  if (activeTab) {
+                    localStorage.setItem(`script:${activeTab.fileId}:body`, content)
+                  }
+                } catch {}
               }}
               placeholder={`Start writing your script: ${scriptTitle}`}
               showWordCount={true}

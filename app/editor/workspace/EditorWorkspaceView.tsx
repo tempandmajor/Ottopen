@@ -225,7 +225,12 @@ function ManuscriptWorkspaceContent() {
         const firstScene = (chaptersData?.[0]?.scenes || [])[0]
         if (firstScene && !activeSceneId) {
           setActiveSceneId(firstScene.id)
-          setEditorContent(firstScene.content || '')
+          try {
+            const draft = localStorage.getItem(`ms:${manuscriptId}:sc:${firstScene.id}`)
+            setEditorContent(draft ?? firstScene.content ?? '')
+          } catch {
+            setEditorContent(firstScene.content || '')
+          }
         }
       }
     } catch (error) {
@@ -243,7 +248,12 @@ function ManuscriptWorkspaceContent() {
   const handleSceneClick = (sceneId: string) => {
     setActiveSceneId(sceneId)
     const scene = chapters.flatMap(ch => ch.scenes || []).find(sc => sc.id === sceneId) as any
-    setEditorContent((scene && scene.content) || '')
+    try {
+      const draft = activeTab ? localStorage.getItem(`ms:${activeTab.fileId}:sc:${sceneId}`) : null
+      setEditorContent(draft ?? (scene && scene.content) ?? '')
+    } catch {
+      setEditorContent((scene && scene.content) || '')
+    }
   }
 
   const handleAddChapter = async () => {
@@ -475,6 +485,11 @@ function ManuscriptWorkspaceContent() {
                 onChange={content => {
                   setEditorContent(content)
                   setContentChanged(true)
+                  try {
+                    if (activeTab && activeSceneId) {
+                      localStorage.setItem(`ms:${activeTab.fileId}:sc:${activeSceneId}`, content)
+                    }
+                  } catch {}
                 }}
                 placeholder={`Start writing your manuscript: ${manuscriptTitle}`}
                 showWordCount={true}

@@ -11,7 +11,7 @@ export function useNavigationContext(): NavigationContext {
   const pathname = usePathname()
 
   // AI Editor context
-  if (pathname?.startsWith('/editor/')) {
+  if (pathname === '/editor' || pathname?.startsWith('/editor/')) {
     return 'ai-editor'
   }
 

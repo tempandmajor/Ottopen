@@ -1,5 +1,4 @@
 'use client'
-import { Navigation } from '@/src/components/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
 import { Button } from '@/src/components/ui/button'
 import { Badge } from '@/src/components/ui/badge'
@@ -174,7 +173,6 @@ export default function DMCAPageView({ user }: DMCAPageViewProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation user={user} />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto space-y-6">
           <div className="flex items-center justify-between">

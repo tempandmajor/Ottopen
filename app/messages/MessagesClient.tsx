@@ -1,5 +1,4 @@
 'use client'
-import { Navigation } from '@/src/components/navigation'
 import { Button } from '@/src/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/src/components/ui/card'
 import { Input } from '@/src/components/ui/input'
@@ -295,7 +294,6 @@ function MessagesContent({ user }: MessagesContentProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation user={user} />
       <div className="container mx-auto px-4 py-6 sm:py-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-4 gap-4 h-[calc(100vh-200px)]">
