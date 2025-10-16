@@ -22,8 +22,9 @@ export function AppLayout({ children, editorSidebar }: AppLayoutProps) {
   }, [])
 
   // Show global sidebar in 'app' context when signed in
-  // Keep showing during loading to prevent flicker, but only if we've hydrated
-  const showGlobalSidebar = navigationContext === 'app' && hasHydrated && (user || loading)
+  // Only show after hydration and when user is authenticated
+  // This prevents hydration mismatches and flicker
+  const showGlobalSidebar = navigationContext === 'app' && hasHydrated && !!user
 
   // Show editor sidebar in editor contexts when user is authenticated
   const showEditorSidebar =
