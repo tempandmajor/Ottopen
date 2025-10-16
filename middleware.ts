@@ -44,11 +44,22 @@ export async function middleware(request: NextRequest) {
               headers: request.headers,
             },
           })
-          // Set the cookie on the response
+
+          // CRITICAL: Explicitly set cookie attributes to ensure persistence
+          // Supabase cookies MUST have these attributes or they will be lost
+          const hostname = request.nextUrl.hostname
+          const isLocal = hostname === 'localhost' || /^(\d+\.){3}\d+$/.test(hostname)
+
+          // Set the cookie on the response with proper attributes
           response.cookies.set({
             name,
             value,
             ...options,
+            httpOnly: options?.httpOnly ?? true,
+            secure: options?.secure ?? !isLocal,
+            sameSite: (options?.sameSite as 'lax' | 'strict' | 'none') ?? 'lax',
+            path: options?.path ?? '/',
+            maxAge: options?.maxAge ?? 60 * 60 * 24 * 90, // 90 days default
           })
         },
         remove(name: string, options: any) {
