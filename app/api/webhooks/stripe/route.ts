@@ -3,13 +3,14 @@ import { headers } from 'next/headers'
 import Stripe from 'stripe'
 import { getSupabaseAdmin } from '@/src/lib/supabase-admin'
 import { logError } from '@/src/lib/errors'
+import logger from '@/src/lib/logger'
 
 function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) {
     throw new Error('STRIPE_SECRET_KEY is not set')
   }
   return new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-08-27.basil',
+    apiVersion: '2024-06-20' as unknown as Stripe.LatestApiVersion,
   })
 }
 
@@ -135,12 +136,11 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription, supa
       const priceId = subscription.items.data[0].price.id
       // Map price IDs to tiers based on Stripe products
       const tierMap: Record<string, string> = {
-        [process.env.STRIPE_PRICE_PREMIUM || '']: 'premium', // $20/mo - Premium Features
-        [process.env.STRIPE_PRICE_PRO || '']: 'pro', // $50/mo - Writer Pro Plan
-        [process.env.STRIPE_PRICE_INDUSTRY_BASIC || '']: 'industry_basic', // $200/mo - External Agent Access
-        [process.env.STRIPE_PRICE_INDUSTRY_PREMIUM || '']: 'industry_premium', // $500/mo - Producer Premium Access
-        // Publisher Access ($300/mo) maps to industry_premium as well
-        price_1SAflHA5S8NBMyaJ9k93hL7Q: 'industry_premium', // Publisher Access hardcoded for now
+        [process.env.STRIPE_PRICE_PREMIUM || '']: 'premium',
+        [process.env.STRIPE_PRICE_PRO || '']: 'pro',
+        [process.env.STRIPE_PRICE_INDUSTRY_BASIC || '']: 'industry_basic',
+        [process.env.STRIPE_PRICE_INDUSTRY_PREMIUM || '']: 'industry_premium',
+        [process.env.STRIPE_PRICE_PUBLISHER || '']: 'industry_premium',
       }
       tier = tierMap[priceId] || 'premium'
     }
@@ -173,7 +173,12 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription, supa
     }
 
     if (referral) {
-      console.log('Confirming referral and creating earnings for user:', user.id)
+      logger.info('Confirming referral and creating earnings', {
+        userId: user.id,
+        referralId: referral.id,
+        referrerId: referral.referrer_id,
+        subscriptionId: subscription.id,
+      })
 
       // Confirm referral
       await supabaseAdmin
@@ -201,13 +206,24 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription, supa
       })
 
       if (earningsError) {
-        console.error('Failed to create referral earnings:', earningsError)
+        logger.error('Failed to create referral earnings', earningsError, {
+          referralId: referral.id,
+          referrerId: referral.referrer_id,
+          userId: user.id,
+        })
       } else {
-        console.log('Created referral earnings:', commissionAmount, 'cents')
+        logger.info('Created referral earnings', {
+          amount: commissionAmount,
+          currency: subscription.items.data[0]?.price?.currency || 'usd',
+          referralId: referral.id,
+        })
       }
     }
   } catch (error) {
-    console.error('Error handling subscription created:', error)
+    logger.error('Error handling subscription created', error, {
+      subscriptionId: subscription.id,
+      customerId: subscription.customer as string,
+    })
   }
 }
 
@@ -233,7 +249,11 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription, supa
     // Downgrade to free tier
     await supabaseAdmin.from('users').update({ account_tier: 'free' }).eq('id', user.id)
 
-    logError(new Error('Subscription cancelled'), { userId: user.id })
+    logger.info('Subscription cancelled, downgraded to free tier', {
+      userId: user.id,
+      subscriptionId: subscription.id,
+      customerId,
+    })
   } catch (error: unknown) {
     logError(error, { context: 'handleSubscriptionDeleted' })
   }
@@ -265,7 +285,13 @@ async function handleAccountUpdated(account: Stripe.Account, supabaseAdmin: any)
       })
       .eq('id', userId)
 
-    logError(new Error('Updated Connect status'), { userId })
+    logger.info('Updated Stripe Connect status', {
+      userId,
+      accountId: account.id,
+      onboarded,
+      chargesEnabled,
+      payoutsEnabled,
+    })
   } catch (error: unknown) {
     logError(error, { context: 'handleAccountUpdated' })
   }
