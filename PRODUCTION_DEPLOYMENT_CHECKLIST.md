@@ -232,10 +232,13 @@ vercel --prod
 
 Before clicking "Deploy to Production":
 
-- [ ] All 3 database migrations applied successfully
-- [ ] Environment variables verified in Vercel
-- [ ] Stripe webhook endpoint configured and tested
-- [ ] Sentry project created and DSN added
+- [x] All 3 database migrations applied successfully ✅ (Applied: Oct 15, 2025)
+  - [x] Migration 1: add_event_id_to_webhook_events ✅
+  - [x] Migration 2: fix_statistics_rls_policies ✅
+  - [x] Migration 3: add_rls_to_stripe_events ✅
+- [x] Environment variables verified in Vercel ✅ (33 variables in production)
+- [x] Stripe webhook endpoint configured ✅ (https://www.ottopen.app/api/webhooks/stripe)
+- [x] Sentry project created and DSN added ✅
 - [ ] Team notified of deployment
 - [ ] Rollback plan reviewed and understood
 - [ ] Health monitoring dashboard open
