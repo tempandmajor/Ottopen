@@ -11,6 +11,7 @@ import logger from '@/src/lib/logger'
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest): Promise<Response | NextResponse> {
+  let user: any = null
   // Apply rate limiting
   const rateLimitResult = await withRateLimit(request, 'ai')
   if (!rateLimitResult.success) {

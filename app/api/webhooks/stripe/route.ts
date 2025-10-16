@@ -59,6 +59,35 @@ export async function POST(request: NextRequest) {
   try {
     const supabaseAdmin = getSupabaseAdmin()
 
+    // CRITICAL: Check if this event has already been processed (idempotency)
+    const { data: existingEvent } = await supabaseAdmin
+      .from('webhook_events')
+      .select('id, status')
+      .eq('webhook_type', 'stripe')
+      .eq('event_id', event.id)
+      .single()
+
+    if (existingEvent) {
+      logger.info('Webhook event already processed (duplicate)', {
+        eventId: event.id,
+        eventType: event.type,
+        status: existingEvent.status,
+      })
+      // Return success to prevent Stripe from retrying
+      return NextResponse.json({ received: true, duplicate: true })
+    }
+
+    // Log the event BEFORE processing to claim ownership
+    await supabaseAdmin.from('webhook_events').insert({
+      webhook_type: 'stripe',
+      event_type: event.type,
+      event_id: event.id,
+      payload: event,
+      headers: Object.fromEntries(headers().entries()),
+      status: 'processing',
+      created_at: new Date().toISOString(),
+    })
+
     switch (event.type) {
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
@@ -90,19 +119,37 @@ export async function POST(request: NextRequest) {
         logError(new Error('Unhandled webhook event type'), { eventType: event.type })
     }
 
-    // Log webhook event for audit
-    await supabaseAdmin.from('webhook_events').insert({
-      webhook_type: 'stripe',
-      event_type: event.type,
-      payload: event,
-      headers: Object.fromEntries(headers().entries()),
-      status: 'completed',
-      processed_at: new Date().toISOString(),
-    })
+    // Mark webhook event as completed
+    await supabaseAdmin
+      .from('webhook_events')
+      .update({
+        status: 'completed',
+        processed_at: new Date().toISOString(),
+      })
+      .eq('webhook_type', 'stripe')
+      .eq('event_id', event.id)
 
     return NextResponse.json({ received: true })
   } catch (error: unknown) {
     logError(error, { context: 'webhook_processing', eventType: event.type })
+
+    // Mark webhook event as failed
+    try {
+      const supabaseAdmin = getSupabaseAdmin()
+      await supabaseAdmin
+        .from('webhook_events')
+        .update({
+          status: 'failed',
+          error_message: error instanceof Error ? error.message : 'Unknown error',
+          processed_at: new Date().toISOString(),
+        })
+        .eq('webhook_type', 'stripe')
+        .eq('event_id', event.id)
+    } catch (updateError) {
+      // Log but don't fail the response
+      logError(updateError, { context: 'webhook_status_update_failed' })
+    }
+
     return NextResponse.json({ error: 'Processing failed' }, { status: 500 })
   }
 }
