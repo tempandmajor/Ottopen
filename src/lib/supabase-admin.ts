@@ -22,6 +22,16 @@ export function getSupabaseAdmin(): SupabaseClient {
     throw new Error('Missing Supabase admin credentials')
   }
 
+  const normalizedKey = serviceRoleKey.toLowerCase()
+  if (
+    normalizedKey.includes('your_service_role_key') ||
+    normalizedKey.includes('production-service-role-key')
+  ) {
+    throw new Error(
+      'Invalid Supabase service role key detected. Update SUPABASE_SERVICE_ROLE_KEY with a real secret.'
+    )
+  }
+
   // Validate service role key format
   if (!serviceRoleKey.startsWith('eyJ')) {
     throw new Error('Invalid service role key format')

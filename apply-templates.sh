@@ -12,9 +12,9 @@ BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Project info
-PROJECT_ID="wkvatudgffosjfwqyxgt"
-PROJECT_NAME="Ottopen"
+# Project info (set SUPABASE_PROJECT_ID env var when running this script)
+PROJECT_ID="${SUPABASE_PROJECT_ID:-}"
+PROJECT_NAME="${SUPABASE_PROJECT_NAME:-Ottopen}"
 TEMPLATES_DIR="supabase/email-templates"
 
 echo ""
@@ -24,8 +24,14 @@ echo -e "${BLUE}║        📧 Supabase Email Templates - Copy Helper         �
 echo -e "${BLUE}║                                                            ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
-echo -e "${GREEN}Project: ${PROJECT_NAME} (${PROJECT_ID})${NC}"
-echo ""
+if [ -z "$PROJECT_ID" ]; then
+    echo -e "${YELLOW}⚠️  SUPABASE_PROJECT_ID not set.${NC}"
+    echo "Please run with: SUPABASE_PROJECT_ID=your-project-id ./apply-templates.sh"
+    echo ""
+else
+    echo -e "${GREEN}Project: ${PROJECT_NAME} (${PROJECT_ID})${NC}"
+    echo ""
+fi
 
 # Check if we're in the right directory
 if [ ! -d "$TEMPLATES_DIR" ]; then
@@ -104,7 +110,11 @@ process_template() {
 # Main menu
 echo "This helper will guide you through applying all 5 email templates."
 echo ""
-echo -e "${BLUE}Dashboard URL:${NC} https://app.supabase.com/project/${PROJECT_ID}/auth/templates"
+if [ -n "$PROJECT_ID" ]; then
+    echo -e "${BLUE}Dashboard URL:${NC} https://app.supabase.com/project/${PROJECT_ID}/auth/templates"
+else
+    echo -e "${BLUE}Dashboard URL:${NC} https://app.supabase.com/ (select your project ➝ Auth ➝ Templates)"
+fi
 echo ""
 echo "Press Enter to start, or Ctrl+C to cancel..."
 read
@@ -114,35 +124,35 @@ process_template \
     "Confirm Signup" \
     "confirm-signup.html" \
     "Confirm Your Email - Ottopen" \
-    "https://app.supabase.com/project/${PROJECT_ID}/auth/templates"
+    "${PROJECT_ID:+https://app.supabase.com/project/${PROJECT_ID}/auth/templates}"
 
 # Template 2: Invite User
 process_template \
     "Invite User" \
     "invite.html" \
     "You've Been Invited to Ottopen" \
-    "https://app.supabase.com/project/${PROJECT_ID}/auth/templates"
+    "${PROJECT_ID:+https://app.supabase.com/project/${PROJECT_ID}/auth/templates}"
 
 # Template 3: Magic Link
 process_template \
     "Magic Link" \
     "magic-link.html" \
     "Your Magic Link - Sign In to Ottopen" \
-    "https://app.supabase.com/project/${PROJECT_ID}/auth/templates"
+    "${PROJECT_ID:+https://app.supabase.com/project/${PROJECT_ID}/auth/templates}"
 
 # Template 4: Email Change
 process_template \
     "Change Email Address" \
     "email-change.html" \
     "Confirm Your Email Change - Ottopen" \
-    "https://app.supabase.com/project/${PROJECT_ID}/auth/templates"
+    "${PROJECT_ID:+https://app.supabase.com/project/${PROJECT_ID}/auth/templates}"
 
 # Template 5: Recovery
 process_template \
     "Reset Password" \
     "recovery.html" \
     "Reset Your Password - Ottopen" \
-    "https://app.supabase.com/project/${PROJECT_ID}/auth/templates"
+    "${PROJECT_ID:+https://app.supabase.com/project/${PROJECT_ID}/auth/templates}"
 
 # Summary
 echo ""

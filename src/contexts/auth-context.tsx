@@ -8,6 +8,7 @@ import { useIdleTimeout } from '@/src/hooks/use-idle-timeout'
 import { SessionTimeoutWarning } from '@/src/components/auth/session-timeout-warning'
 import { logAuthEvent } from '@/src/lib/auth-monitoring'
 import { dbService } from '@/src/lib/database'
+import { logDebug } from '@/src/lib/logger'
 
 interface AuthContextType {
   user: (SupabaseUser & { profile?: User }) | null
@@ -107,7 +108,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     onTimeout: () => {
       if (timeoutMs >= 365 * 24 * 60 * 60 * 1000) return // effectively disabled
       if (user && !loading) {
-        console.log('Session timeout - signing out user')
+        logDebug('Session timeout triggered, signing out user', {
+          userId: user.id,
+          email: user.email,
+        })
         logAuthEvent('session_timeout', { userId: user.id, email: user.email })
         signOut()
         setShowTimeoutWarning(false)
@@ -163,7 +167,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           error,
         } = await supabase.auth.getSession()
 
-        console.log('Auth initialization - session:', !!session, 'user:', !!session?.user)
+        logDebug('Auth initialization state', {
+          hasSession: !!session,
+          hasUser: !!session?.user,
+        })
 
         if (error) {
           console.error('Auth session error:', error)
@@ -192,7 +199,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
           if (mounted) {
             const userWithProfile = await fetchUserProfile(session.user)
-            console.log('Setting user with profile:', !!(userWithProfile as any).profile)
+            logDebug('Loaded user profile after initialization', {
+              hasProfile: !!(userWithProfile as any).profile,
+            })
             setUser(userWithProfile)
             stopLoading()
           }
@@ -247,7 +256,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const userWithProfile = await fetchUserProfile(session.user)
         setUser(userWithProfile)
       } else {
-        console.log('Clearing user from auth change')
+        logDebug('Clearing user from auth change event', { event })
         setUser(null)
       }
 
@@ -336,7 +345,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logAuthEvent('signup_attempt', { email: trimmedEmail })
 
     try {
-      console.log('SignUp attempt initiated')
+      logDebug('Sign up attempt initiated', { email: trimmedEmail })
       setLoading(true)
 
       const { data: authData, error } = await supabase.auth.signUp({
@@ -364,7 +373,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (authData.user) {
-        console.log('SignUp successful')
+        logDebug('Sign up successful', { userId: authData.user.id })
         logAuthEvent('signup_success', {
           userId: authData.user.id,
           email: authData.user.email,
@@ -399,7 +408,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      console.log('SignOut attempt')
+      logDebug('Sign out attempt', { userId: user?.id })
       logAuthEvent('signout_attempt', { userId: user?.id, email: user?.email })
 
       const { error } = await supabase.auth.signOut()
@@ -410,7 +419,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           metadata: { error: error.message },
         })
       } else {
-        console.log('SignOut successful')
+        logDebug('Sign out successful', { userId: user?.id })
         logAuthEvent('signout_success', { userId: user?.id })
         setUser(null)
       }
@@ -432,7 +441,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logAuthEvent('password_reset_request', { email: trimmedEmail })
 
     try {
-      console.log('ForgotPassword attempt initiated')
+      logDebug('Password reset request initiated', { email: trimmedEmail })
       const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail)
 
       if (error) {
@@ -444,7 +453,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: error.message }
       }
 
-      console.log('ForgotPassword email sent successfully')
+      logDebug('Password reset email dispatched', { email: trimmedEmail })
       logAuthEvent('password_reset_success', { email: trimmedEmail })
       return { success: true }
     } catch (error) {
