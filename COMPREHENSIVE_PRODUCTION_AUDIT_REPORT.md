@@ -213,8 +213,8 @@ if (file.name.includes('..') || file.name.includes('/') || file.name.includes('\
 **Vercel Environment Variables** (✅ Configured):
 
 ```
-UPSTASH_REDIS_REST_URL=https://smiling-cricket-21202.upstash.io ✅
-UPSTASH_REDIS_REST_TOKEN=AVLSAAInc... ✅
+UPSTASH_REDIS_REST_URL=https://<your-upstash-endpoint> ✅
+UPSTASH_REDIS_REST_TOKEN=<redacted-token> ✅
 ```
 
 **Implementation**: Rate limiting automatically activates when Redis env vars are present. All AI routes wrapped with `createRateLimitedHandler('ai', handler)`.
@@ -447,8 +447,8 @@ AI_PROVIDER=anthropic ✅
 #### ✅ Rate Limiting (Upstash Redis)
 
 ```bash
-UPSTASH_REDIS_REST_URL=https://smiling-cricket-21202.upstash.io ✅
-UPSTASH_REDIS_REST_TOKEN=AVLSAAInc... ✅
+UPSTASH_REDIS_REST_URL=https://<your-upstash-endpoint> ✅
+UPSTASH_REDIS_REST_TOKEN=<redacted-token> ✅
 ```
 
 **Status**: Infrastructure ready, rate limiting should activate automatically

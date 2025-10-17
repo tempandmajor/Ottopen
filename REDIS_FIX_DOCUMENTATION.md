@@ -8,7 +8,7 @@ The application was experiencing recurring build failures in Vercel production w
 [Upstash Redis] The redis url contains whitespace or newline, which can cause errors!
 [Upstash Redis] The redis token contains whitespace or newline, which can cause errors!
 c [UrlError]: Upstash Redis client was passed an invalid URL. You should pass a URL starting with https.
-Received: "https://smiling-cricket-21202.upstash.io\n".
+Received: "https://<your-upstash-endpoint>\n".
 ```
 
 ### Root Causes

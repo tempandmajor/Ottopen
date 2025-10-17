@@ -26,7 +26,7 @@ This explains why you saw errors like:
 
 ```
 [UrlError]: Upstash Redis client was passed an invalid URL.
-Received: "https://smiling-cricket-21202.upstash.io\n"
+Received: "https://<your-upstash-endpoint>\n"
 ```
 
 The error appeared to be about trailing newlines, but the **actual problem** was that the environment variables didn't exist in that account at all.

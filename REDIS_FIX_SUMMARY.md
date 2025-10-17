@@ -8,7 +8,7 @@ The application had been failing to build in Vercel with the error:
 
 ```
 [UrlError]: Upstash Redis client was passed an invalid URL.
-Received: "https://smiling-cricket-21202.upstash.io\n"
+Received: "https://<your-upstash-endpoint>\n"
 ```
 
 This error is now **permanently fixed** through a comprehensive three-layered solution.

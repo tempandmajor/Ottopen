@@ -7,9 +7,9 @@ The app is now production-ready with full Supabase integration!
 ### Environment Variables Required for Production:
 
 ```bash
-# Supabase Configuration (Already configured)
-NEXT_PUBLIC_SUPABASE_URL=https://wkvatudgffosjfwqyxgt.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrdmF0dWRnZmZvc2pmd3F5eGd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1OTIwNzYsImV4cCI6MjA3NDE2ODA3Nn0.d2KK6lraqrJ519T1ek3tDimJxP7lmNsdUib7l4Dyugs
+# Supabase Configuration (Set in dashboard)
+NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
 
 # Application Configuration
 NEXT_PUBLIC_APP_URL=https://ottopen.app

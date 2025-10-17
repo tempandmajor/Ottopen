@@ -9,7 +9,7 @@ Rate limiting is now configured and active in production using Upstash Redis.
 ### Upstash Redis
 
 - **Provider**: Upstash Redis (Free tier)
-- **Endpoint**: https://smiling-cricket-21202.upstash.io
+- **Endpoint**: https://<your-upstash-endpoint>
 - **Status**: ✅ Connected
 - **Environment**: Production + Development
 
@@ -125,8 +125,8 @@ If Redis is unavailable:
 ### Production (Vercel)
 
 ```bash
-UPSTASH_REDIS_REST_URL=https://smiling-cricket-21202.upstash.io
-UPSTASH_REDIS_REST_TOKEN=AVLSAAIncDI0OGZiMjdiMDE3YmQ0YTNhYjMxMDVlMWE4ZWM0ZTQ3MnAyMjEyMDI
+UPSTASH_REDIS_REST_URL=https://<your-upstash-endpoint>
+UPSTASH_REDIS_REST_TOKEN=<your-upstash-token>
 ```
 
 ✅ **Status**: Configured in Vercel
@@ -134,8 +134,8 @@ UPSTASH_REDIS_REST_TOKEN=AVLSAAIncDI0OGZiMjdiMDE3YmQ0YTNhYjMxMDVlMWE4ZWM0ZTQ3MnA
 ### Development (.env.local)
 
 ```bash
-UPSTASH_REDIS_REST_URL=https://smiling-cricket-21202.upstash.io
-UPSTASH_REDIS_REST_TOKEN=AVLSAAIncDI0OGZiMjdiMDE3YmQ0YTNhYjMxMDVlMWE4ZWM0ZTQ3MnAyMjEyMDI
+UPSTASH_REDIS_REST_URL=https://<your-upstash-endpoint>
+UPSTASH_REDIS_REST_TOKEN=<your-upstash-token>
 ```
 
 ✅ **Status**: Configured locally
