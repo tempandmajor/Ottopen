@@ -31,9 +31,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<(SupabaseUser & { profile?: User }) | null>(null)
-  // Start with loading: false on server to prevent timeout issues
-  // Will be set to true in useEffect on client-side
-  const [loading, setLoading] = useState(false)
+  // Start in a loading state whenever Supabase is configured so UI can
+  // render skeletons instead of flashing unauthenticated controls.
+  const [loading, setLoading] = useState(() => isSupabaseConfigured())
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false)
   const [timeoutWarningTime, setTimeoutWarningTime] = useState(0)
 

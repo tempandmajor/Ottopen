@@ -21,10 +21,13 @@ export function AppLayout({ children, editorSidebar }: AppLayoutProps) {
     setHasHydrated(true)
   }, [])
 
-  // Show global sidebar in 'app' context when signed in
-  // Only show after hydration and when user is authenticated
-  // This prevents hydration mismatches and flicker
-  const showGlobalSidebar = navigationContext === 'app' && hasHydrated && !!user
+  // Show global sidebar in 'app' context once we've hydrated and either
+  // have an authenticated user or are still resolving auth state.
+  const showGlobalSidebar = navigationContext === 'app' && hasHydrated && (loading || Boolean(user))
+
+  // Determine which sidebar variant to render
+  const renderAuthenticatedSidebar = showGlobalSidebar && !loading && !!user
+  const renderSidebarSkeleton = showGlobalSidebar && loading && !user
 
   // Show editor sidebar in editor contexts when user is authenticated
   const showEditorSidebar =
@@ -33,7 +36,7 @@ export function AppLayout({ children, editorSidebar }: AppLayoutProps) {
     !loading &&
     (navigationContext === 'ai-editor' || navigationContext === 'script-editor')
 
-  // Reserve sidebar space when sidebar is shown
+  // Reserve sidebar space when any sidebar (or skeleton) is shown
   // This prevents layout shift and maintains consistent spacing
   const shouldReserveSpace = showGlobalSidebar || showEditorSidebar
 
@@ -42,14 +45,23 @@ export function AppLayout({ children, editorSidebar }: AppLayoutProps) {
       {/* Global header - gets user from auth context */}
       <Navigation />
 
-      {/* Global sidebar for app context - shown when user is authenticated or loading */}
-      {showGlobalSidebar && <Sidebar />}
+      {/* Global sidebar for app context – either full sidebar or skeleton while loading */}
+      {renderAuthenticatedSidebar && <Sidebar />}
+      {renderSidebarSkeleton && (
+        <aside
+          className="hidden lg:block lg:fixed lg:left-0 lg:top-16 lg:z-40 lg:h-[calc(100vh-4rem)] lg:w-64 lg:border-r lg:bg-muted/40 animate-pulse"
+          data-testid="sidebar-skeleton"
+          aria-hidden="true"
+        />
+      )}
 
       {/* Editor-specific sidebar (passed as prop) */}
       {showEditorSidebar && editorSidebar}
 
       {/* Content area with consistent spacing - sidebar space reserved when sidebar shown */}
-      <div className={shouldReserveSpace ? 'lg:ml-64' : ''}>{children}</div>
+      <div className={shouldReserveSpace ? 'lg:ml-64' : ''} data-testid="app-layout-content">
+        {children}
+      </div>
     </div>
   )
 }
