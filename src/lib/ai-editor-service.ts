@@ -47,11 +47,12 @@ const supabase = new Proxy({} as typeof supabaseClient, {
 // ============================================================================
 
 export class ManuscriptService {
-  static async create(userId: string, data: Partial<Manuscript>): Promise<Manuscript> {
-    const { data: manuscript, error } = await supabase
-      .from('manuscripts')
-      .insert({
-        user_id: userId,
+  static async create(_userId: string, data: Partial<Manuscript>): Promise<Manuscript> {
+    // Use server route to create (handles auth via cookies and avoids client env requirements)
+    const res = await fetch('/api/manuscripts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         title: data.title || 'Untitled Manuscript',
         logline: data.logline || 'A new story waiting to be told',
         synopsis: data.synopsis || 'Synopsis to be written...',
@@ -59,13 +60,14 @@ export class ManuscriptService {
         type: (data.type as any) || 'book',
         page_count: data.page_count || 0,
         target_word_count: data.target_word_count || 80000,
-        ...data,
-      })
-      .select()
-      .single()
-
-    if (error) throw error
-    return manuscript
+      }),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err?.error || 'Failed to create manuscript')
+    }
+    const json = await res.json()
+    return json.manuscript as Manuscript
   }
 
   static async getById(id: string): Promise<Manuscript | null> {
@@ -75,15 +77,15 @@ export class ManuscriptService {
     return data
   }
 
-  static async getUserManuscripts(userId: string): Promise<Manuscript[]> {
-    const { data, error } = await supabase
-      .from('manuscripts')
-      .select('*')
-      .eq('user_id', userId)
-      .order('updated_at', { ascending: false })
-
-    if (error) throw error
-    return data || []
+  static async getUserManuscripts(_userId: string): Promise<Manuscript[]> {
+    // Use server route to list current user's manuscripts
+    const res = await fetch('/api/manuscripts', { method: 'GET' })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err?.error || 'Failed to load manuscripts')
+    }
+    const json = await res.json()
+    return (json.manuscripts as Manuscript[]) || []
   }
 
   static async update(id: string, updates: Partial<Manuscript>): Promise<Manuscript> {

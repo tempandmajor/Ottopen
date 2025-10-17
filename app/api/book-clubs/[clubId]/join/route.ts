@@ -6,12 +6,17 @@ import logger from '@/src/lib/logger'
 // POST /api/book-clubs/[clubId]/join - Join a club
 export async function POST(request: NextRequest, { params }: { params: { clubId: string } }) {
   try {
-    const { user } = await getServerUser()
+    const { user, supabase } = await getServerUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    if (!supabase) {
+      return NextResponse.json({ error: 'Supabase is not configured' }, { status: 500 })
+    }
 
-    const club = await BookClubService.getById(params.clubId)
+    const bookClubs = BookClubService.fromClient(supabase)
+
+    const club = await bookClubs.getById(params.clubId)
     if (!club) {
       return NextResponse.json({ error: 'Club not found' }, { status: 404 })
     }
@@ -22,7 +27,7 @@ export async function POST(request: NextRequest, { params }: { params: { clubId:
     }
 
     // Check if already a member
-    const existing = await BookClubService.getMembership(params.clubId, user.id)
+    const existing = await bookClubs.getMembership(params.clubId, user.id)
     if (existing) {
       return NextResponse.json({ error: 'Already a member' }, { status: 400 })
     }
@@ -30,7 +35,7 @@ export async function POST(request: NextRequest, { params }: { params: { clubId:
     // Determine status based on club type
     const status = club.club_type === 'public' ? 'active' : 'pending'
 
-    const membership = await BookClubService.addMember(params.clubId, user.id, 'member', status)
+    const membership = await bookClubs.addMember(params.clubId, user.id, 'member', status)
 
     return NextResponse.json({ membership }, { status: 201 })
   } catch (error: any) {
@@ -42,12 +47,17 @@ export async function POST(request: NextRequest, { params }: { params: { clubId:
 // DELETE /api/book-clubs/[clubId]/join - Leave a club
 export async function DELETE(request: NextRequest, { params }: { params: { clubId: string } }) {
   try {
-    const { user } = await getServerUser()
+    const { user, supabase } = await getServerUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    if (!supabase) {
+      return NextResponse.json({ error: 'Supabase is not configured' }, { status: 500 })
+    }
 
-    const membership = await BookClubService.getMembership(params.clubId, user.id)
+    const bookClubs = BookClubService.fromClient(supabase)
+
+    const membership = await bookClubs.getMembership(params.clubId, user.id)
     if (!membership) {
       return NextResponse.json({ error: 'Not a member' }, { status: 400 })
     }
@@ -60,7 +70,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { clubI
       )
     }
 
-    await BookClubService.removeMember(params.clubId, user.id)
+    await bookClubs.removeMember(params.clubId, user.id)
 
     return NextResponse.json({ success: true })
   } catch (error: any) {

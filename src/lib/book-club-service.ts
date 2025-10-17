@@ -1,34 +1,4 @@
-// Book Club Service - Complete backend for community features
-import { createClient } from '@supabase/supabase-js'
-
-// Lazy getter for Supabase client - only creates when accessed, not at module import time
-// This prevents build-time errors when env vars aren't available
-let _supabaseClient: ReturnType<typeof createClient> | null = null
-function getSupabaseClient() {
-  if (_supabaseClient) return _supabaseClient
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Supabase client not configured')
-  }
-
-  _supabaseClient = createClient(supabaseUrl, supabaseAnonKey)
-  return _supabaseClient
-}
-
-// Export a proxy that lazily initializes the client
-export const supabase = new Proxy({} as ReturnType<typeof createClient>, {
-  get(_target, prop) {
-    const client = getSupabaseClient()
-    return client[prop as keyof typeof client]
-  },
-})
-
-// ============================================================================
-// TYPES
-// ============================================================================
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type ClubType = 'public' | 'private' | 'invite-only'
 export type MemberRole = 'owner' | 'moderator' | 'member'
@@ -145,13 +115,24 @@ export interface ClubEvent {
   updated_at: string
 }
 
-// ============================================================================
-// BOOK CLUB OPERATIONS
-// ============================================================================
+function assertClient<T extends SupabaseClient | null | undefined>(
+  client: T
+): asserts client is NonNullable<T> {
+  if (!client) {
+    throw new Error('Supabase client is required for book club operations')
+  }
+}
 
 export class BookClubService {
-  static async create(userId: string, data: Partial<BookClub>): Promise<BookClub> {
-    const { data: club, error } = await supabase
+  constructor(private readonly supabase: SupabaseClient) {}
+
+  static fromClient(supabase: SupabaseClient | null | undefined) {
+    assertClient(supabase)
+    return new BookClubService(supabase)
+  }
+
+  async create(userId: string, data: Partial<BookClub>): Promise<BookClub> {
+    const { data: club, error } = await this.supabase
       .from('book_clubs')
       .insert({
         created_by: userId,
@@ -164,51 +145,47 @@ export class BookClubService {
 
     if (error) throw error
 
-    // Automatically add creator as owner
     await this.addMember(club.id, userId, 'owner', 'active')
-
     return club
   }
 
-  static async getById(id: string): Promise<BookClub | null> {
-    const { data, error } = await supabase.from('book_clubs').select('*').eq('id', id).single()
-
+  async getById(id: string): Promise<BookClub | null> {
+    const { data, error } = await this.supabase.from('book_clubs').select('*').eq('id', id).single()
     if (error) return null
     return data
   }
 
-  static async list(filters?: {
+  async list(filters?: {
     club_type?: ClubType
     genre?: string
     search?: string
     limit?: number
   }): Promise<BookClub[]> {
-    let query = supabase.from('book_clubs').select('*').order('member_count', { ascending: false })
+    let query = this.supabase
+      .from('book_clubs')
+      .select('*')
+      .order('member_count', { ascending: false })
 
     if (filters?.club_type) {
       query = query.eq('club_type', filters.club_type)
     }
-
     if (filters?.genre) {
       query = query.contains('genre', [filters.genre])
     }
-
     if (filters?.search) {
       query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`)
     }
-
     if (filters?.limit) {
       query = query.limit(filters.limit)
     }
 
     const { data, error } = await query
-
     if (error) throw error
     return data || []
   }
 
-  static async getFeatured(limit: number = 6): Promise<BookClub[]> {
-    const { data, error } = await supabase
+  async getFeatured(limit = 6): Promise<BookClub[]> {
+    const { data, error } = await this.supabase
       .from('book_clubs')
       .select('*')
       .eq('is_featured', true)
@@ -218,19 +195,23 @@ export class BookClubService {
     return data || []
   }
 
-  static async getUserClubs(userId: string): Promise<BookClub[]> {
-    const { data, error } = await supabase
+  async getUserClubs(userId: string): Promise<BookClub[]> {
+    const { data, error } = await this.supabase
       .from('club_memberships')
-      .select('club_id, book_clubs(*)')
+      .select(
+        `
+        club:book_clubs(*)
+      `
+      )
       .eq('user_id', userId)
       .eq('status', 'active')
 
     if (error) throw error
-    return (data || []).map((m: any) => m.book_clubs)
+    return (data || []).map(record => record.club).filter(Boolean) as BookClub[]
   }
 
-  static async update(id: string, updates: Partial<BookClub>): Promise<BookClub> {
-    const { data, error } = await supabase
+  async update(id: string, updates: Partial<BookClub>): Promise<BookClub> {
+    const { data, error } = await this.supabase
       .from('book_clubs')
       .update(updates)
       .eq('id', id)
@@ -241,36 +222,38 @@ export class BookClubService {
     return data
   }
 
-  static async delete(id: string): Promise<void> {
-    const { error } = await supabase.from('book_clubs').delete().eq('id', id)
+  async delete(id: string): Promise<void> {
+    const { error } = await this.supabase.from('book_clubs').delete().eq('id', id)
     if (error) throw error
   }
 
-  static async getMembers(clubId: string): Promise<ClubMembership[]> {
-    const { data, error } = await supabase
+  async getMembers(clubId: string): Promise<ClubMembership[]> {
+    const { data, error } = await this.supabase
       .from('club_memberships')
       .select('*')
       .eq('club_id', clubId)
-      .eq('status', 'active')
+      .order('role', { ascending: true })
       .order('joined_at', { ascending: true })
 
     if (error) throw error
     return data || []
   }
 
-  static async addMember(
+  async addMember(
     clubId: string,
     userId: string,
     role: MemberRole = 'member',
     status: MemberStatus = 'pending'
   ): Promise<ClubMembership> {
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from('club_memberships')
       .insert({
         club_id: clubId,
         user_id: userId,
         role,
         status,
+        credits: 0,
+        reputation_score: 0,
       })
       .select()
       .single()
@@ -279,14 +262,16 @@ export class BookClubService {
     return data
   }
 
-  static async updateMember(
-    membershipId: string,
+  async updateMember(
+    clubId: string,
+    userId: string,
     updates: Partial<ClubMembership>
   ): Promise<ClubMembership> {
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from('club_memberships')
       .update(updates)
-      .eq('id', membershipId)
+      .eq('club_id', clubId)
+      .eq('user_id', userId)
       .select()
       .single()
 
@@ -294,8 +279,8 @@ export class BookClubService {
     return data
   }
 
-  static async removeMember(clubId: string, userId: string): Promise<void> {
-    const { error } = await supabase
+  async removeMember(clubId: string, userId: string): Promise<void> {
+    const { error } = await this.supabase
       .from('club_memberships')
       .delete()
       .eq('club_id', clubId)
@@ -304,30 +289,33 @@ export class BookClubService {
     if (error) throw error
   }
 
-  static async getMembership(clubId: string, userId: string): Promise<ClubMembership | null> {
-    const { data, error } = await supabase
+  async getMembership(clubId: string, userId: string): Promise<ClubMembership | null> {
+    const { data, error } = await this.supabase
       .from('club_memberships')
       .select('*')
       .eq('club_id', clubId)
       .eq('user_id', userId)
-      .single()
+      .maybeSingle()
 
-    if (error) return null
-    return data
+    if (error) throw error
+    return data || null
   }
 }
 
-// ============================================================================
-// DISCUSSION OPERATIONS
-// ============================================================================
-
 export class DiscussionService {
-  static async create(
+  constructor(private readonly supabase: SupabaseClient) {}
+
+  static fromClient(supabase: SupabaseClient | null | undefined) {
+    assertClient(supabase)
+    return new DiscussionService(supabase)
+  }
+
+  async create(
     clubId: string,
     authorId: string,
     data: Partial<ClubDiscussion>
   ): Promise<ClubDiscussion> {
-    const { data: discussion, error } = await supabase
+    const { data: discussion, error } = await this.supabase
       .from('club_discussions')
       .insert({
         club_id: clubId,
@@ -343,8 +331,8 @@ export class DiscussionService {
     return discussion
   }
 
-  static async getById(id: string): Promise<ClubDiscussion | null> {
-    const { data, error } = await supabase
+  async getById(id: string): Promise<ClubDiscussion | null> {
+    const { data, error } = await this.supabase
       .from('club_discussions')
       .select('*')
       .eq('id', id)
@@ -354,8 +342,8 @@ export class DiscussionService {
     return data
   }
 
-  static async getByClubId(clubId: string, limit: number = 50): Promise<ClubDiscussion[]> {
-    const { data, error } = await supabase
+  async getByClubId(clubId: string, limit = 50): Promise<ClubDiscussion[]> {
+    const { data, error } = await this.supabase
       .from('club_discussions')
       .select('*')
       .eq('club_id', clubId)
@@ -368,8 +356,8 @@ export class DiscussionService {
     return data || []
   }
 
-  static async update(id: string, updates: Partial<ClubDiscussion>): Promise<ClubDiscussion> {
-    const { data, error } = await supabase
+  async update(id: string, updates: Partial<ClubDiscussion>): Promise<ClubDiscussion> {
+    const { data, error } = await this.supabase
       .from('club_discussions')
       .update(updates)
       .eq('id', id)
@@ -380,23 +368,23 @@ export class DiscussionService {
     return data
   }
 
-  static async delete(id: string): Promise<void> {
-    const { error } = await supabase.from('club_discussions').delete().eq('id', id)
+  async delete(id: string): Promise<void> {
+    const { error } = await this.supabase.from('club_discussions').delete().eq('id', id)
     if (error) throw error
   }
 
-  static async incrementViewCount(id: string): Promise<void> {
-    const { error } = await supabase.rpc('increment_discussion_views', { discussion_id: id })
+  async incrementViewCount(id: string): Promise<void> {
+    const { error } = await this.supabase.rpc('increment_discussion_views', { discussion_id: id })
     if (error) console.error('Failed to increment view count:', error)
   }
 
-  static async addReply(
+  async addReply(
     discussionId: string,
     authorId: string,
     content: string,
     parentReplyId?: string
   ): Promise<DiscussionReply> {
-    const { data, error } = await supabase
+    const { data, error } = await this.supabase
       .from('discussion_replies')
       .insert({
         discussion_id: discussionId,
@@ -411,8 +399,8 @@ export class DiscussionService {
     return data
   }
 
-  static async getReplies(discussionId: string): Promise<DiscussionReply[]> {
-    const { data, error } = await supabase
+  async getReplies(discussionId: string): Promise<DiscussionReply[]> {
+    const { data, error } = await this.supabase
       .from('discussion_replies')
       .select('*')
       .eq('discussion_id', discussionId)
@@ -423,23 +411,31 @@ export class DiscussionService {
   }
 }
 
-// ============================================================================
-// CRITIQUE OPERATIONS
-// ============================================================================
-
 export class CritiqueService {
-  static async createSubmission(
+  constructor(
+    private readonly supabase: SupabaseClient,
+    private readonly clubs: BookClubService
+  ) {}
+
+  static fromClient(supabase: SupabaseClient | null | undefined, clubs?: BookClubService) {
+    assertClient(supabase)
+    if (!clubs) {
+      clubs = new BookClubService(supabase)
+    }
+    return new CritiqueService(supabase, clubs)
+  }
+
+  async createSubmission(
     clubId: string,
     submitterId: string,
     data: Partial<CritiqueSubmission>
   ): Promise<CritiqueSubmission> {
-    // Check if user has enough credits
-    const membership = await BookClubService.getMembership(clubId, submitterId)
+    const membership = await this.clubs.getMembership(clubId, submitterId)
     if (!membership || membership.credits < (data.credits_cost || 1)) {
       throw new Error('Insufficient credits')
     }
 
-    const { data: submission, error } = await supabase
+    const { data: submission, error } = await this.supabase
       .from('critique_submissions')
       .insert({
         club_id: clubId,
@@ -452,8 +448,7 @@ export class CritiqueService {
 
     if (error) throw error
 
-    // Deduct credits
-    await supabase
+    await this.supabase
       .from('club_memberships')
       .update({ credits: membership.credits - (data.credits_cost || 1) })
       .eq('id', membership.id)
@@ -461,8 +456,8 @@ export class CritiqueService {
     return submission
   }
 
-  static async getSubmissions(clubId: string, status?: string): Promise<CritiqueSubmission[]> {
-    let query = supabase
+  async getSubmissions(clubId: string, status?: string): Promise<CritiqueSubmission[]> {
+    let query = this.supabase
       .from('critique_submissions')
       .select('*')
       .eq('club_id', clubId)
@@ -473,17 +468,16 @@ export class CritiqueService {
     }
 
     const { data, error } = await query
-
     if (error) throw error
     return data || []
   }
 
-  static async submitCritique(
+  async submitCritique(
     submissionId: string,
     reviewerId: string,
     data: Partial<Critique>
   ): Promise<Critique> {
-    const { data: critique, error } = await supabase
+    const { data: critique, error } = await this.supabase
       .from('critiques')
       .insert({
         submission_id: submissionId,
@@ -496,18 +490,16 @@ export class CritiqueService {
 
     if (error) throw error
 
-    // Get submission to award credits
-    const { data: submission } = await supabase
+    const { data: submission } = await this.supabase
       .from('critique_submissions')
       .select('club_id')
       .eq('id', submissionId)
       .single()
 
     if (submission) {
-      // Award credit to reviewer
-      const membership = await BookClubService.getMembership(submission.club_id, reviewerId)
+      const membership = await this.clubs.getMembership(submission.club_id, reviewerId)
       if (membership) {
-        await supabase
+        await this.supabase
           .from('club_memberships')
           .update({
             credits: membership.credits + 1,
@@ -520,8 +512,8 @@ export class CritiqueService {
     return critique
   }
 
-  static async getCritiques(submissionId: string): Promise<Critique[]> {
-    const { data, error } = await supabase
+  async getCritiques(submissionId: string): Promise<Critique[]> {
+    const { data, error } = await this.supabase
       .from('critiques')
       .select('*')
       .eq('submission_id', submissionId)
@@ -531,24 +523,23 @@ export class CritiqueService {
     return data || []
   }
 
-  static async voteHelpful(critiqueId: string, helpful: boolean): Promise<void> {
+  async voteHelpful(critiqueId: string, helpful: boolean): Promise<void> {
     const field = helpful ? 'helpful_votes' : 'not_helpful_votes'
-    const { error } = await supabase.rpc(`increment_${field}`, { critique_id: critiqueId })
+    const { error } = await this.supabase.rpc(`increment_${field}`, { critique_id: critiqueId })
     if (error) throw error
   }
 }
 
-// ============================================================================
-// EVENT OPERATIONS
-// ============================================================================
-
 export class EventService {
-  static async create(
-    clubId: string,
-    creatorId: string,
-    data: Partial<ClubEvent>
-  ): Promise<ClubEvent> {
-    const { data: event, error } = await supabase
+  constructor(private readonly supabase: SupabaseClient) {}
+
+  static fromClient(supabase: SupabaseClient | null | undefined) {
+    assertClient(supabase)
+    return new EventService(supabase)
+  }
+
+  async create(clubId: string, creatorId: string, data: Partial<ClubEvent>): Promise<ClubEvent> {
+    const { data: event, error } = await this.supabase
       .from('club_events')
       .insert({
         club_id: clubId,
@@ -565,8 +556,8 @@ export class EventService {
     return event
   }
 
-  static async getUpcoming(clubId: string): Promise<ClubEvent[]> {
-    const { data, error } = await supabase
+  async getUpcoming(clubId: string): Promise<ClubEvent[]> {
+    const { data, error } = await this.supabase
       .from('club_events')
       .select('*')
       .eq('club_id', clubId)
@@ -577,17 +568,28 @@ export class EventService {
     return data || []
   }
 
-  static async rsvp(
+  async rsvp(
     eventId: string,
     userId: string,
     status: 'going' | 'maybe' | 'not-going'
   ): Promise<void> {
-    const { error } = await supabase.from('event_participants').upsert({
+    const { error } = await this.supabase.from('event_participants').upsert({
       event_id: eventId,
       user_id: userId,
       status,
     })
 
     if (error) throw error
+  }
+}
+
+export function createBookClubServices(supabase: SupabaseClient | null | undefined) {
+  assertClient(supabase)
+  const bookClubs = new BookClubService(supabase)
+  return {
+    bookClubs,
+    discussions: new DiscussionService(supabase),
+    critiques: new CritiqueService(supabase, bookClubs),
+    events: new EventService(supabase),
   }
 }

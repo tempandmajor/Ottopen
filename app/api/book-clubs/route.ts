@@ -9,13 +9,20 @@ export const dynamic = 'force-dynamic'
 // GET /api/book-clubs - List clubs with optional filters
 export async function GET(request: NextRequest) {
   try {
+    const { supabase } = await getServerUser()
+    if (!supabase) {
+      return NextResponse.json({ error: 'Supabase is not configured' }, { status: 500 })
+    }
+
+    const bookClubs = BookClubService.fromClient(supabase)
+
     const { searchParams } = new URL(request.url)
     const club_type = searchParams.get('club_type') as any
     const genre = searchParams.get('genre') || undefined
     const search = searchParams.get('search') || undefined
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined
 
-    const clubs = await BookClubService.list({
+    const clubs = await bookClubs.list({
       club_type,
       genre,
       search,
@@ -32,14 +39,18 @@ export async function GET(request: NextRequest) {
 // POST /api/book-clubs - Create new club
 export async function POST(request: NextRequest) {
   try {
-    const { user } = await getServerUser()
+    const { user, supabase } = await getServerUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    if (!supabase) {
+      return NextResponse.json({ error: 'Supabase is not configured' }, { status: 500 })
     }
 
     const body = await request.json()
 
-    const club = await BookClubService.create(user.id, body)
+    const bookClubs = BookClubService.fromClient(supabase)
+    const club = await bookClubs.create(user.id, body)
 
     return NextResponse.json({ club }, { status: 201 })
   } catch (error: any) {

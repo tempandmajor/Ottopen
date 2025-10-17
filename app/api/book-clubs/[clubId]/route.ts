@@ -6,7 +6,13 @@ import logger from '@/src/lib/logger'
 // GET /api/book-clubs/[clubId] - Get club details
 export async function GET(request: NextRequest, { params }: { params: { clubId: string } }) {
   try {
-    const club = await BookClubService.getById(params.clubId)
+    const { supabase } = await getServerUser()
+    if (!supabase) {
+      return NextResponse.json({ error: 'Supabase is not configured' }, { status: 500 })
+    }
+
+    const bookClubs = BookClubService.fromClient(supabase)
+    const club = await bookClubs.getById(params.clubId)
 
     if (!club) {
       return NextResponse.json({ error: 'Club not found' }, { status: 404 })
@@ -22,19 +28,24 @@ export async function GET(request: NextRequest, { params }: { params: { clubId: 
 // PATCH /api/book-clubs/[clubId] - Update club
 export async function PATCH(request: NextRequest, { params }: { params: { clubId: string } }) {
   try {
-    const { user } = await getServerUser()
+    const { user, supabase } = await getServerUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    if (!supabase) {
+      return NextResponse.json({ error: 'Supabase is not configured' }, { status: 500 })
+    }
+
+    const bookClubs = BookClubService.fromClient(supabase)
 
     // Check if user is owner or moderator
-    const membership = await BookClubService.getMembership(params.clubId, user.id)
+    const membership = await bookClubs.getMembership(params.clubId, user.id)
     if (!membership || !['owner', 'moderator'].includes(membership.role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const body = await request.json()
-    const club = await BookClubService.update(params.clubId, body)
+    const club = await bookClubs.update(params.clubId, body)
 
     return NextResponse.json({ club })
   } catch (error: any) {
@@ -46,18 +57,23 @@ export async function PATCH(request: NextRequest, { params }: { params: { clubId
 // DELETE /api/book-clubs/[clubId] - Delete club
 export async function DELETE(request: NextRequest, { params }: { params: { clubId: string } }) {
   try {
-    const { user } = await getServerUser()
+    const { user, supabase } = await getServerUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    if (!supabase) {
+      return NextResponse.json({ error: 'Supabase is not configured' }, { status: 500 })
+    }
+
+    const bookClubs = BookClubService.fromClient(supabase)
 
     // Check if user is owner
-    const membership = await BookClubService.getMembership(params.clubId, user.id)
+    const membership = await bookClubs.getMembership(params.clubId, user.id)
     if (!membership || membership.role !== 'owner') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    await BookClubService.delete(params.clubId)
+    await bookClubs.delete(params.clubId)
 
     return NextResponse.json({ success: true })
   } catch (error: any) {

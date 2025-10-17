@@ -71,18 +71,18 @@ export function ManuscriptsBrowser() {
   }
 
   const handleCreateNew = () => {
-    if (typeof window !== 'undefined') {
-      window.open('/editor/workspace?new=true', '_blank', 'noopener,noreferrer')
-    } else {
+    try {
       router.push('/editor/workspace?new=true')
+    } catch (e) {
+      toast.error('Could not open editor')
     }
   }
 
   const handleOpenManuscript = (manuscriptId: string) => {
-    if (typeof window !== 'undefined') {
-      window.open(`/editor/workspace?tabs=${manuscriptId}`, '_blank', 'noopener,noreferrer')
-    } else {
+    try {
       router.push(`/editor/workspace?tabs=${manuscriptId}`)
+    } catch (e) {
+      toast.error('Could not open manuscript')
     }
   }
 

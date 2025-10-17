@@ -12,12 +12,17 @@ async function handleGetReplies(
   { params }: { params: { discussionId: string } }
 ) {
   try {
-    const { user } = await getServerUser()
+    const { user, supabase } = await getServerUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    if (!supabase) {
+      return NextResponse.json({ error: 'Supabase is not configured' }, { status: 500 })
+    }
 
-    const replies = await DiscussionService.getReplies(params.discussionId)
+    const discussions = DiscussionService.fromClient(supabase)
+
+    const replies = await discussions.getReplies(params.discussionId)
 
     return NextResponse.json({
       success: true,
@@ -40,10 +45,15 @@ async function handleAddReply(
   { params }: { params: { discussionId: string } }
 ) {
   try {
-    const { user } = await getServerUser()
+    const { user, supabase } = await getServerUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    if (!supabase) {
+      return NextResponse.json({ error: 'Supabase is not configured' }, { status: 500 })
+    }
+
+    const discussions = DiscussionService.fromClient(supabase)
 
     const body = await request.json()
     const { content, parentReplyId } = body
@@ -52,12 +62,7 @@ async function handleAddReply(
       return NextResponse.json({ error: 'Content is required' }, { status: 400 })
     }
 
-    const reply = await DiscussionService.addReply(
-      params.discussionId,
-      user.id,
-      content,
-      parentReplyId
-    )
+    const reply = await discussions.addReply(params.discussionId, user.id, content, parentReplyId)
 
     return NextResponse.json({
       success: true,

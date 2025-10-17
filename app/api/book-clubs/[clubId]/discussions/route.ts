@@ -20,13 +20,19 @@ async function handleGetDiscussions(
   { params }: { params: { clubId: string } }
 ) {
   try {
-    const { user } = await getServerUser()
+    const { user, supabase } = await getServerUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    if (!supabase) {
+      return NextResponse.json({ error: 'Supabase is not configured' }, { status: 500 })
+    }
+
+    const bookClubs = BookClubService.fromClient(supabase)
+    const discussionsService = DiscussionService.fromClient(supabase)
 
     // Check membership
-    const membership = await BookClubService.getMembership(params.clubId, user.id)
+    const membership = await bookClubs.getMembership(params.clubId, user.id)
     if (!membership || membership.status !== 'active') {
       return NextResponse.json(
         { error: 'Must be an active member to view discussions' },
@@ -34,7 +40,7 @@ async function handleGetDiscussions(
       )
     }
 
-    const discussions = await DiscussionService.getByClubId(params.clubId)
+    const discussions = await discussionsService.getByClubId(params.clubId)
 
     return NextResponse.json({ discussions })
   } catch (error: any) {
@@ -51,13 +57,19 @@ async function handleCreateDiscussion(
   { params }: { params: { clubId: string } }
 ) {
   try {
-    const { user } = await getServerUser()
+    const { user, supabase } = await getServerUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    if (!supabase) {
+      return NextResponse.json({ error: 'Supabase is not configured' }, { status: 500 })
+    }
+
+    const bookClubs = BookClubService.fromClient(supabase)
+    const discussionsService = DiscussionService.fromClient(supabase)
 
     // Check membership
-    const membership = await BookClubService.getMembership(params.clubId, user.id)
+    const membership = await bookClubs.getMembership(params.clubId, user.id)
     if (!membership || membership.status !== 'active') {
       return NextResponse.json(
         { error: 'Must be an active member to create discussions' },
@@ -76,7 +88,11 @@ async function handleCreateDiscussion(
       )
     }
 
-    const discussion = await DiscussionService.create(params.clubId, user.id, validationResult.data)
+    const discussion = await discussionsService.create(
+      params.clubId,
+      user.id,
+      validationResult.data
+    )
 
     return NextResponse.json({ discussion }, { status: 201 })
   } catch (error: any) {
